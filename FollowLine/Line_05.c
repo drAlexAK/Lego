@@ -54,7 +54,10 @@ task main()
 		motor[mLeft] = v + u;
 		motor[mRight] = v - u;
 		wait1Msec(1);
+		if (SensorValue(sTouch)== 1) break;
 	}
+	motor[mLeft] = 0;
+	motor[mRight] = 0;
 }
 
 void WaitTouchRealise ()

@@ -1,5 +1,6 @@
 #pragma config(Sensor, S1,     sRight,         sensorLightActive)
 #pragma config(Sensor, S2,     sTouch,         sensorEV3_Touch)
+#pragma config(Sensor, S3,     sCenter,        sensorEV3_IRSensor)
 #pragma config(Sensor, S4,     sLeft,          sensorLightActive)
 #pragma config(Motor,  motorC,          mRight,        tmotorEV3_Large, openLoop, reversed, encoder)
 #pragma config(Motor,  motorD,          mLeft,         tmotorEV3_Large, openLoop, reversed, encoder)
@@ -12,7 +13,7 @@ void ClearAllSensors();
 task main()
 {
 	const int maxSpeed = 100;
-	const float ki = 0.01, kp = 2, kd = 20, maxi = 20;
+	const float ki = 0.01, kp = 2.6, kd = 9.8, maxi = 20;
 	float eS = 0, u = 0, eOld = 0, i = 0, e = 0;
 	int v = maxSpeed, vLeft = 0, vRight = 0;
 
@@ -68,7 +69,7 @@ task main()
 		motor[mRight] = vRight;
 
 		sleep(10);
-
+		if (SensorValue(sCenter)<25) break ;
 		if (SensorValue(sTouch)== 1) break ;
 	}
 	motor[mLeft]  =0;

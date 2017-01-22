@@ -9,11 +9,11 @@
 void WaitTouchRelease();
 void GetErrorAfterTouchRelease(float &eS);
 void ClearAllSensors();
-//
+
 task main()
 {
 	const int maxSpeed = 100;
-	const float ki = 0.01, kp = 2.6, kd = 9.8, maxi = 20;
+	const float ki = 0.02, kp = 2.53, kd = 26.5, maxi = 20;
 	float eS = 0, u = 0, eOld = 0, i = 0, e = 0;
 	int v = maxSpeed, vLeft = 0, vRight = 0;
 
@@ -60,8 +60,9 @@ task main()
 		datalogAddValueWithTimeStamp(0, e);
 		datalogAddValueWithTimeStamp(1, eOld);
 		datalogAddValueWithTimeStamp(2, u);
-		datalogAddValueWithTimeStamp(3, vLeft);
-		datalogAddValueWithTimeStamp(4, vRight);
+		datalogAddValueWithTimeStamp(3, i);
+		datalogAddValueWithTimeStamp(4, vLeft);
+		datalogAddValueWithTimeStamp(5, vRight);
 
 		eOld = e;
 

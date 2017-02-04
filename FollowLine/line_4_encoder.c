@@ -25,8 +25,8 @@ task main()
 
 	while (true)
 	{
-		e1 = SensorValue(s1) + SensorValue(s2);
-		e2 = SensorValue(s3) + SensorValue(s4);
+		e1 = SensorValue(s1) * 2 + SensorValue(s2);
+		e2 = SensorValue(s3) + SensorValue(s4) * 2;
 		e = e1 - e2;
 		u = (e + (e - eOld) * 10) * 2;
 		eOld = e;

@@ -45,9 +45,9 @@ task main()
 			motor[mLeft]  = -100; 		// move back
 			motor[mRight] = -100;		  // move back
 			sleep(350);
-			motor[mLeft]  =  35;		  // turn
-			motor[mRight] = -35;		  // turn
-			sleep(250);
+			motor[mLeft]  =  50;		  // turn
+			motor[mRight] = -50;		  // turn
+			sleep(350);
 		}
 		//-----------------------------------------------------
 
@@ -88,7 +88,7 @@ task main()
 	}
 }
 
-// returns true when value of anysensor more than 25
+// returns true when value of anysensor more than 45
 bool IsHereWhite()
 {
 	tByteArray signalstr;
@@ -96,7 +96,7 @@ bool IsHereWhite()
 
 	for (int i = 0 ; i < 8; i++)
 	{
-		if ( signalstr[i] > 35 ) return true;
+		if ( signalstr[i] > 45 ) return true;
 	}
 	return false;
 }

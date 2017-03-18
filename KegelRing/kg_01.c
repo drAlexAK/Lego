@@ -1,5 +1,6 @@
 #pragma config(Sensor, S1,     sSonarLeft,     sensorSONAR)
 #pragma config(Sensor, S2,     sSonarRight,    sensorSONAR)
+#pragma config(Sensor, S3,     sTouch,         sensorTouch)
 #pragma config(Sensor, S4,     sLight,         sensorI2CCustom9V)
 #pragma config(Motor,  motorA,          mShLeft,       tmotorNXT, PIDControl, reversed, encoder)
 #pragma config(Motor,  motorB,          mLeft,         tmotorNXT, PIDControl, encoder)
@@ -8,21 +9,25 @@
 
 #include "mindsensors-lineleader.h"
 
-bool IsHereWhite();
+bool IsHereBlack();
 
 task main()
 {
+	playSound(soundBlip);
 	//-----------------------------------------------------
+	while (SensorValue(sTouch)== 0)
+	{
+		sleep (10);
+	}
+	while (SensorValue(sTouch)== 1)
+	{
+		sleep (10);
+	}
 
-	motor[mShLeft]=100;					// shovel down
-	sleep(200);
-	motor[mShLeft]=0;
-	sleep (4800);
-	motor[mShLeft]=10;					  // shovel light pressure
 	//-----------------------------------------------------
-
-	//-----------------------------------------------------
-	const int sonarDistance  = 55;
+	const int sonarDistance  = 67;
+	const int catchDistance  = 25; // 24
+	bool target 						 = false;
 	int sonarLeft 					 = 0;				// current left sonar sensor
 	int sonarRight 					 = 0;				// current left sonar sensor
 	SensorValue(sSonarLeft)	 = 0;				// init left sonar sensor
@@ -31,7 +36,7 @@ task main()
 
 	// Initit motors
 	//-----------------------------------------------------
-	int vLeft 	= 100;					// left motor power
+	int vLeft 	= 75;					// left motor power
 	int vRight 	= 100;					// right motor power
 
 	motor[mLeft]  = vLeft;					// go ahead
@@ -42,16 +47,23 @@ task main()
 	{
 		// Get light sensor value and turn when current value less or more than start value
 		//-----------------------------------------------------
-		if ( IsHereWhite() ) // U turn
+		if ( IsHereBlack() ) // U turn
 		{
+			target = false;
+
 			motor[mLeft]  = -100; 		// move back
 			motor[mRight] = -100;		  // move back
-			sleep(350);
+
+			sleep(750);
+
 			motor[mLeft]  =  50;		  // turn
 			motor[mRight] = -50;		  // turn
+
 			sleep(350);
 		}
 		//-----------------------------------------------------
+
+		if ( target ) continue ; // ignore all sensors because target is true
 
 		// use sonar sensor here
 		//-----------------------------------------------------
@@ -59,12 +71,14 @@ task main()
 		sonarRight = SensorValue(sSonarRight);
 
 		if ( sonarLeft  < 5 ) sonarLeft  = 255; // protects from stupid sonar issue when value is 0
-		if ( sonarRight < 5 ) sonarRight = 255; // protects from stupid sonar issue when value is 0
+			if ( sonarRight < 5 ) sonarRight = 255; // protects from stupid sonar issue when value is 0
 
 		if ( sonarLeft < sonarDistance ) // see on the left
 		{
 			if ( sonarRight < sonarDistance ) // see on the right too. Go ahead
 			{
+				if (( sonarLeft < catchDistance ) && ( sonarRight < catchDistance )) target = true;
+
 				vLeft  = 100 * sonarLeft / sonarRight ;
 				vRight = 100 * sonarRight / sonarLeft ;
 			}
@@ -81,24 +95,30 @@ task main()
 				vLeft  = -15;
 				vRight =  15;
 			}
+			else
+			{
+				vLeft 	= 75;					// left motor power
+				vRight 	= 100;					// right motor power
+			}
 		}
 
 		// sets motors power value
 		motor[mLeft]  = vLeft;
 		motor[mRight] = vRight;
 		sleep(1);
+		if (SensorValue(sTouch)== 1) break;
 	}
 }
 
-// returns true when value of anysensor more than 45
-bool IsHereWhite()
+// returns true when value of anysensor less than 50
+bool IsHereBlack()
 {
 	tByteArray signalstr;
 	LLreadSensorRaw(sLight, signalstr); // read the raw sensor data (8 bit data)
 
 	for (int i = 0 ; i < 8; i++)
 	{
-		if ( signalstr[i] > 50 ) return true;
+		if ( signalstr[i] < 20 ) return true;
 	}
 	return false;
 }

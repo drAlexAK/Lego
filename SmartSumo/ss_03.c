@@ -13,12 +13,20 @@ bool IsHereWhite();
 task main()
 {
 	//-----------------------------------------------------
-
+	while (SensorValue(sTouch)== 0)
+	{
+		sleep (10);
+	}
+	while (SensorValue(sTouch)== 1)
+	{
+		sleep (10);
+	}
+	//-----------------------------------------------------
+	//-----------------------------------------------------
 	motor[mShLeft]=100;					// shovel down
 	sleep(200);
 	motor[mShLeft]=0;
-	sleep (4800);
-	motor[mShLeft]=10;					  // shovel light pressure
+
 	//-----------------------------------------------------
 
 	//-----------------------------------------------------
@@ -29,6 +37,10 @@ task main()
 	SensorValue(sSonarRight) = 0;				// init right sonar sensor
 	//-----------------------------------------------------
 
+	int sensor = LLreadResult(sLight);
+	sleep (4200);
+	motor[mShLeft]=10;					  // shovel light pressure
+
 	// Initit motors
 	//-----------------------------------------------------
 	int vLeft 	= 100;					// left motor power
@@ -37,7 +49,7 @@ task main()
 	motor[mLeft]  = vLeft;					// go ahead
 	motor[mRight] = vRight;					// go ahead
 	//-----------------------------------------------------
-	int sensor = LLreadResult(sLight);
+
 	while (true)
 	{
 		// Get light sensor value and turn when current value less or more than start value

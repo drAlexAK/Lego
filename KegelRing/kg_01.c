@@ -25,7 +25,7 @@ task main()
 	}
 
 	//-----------------------------------------------------
-	const int sonarDistance  = 67;
+	const int sonarDistance  = 70;
 	const int catchDistance  = 25; // 24
 	bool target 						 = false;
 	int sonarLeft 					 = 0;				// current left sonar sensor
@@ -84,7 +84,7 @@ task main()
 			}
 			else // see only left only. Turn left
 			{
-				vLeft  =  15;
+				vLeft  =  22;
 				vRight = -15;
 			}
 		}
@@ -93,7 +93,7 @@ task main()
 			if ( sonarRight < sonarDistance ) // see on the right only. Turn right
 			{
 				vLeft  = -15;
-				vRight =  15;
+				vRight =  22;
 			}
 			else
 			{

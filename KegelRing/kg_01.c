@@ -10,10 +10,10 @@
 #include "mindsensors-lineleader.h"
 
 bool IsHereBlack();
+int GetLightAverage();
 
 task main()
 {
-	playSound(soundBlip);
 	//-----------------------------------------------------
 	while (SensorValue(sTouch)== 0)
 	{
@@ -23,10 +23,9 @@ task main()
 	{
 		sleep (10);
 	}
-
 	//-----------------------------------------------------
-	const int sonarDistance  = 70;
-	const int catchDistance  = 25; // 24
+	const int sonarDistance  = 67;
+	const int catchDistance  = 30; // 24
 	bool target 						 = false;
 	int sonarLeft 					 = 0;				// current left sonar sensor
 	int sonarRight 					 = 0;				// current left sonar sensor
@@ -43,11 +42,12 @@ task main()
 	motor[mRight] = vRight;					// go ahead
 	//-----------------------------------------------------
 	int sensor = LLreadResult(sLight);
+	IsHereBlack();
 	while (true)
 	{
 		// Get light sensor value and turn when current value less or more than start value
 		//-----------------------------------------------------
-		if ( IsHereBlack() ) // U turn
+		if ( GetLightAverage()< 15 ) // U turn
 		{
 			target = false;
 
@@ -60,10 +60,11 @@ task main()
 			motor[mRight] = -50;		  // turn
 
 			sleep(350);
+
 		}
 		//-----------------------------------------------------
 
-		if ( target ) continue ; // ignore all sensors because target is true
+		if ( target==true ) continue ; // ignore all sensors because target is true
 
 		// use sonar sensor here
 		//-----------------------------------------------------
@@ -77,10 +78,18 @@ task main()
 		{
 			if ( sonarRight < sonarDistance ) // see on the right too. Go ahead
 			{
-				if (( sonarLeft < catchDistance ) && ( sonarRight < catchDistance )) target = true;
+				if (( sonarLeft < catchDistance ) && ( sonarRight < catchDistance ))
+				{
+					target = true;
+					vLeft  = 100 ;
+					vRight = 100 ;
+				}
+				else
+				{
 
-				vLeft  = 100 * sonarLeft / sonarRight ;
-				vRight = 100 * sonarRight / sonarLeft ;
+					vLeft  = 100 * sonarLeft / sonarRight ;
+					vRight = 100 * sonarRight / sonarLeft ;
+				}
 			}
 			else // see only left only. Turn left
 			{
@@ -118,7 +127,24 @@ bool IsHereBlack()
 
 	for (int i = 0 ; i < 8; i++)
 	{
-		if ( signalstr[i] < 20 ) return true;
+		if ( signalstr[i] < 15 ) return true;
 	}
 	return false;
+}
+
+// retruns light average from 0 - black to 100 - white
+int GetLightAverage()
+{
+	int average = 0;
+	//int sensor = LLreadResult(sLight); // fetch the data from the sensor
+	tByteArray signalstr;
+
+	LLreadSensorRaw(sLight, signalstr); // read the raw sensor data (8 bit data)
+
+	for (int i = 0 ; i<8; i++)
+	{
+		average += signalstr[i];
+	}
+	average /= 8;
+	return average;
 }

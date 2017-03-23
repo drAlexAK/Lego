@@ -1,5 +1,6 @@
 #pragma config(Sensor, S1,     sSonarLeft,     sensorSONAR)
 #pragma config(Sensor, S2,     sSonarRight,    sensorSONAR)
+#pragma config(Sensor, S3,     sTouch,         sensorTouch)
 #pragma config(Sensor, S4,     sLight,         sensorI2CCustom9V)
 #pragma config(Motor,  motorA,          mShLeft,       tmotorNXT, PIDControl, reversed, encoder)
 #pragma config(Motor,  motorB,          mLeft,         tmotorNXT, PIDControl, encoder)
@@ -21,12 +22,20 @@ task main()
 	{
 		sleep (10);
 	}
-	//-----------------------------------------------------
-	//-----------------------------------------------------
-	motor[mShLeft]=100;					// shovel down
-	sleep(200);
-	motor[mShLeft]=0;
 
+	//-----------------------------------------------------
+	sleep (5000);
+	//-----------------------------------------------------
+
+	//-----------------------------------------------------
+	motor[mShLeft]=100; 				// shovel down
+	for (int i = 10; i <= 130; i = i + 10)
+	{
+		motor[mLeft]  = i;					// go ahead smoothly
+		motor[mRight] = i;					// go ahead smoothly
+		sleep(10);
+	}
+	motor[mShLeft]=10; 		// shovel light pressure
 	//-----------------------------------------------------
 
 	//-----------------------------------------------------
@@ -38,8 +47,6 @@ task main()
 	//-----------------------------------------------------
 
 	int sensor = LLreadResult(sLight);
-	sleep (4200);
-	motor[mShLeft]=10;					  // shovel light pressure
 
 	// Initit motors
 	//-----------------------------------------------------
@@ -71,14 +78,22 @@ task main()
 		sonarRight = SensorValue(sSonarRight);
 
 		if ( sonarLeft  < 5 ) sonarLeft  = 255; // protects from stupid sonar issue when value is 0
-		if ( sonarRight < 5 ) sonarRight = 255; // protects from stupid sonar issue when value is 0
+			if ( sonarRight < 5 ) sonarRight = 255; // protects from stupid sonar issue when value is 0
 
 		if ( sonarLeft < sonarDistance ) // see on the left
 		{
 			if ( sonarRight < sonarDistance ) // see on the right too. Go ahead
 			{
-				vLeft  = 100 * sonarLeft / sonarRight ;
-				vRight = 100 * sonarRight / sonarLeft ;
+				if (( sonarLeft < 15 ) | ( sonarRight < 15 )) // max power go ahead. Kill it
+				{
+					vLeft  = 100 ;
+					vRight = 100 ;
+				}
+				else  // smart go ahead
+				{
+					vLeft  = 100 * sonarLeft / sonarRight ;
+					vRight = 100 * sonarRight / sonarLeft ;
+				}
 			}
 			else // see only left only. Turn left
 			{

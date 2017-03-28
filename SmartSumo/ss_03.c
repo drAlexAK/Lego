@@ -9,8 +9,8 @@
 
 #include "mindsensors-lineleader.h"
 
-#define RELEASE
-//#define DEBUG
+//#define RELEASE//
+#define DEBUG//
 
 bool IsHereWhite();
 
@@ -47,7 +47,7 @@ task main()
 	//-----------------------------------------------------
 
 	//-----------------------------------------------------
-	const float sonarDistance  = 60;
+	const float sonarDistance  = 59;
 	float sonarLeft 					 = 0;				// current left sonar sensor
 	float sonarRight 					 = 0;				// current left sonar sensor
 	float sonarLeftOld 					 = 0;				// previous left sonar sensor
@@ -83,11 +83,7 @@ task main()
 			sleep(350);
 			motor[mLeft]   = -50;		  // turn
 			motor[mRight]  =  50;		  // turn
-			for ( int i = 1 ; i <= 7 ; i = i + 1)
-			{
-				sleep(50);
-				if (( SensorValue(sSonarLeft) < sonarDistance ) || ( SensorValue(sSonarRight) < sonarDistance )) break;
-			}
+			sleep(350);
 		}
 #endif
 		//-----------------------------------------------------
@@ -168,7 +164,7 @@ bool IsHereWhite()
 
 	for (int i = 0 ; i < 8; i++)
 	{
-		if ( signalstr[i] > 30 ) return true;
+		if ( signalstr[i] > 25 ) return true;
 	}
 	return false;
 }

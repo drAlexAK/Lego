@@ -10,33 +10,44 @@ float GetLightError();
 task main()
 {
 
+	LLinit(sLight); 	// Set up Line Leader sensor type
+
 	while (SensorValue(sTouch)== 0)
 	{
 		sleep (10);
 	}
+
+	LLwakeUp(sLight); 	// Wake sensor from sleep mode
+	LLcalWhite(sLight); 	// Set white threshold for light area
+
 	while (SensorValue(sTouch)== 1)
 	{
 		sleep (10);
 	}
 
-	int const vMax = 100;
+	int const vMax = 20;
 	float es = GetLightError() ;
 	float  e = 0;
 	float eOld = e;
 
 	while(true)
 	{
-		e = GetLightError() - es;
+		e = GetLightError()- es;
 
-		float	u = e *3 - (e - eOld) * 10;
+		int	u = e  + (e - eOld) *2 ;
 
 		eOld = e ;
 
 		motor[mLeft] = vMax - u;
 		motor[mRight] = vMax + u;
 
+	//	if (mLeft < 0) mLeft = 0.0;
+		//if (mLeft < 0) mLeft = 0.0;
+
 		sleep (1);
+		if (SensorValue(sTouch)== 1) break;
 	}
+	LLsleep(sLight); // Sleep to conserve power when not in use 
 
 }
 
@@ -45,6 +56,6 @@ float GetLightError()
 	tByteArray light;
 	LLreadSensorRaw(sLight, light); // read the raw sensor data (8 bit data)
 
-	float e = ( light[0] - light[7] ) + ( light[1] - light[6] ) * 2 + ( light[2] - light[5] ) * 3 + ( light[3] - light[4] ) * 4;
-	return e;
+	float es = ( light[0] - light[7] ) + ( light[1] - light[6] ) * 2 + ( light[2] - light[5] ) * 4  + ( light[3] - light[4] ) * 8 ;
+	return es / 50 ;
 }

@@ -40,22 +40,22 @@ task main()
 	tByteArray rawLight;
 
 	LLreadSensorRaw(sLightLeft, rawLight); // read the raw sensor data (8 bit data)
-	float	rwLeft = (rawLight[0] * 1.14 + rawLight[1] * 1.12 + rawLight[2] * 1.1 + rawLight[3] * 1.08 + rawLight[4] * 1.06 + rawLight[5] * 1.04 + rawLight[6]  * 1.02 + rawLight[7]) / 8;
+	float	rwLeft = (rawLight[0] * 1.35 + rawLight[1] * 1.30 + rawLight[2] * 1.25 + rawLight[3] * 1.20 + rawLight[4] * 1.15 + rawLight[5] * 1.1 + rawLight[6]  * 1.05 + rawLight[7]) / 8;
 	LLreadSensorRaw(sLightRight, rawLight); // read the raw sensor data (8 bit data)
-	float	rwRight = (rawLight[0] + rawLight[1] * 1.02 + rawLight[2] * 1.04 + rawLight[3] * 1.06  + rawLight[4] * 1.08 + rawLight[5] * 1.1  + rawLight[6] * 1.12 + rawLight[7] * 1.14) / 8;
+	float	rwRight = (rawLight[0] + rawLight[1] * 1.05 + rawLight[2] * 1.1 + rawLight[3] * 1.15  + rawLight[4] * 1.20 + rawLight[5] * 1.25  + rawLight[6] * 1.30 + rawLight[7] * 1.35) / 8;
 	es = rwLeft - rwRight;
 
 	while(true)
 	{
 
 		LLreadSensorRaw(sLightLeft, rawLight); // read the raw sensor data (8 bit data)
-		rwLeft = rwLeft = (rawLight[0] * 1.14 + rawLight[1] * 1.12 + rawLight[2] * 1.1 + rawLight[3] * 1.08 + rawLight[4] * 1.06 + rawLight[5] * 1.04 + rawLight[6] * 1.02 + rawLight[7]) / 8;
+		rwLeft = rwLeft = (rawLight[0] * 1.35 + rawLight[1] * 1.30 + rawLight[2] * 1.25 + rawLight[3] * 1.20 + rawLight[4] * 1.15 + rawLight[5] * 1.1 + rawLight[6] * 1.05 + rawLight[7]) / 8;
 		LLreadSensorRaw(sLightRight, rawLight); // read the raw sensor data (8 bit data)
-		rwRight = (rawLight[0] + rawLight[1] * 1.1 + rawLight[2] * 1.2 + rawLight[3] * 1.3  + rawLight[4] * 1.4 + rawLight[5] * 1.5  + rawLight[6] * 1.6 + rawLight[7] * 1.7) / 8;
+		rwRight = (rawLight[0] + rawLight[1] * 1.05 + rawLight[2] * 1.1 + rawLight[3] * 1.15  + rawLight[4] * 1.20 + rawLight[5] * 1.25  + rawLight[6] * 1.30 + rawLight[7] * 1.35) / 8;
 
 		e = rwLeft - rwRight - es;
 
-		int	u = e  + (e - eOld) * 0.1 ;
+		int	u = e  + (e - eOld) ;
 
 		eOld = e ;
 

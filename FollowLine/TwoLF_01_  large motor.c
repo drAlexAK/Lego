@@ -7,11 +7,15 @@
 
 #include "mindsensors-lineleader.h"
 
-#define RELEASE
+#define RELEASE//
 //#define DEBUG//
 
 task main()
 {
+
+
+//float batteryLife = getBatteryVoltage();
+
 
 	LLinit(sLightLeft); 	// Set up Line Leader sensor type
 	LLinit(sLightRight); 	// Set up Line Leader sensor type
@@ -40,28 +44,30 @@ task main()
 	tByteArray rawLight;
 
 	LLreadSensorRaw(sLightLeft, rawLight); // read the raw sensor data (8 bit data)
-	float	rwLeft = (rawLight[0] * 1.14 + rawLight[1] * 1.12 + rawLight[2] * 1.1 + rawLight[3] * 1.08 + rawLight[4] * 1.06 + rawLight[5] * 1.04 + rawLight[6]  * 1.02 + rawLight[7]) / 8;
+	float	rwLeft = (rawLight[0] * 1.7 + rawLight[1] * 1.6 + rawLight[2] * 1.5 + rawLight[3] * 1.4 + rawLight[4] * 1.3 + rawLight[5] * 1.2 + rawLight[6]  * 1.1 + rawLight[7]) / 30;
 	LLreadSensorRaw(sLightRight, rawLight); // read the raw sensor data (8 bit data)
-	float	rwRight = (rawLight[0] + rawLight[1] * 1.02 + rawLight[2] * 1.04 + rawLight[3] * 1.06  + rawLight[4] * 1.08 + rawLight[5] * 1.1  + rawLight[6] * 1.12 + rawLight[7] * 1.14) / 8;
+	float	rwRight = (rawLight[0] + rawLight[1] * 1.1 + rawLight[2] * 1.2 + rawLight[3] * 1.3  + rawLight[4] * 1.4 + rawLight[5] * 1.5  + rawLight[6] * 1.6 + rawLight[7] * 1.7) / 30;
 	es = rwLeft - rwRight;
-
+ int v = 0 ;
 	while(true)
 	{
 
 		LLreadSensorRaw(sLightLeft, rawLight); // read the raw sensor data (8 bit data)
-		rwLeft = rwLeft = (rawLight[0] * 1.14 + rawLight[1] * 1.12 + rawLight[2] * 1.1 + rawLight[3] * 1.08 + rawLight[4] * 1.06 + rawLight[5] * 1.04 + rawLight[6] * 1.02 + rawLight[7]) / 8;
+		rwLeft = rwLeft = (rawLight[0] * 1.7 + rawLight[1] * 1.6 + rawLight[2] * 1.5 + rawLight[3] * 1.4 + rawLight[4] * 1.3 + rawLight[5] * 1.2 + rawLight[6] * 1.1 + rawLight[7]) /30;
 		LLreadSensorRaw(sLightRight, rawLight); // read the raw sensor data (8 bit data)
-		rwRight = (rawLight[0] + rawLight[1] * 1.1 + rawLight[2] * 1.2 + rawLight[3] * 1.3  + rawLight[4] * 1.4 + rawLight[5] * 1.5  + rawLight[6] * 1.6 + rawLight[7] * 1.7) / 8;
+		rwRight = (rawLight[0] + rawLight[1] * 1.1 + rawLight[2] * 1.2 + rawLight[3] * 1.3  + rawLight[4] * 1.4 + rawLight[5] * 1.5  + rawLight[6] * 1.6 + rawLight[7] * 1.7) /30;
 
 		e = rwLeft - rwRight - es;
 
-		int	u = e  + (e - eOld) * 0.1 ;
+		int	u = e  + (e - eOld) * 5 ;
 
 		eOld = e ;
 
+    v = vMax - abs (u) ;
+
 #ifdef RELEASE
-		motor[mLeft] = vMax + u;
-		motor[mRight] = vMax - u;
+		motor[mLeft] = v + u;
+		motor[mRight] = v - u;
 #endif
 #ifdef DEBUG
 		displayVariableValues(0,rwLeft);

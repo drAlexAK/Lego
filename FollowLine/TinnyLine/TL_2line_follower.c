@@ -11,8 +11,8 @@
 float GetLFLeft();
 float GetLFRight();
 
-#define RELEASE//
-//#define DEBUG//
+#define RELEASE
+#define DEBUG
 
 task main()
 {

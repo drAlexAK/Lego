@@ -12,7 +12,7 @@ float GetLFLeft();
 float GetLFRight();
 
 #define RELEASE
-#define DEBUG
+//#define DEBUG
 
 task main()
 {

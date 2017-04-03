@@ -96,13 +96,13 @@ float GetLFLeft()
 	return
 	(
 	rawLight[0] +
-	rawLight[1] * 1.1 +
-	rawLight[2] * 1.2 +
-	rawLight[3] * 1.3 +
-	rawLight[4] * 1.4 +
-	rawLight[5] * 1.5 +
-	rawLight[6] * 1.6 +
-	rawLight[7] * 1.7
+	rawLight[1] * 1.2 +
+	rawLight[2] * 1.4 +
+	rawLight[3] * 1.6 +
+	rawLight[4] * 1.8 +
+	rawLight[5] * 2.0 +
+	rawLight[6] * 2.2 +
+	rawLight[7] * 2.4
 	);
 }
 float GetLFRight()
@@ -111,13 +111,13 @@ float GetLFRight()
 	LLreadSensorRaw(sLightRight, rawLight); // read the raw sensor data (8 bit data)
 	return
 	(
-	rawLight[0] * 1.7 +
-	rawLight[1] * 1.6 +
-	rawLight[2] * 1.5 +
-	rawLight[3] * 1.4 +
-	rawLight[4] * 1.3 +
-	rawLight[5] * 1.2 +
-	rawLight[6] * 1.1 +
+	rawLight[0] * 2.4 +
+	rawLight[1] * 2.2 +
+	rawLight[2] * 2.0 +
+	rawLight[3] * 1.8 +
+	rawLight[4] * 1.6 +
+	rawLight[5] * 1.4 +
+	rawLight[6] * 1.2+
 	rawLight[7]
 	);
 

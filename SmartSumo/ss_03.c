@@ -174,7 +174,7 @@ bool IsHereWhite()
 
 	for (int i = 0 ; i < 8; i++)
 	{
-		if ( signalstr[i] > 10 ) return true;
+		if ( signalstr[i] > 35 ) return true;
 	}
 	return false;
 }

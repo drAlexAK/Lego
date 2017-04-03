@@ -84,7 +84,7 @@ float GetLFLeft()
 	rawLight[3] * 1.4 +
 	rawLight[4] * 1.3 +
 	rawLight[5] * 1.2 +
-	rawLight[6]  * 1.1 +
+	rawLight[6] * 1.1 +
 	rawLight[7]);
 }
 float GetLFRight()

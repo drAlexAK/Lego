@@ -1,5 +1,6 @@
 #pragma config(Sensor, S1,     sLightLeft,     sensorI2CCustom9V)
 #pragma config(Sensor, S2,     sTouch,         sensorTouch)
+#pragma config(Sensor, S3,     sCenter,        sensorLightActive)
 #pragma config(Sensor, S4,     sLightRight,    sensorI2CCustom9V)
 #pragma config(Motor,  motorA,          mLeft,         tmotorNXT, openLoop, encoder)
 #pragma config(Motor,  motorB,          mCenter,       tmotorNXT, openLoop, reversed)
@@ -11,22 +12,9 @@
 float GetLFLeft();
 float GetLFRight();
 
- int vMax = 0 ;
-
 #define RELEASE
-//#define DEBUG
-/*task speed()
-{
-vMax = 70;
-playSound(soundBeepBeep);
-sleep(7000);
-vMax = 100;
-playSound(soundBeepBeep);
-sleep(5000);
-vMax = 90;
-playSound(soundBeepBeep);
-playSound(soundBeepBeep);
-}*/
+#define DEBUG
+
 task main()
 {
 
@@ -54,16 +42,19 @@ task main()
 	float es 			 = 0 ;
 	float e 			 = 0;
 	float eOld 		 = e;
+	float esCenter = 0;
 	float rwLeft 	 = 0;
 	float rwRight  = 0;
 	int vLeft      = 0;
 	int vRight     = 0;
 	int vCenter    = 0;
 	int v          = 0;
-	float k			   = 16;
+	float k			   = 8;
 
 	es = GetLFLeft() / k - GetLFRight() / k;
-//	startTask (speed);
+	esCenter = SensorValue(sCenter);
+	if (esCenter == 0) esCenter = 1;
+
 	while(true)
 	{
 
@@ -72,28 +63,29 @@ task main()
 
 		e = rwLeft - rwRight - es;
 
-		float	u = (e * 2 + (e - eOld ) * 10 ) * 0.7 ;
+		float	u = (e * 1 + (e - eOld ) * 2 ) * 1 ;
 
 		eOld = e ;
 
-		v = vMax - abs (u) ;
-
-		vLeft   = v - u * 0.7;
-		vRight  = v + u * 0.7;
+		//v = vMax - abs (u) ;
+		v = vMax * ( esCenter / SensorValue(sCenter) ) - abs (u) / 2;
+		vLeft   = v - u ;
+		vRight  = v + u ;
 		vCenter = u   ;
 
 #ifdef RELEASE
 		motor[mLeft]   = vLeft;
 		motor[mRight]  = vRight;
-		motor[mCenter] = vCenter;
+		//motor[mCenter] = vCenter;
 #endif
 #ifdef DEBUG
 		displayVariableValues(0,rwLeft);
 		displayVariableValues(1,rwRight);
 		displayVariableValues(2,u);
-		displayVariableValues(3,vLeft);
-		displayVariableValues(4,vRight);
-		displayVariableValues(5,vCenter);
+		displayVariableValues(3,v);
+		displayVariableValues(4,vLeft);
+		displayVariableValues(5,vRight);
+		displayVariableValues(6,vCenter);
 #endif
 		if (SensorValue(sTouch)== 1) break;
 		sleep (1);
@@ -109,14 +101,14 @@ float GetLFLeft()
 	LLreadSensorRaw(sLightLeft, rawLight); // read the raw sensor data (8 bit data)
 	return
 	(
-	rawLight[0] * 0.6 +
-	rawLight[1] * 0.8 +
-	rawLight[2] * 1.2 +
-	rawLight[3] * 1.3 +
-	rawLight[4] * 1.4 +
-	rawLight[5] * 1.7 +
-	rawLight[6] * 1.8 +
-	rawLight[7] * 1.9
+	rawLight[0] * 1.00 +
+	rawLight[1] * 1.10 +
+	rawLight[2] * 1.25 +
+	rawLight[3] * 1.45 +
+	rawLight[4] * 1.70 +
+	rawLight[5] * 2.00 +
+	rawLight[6] * 2.35 +
+	rawLight[7] * 2.75
 	);
 }
 float GetLFRight()
@@ -125,13 +117,13 @@ float GetLFRight()
 	LLreadSensorRaw(sLightRight, rawLight); // read the raw sensor data (8 bit data)
 	return
 	(
-	rawLight[0] * 1.9 +
-	rawLight[1] * 1.8 +
-	rawLight[2] * 1.7 +
-	rawLight[3] * 1.4 +
-	rawLight[4] * 1.3 +
-	rawLight[5] * 1.2 +
-	rawLight[6] * 0.8 +
-	rawLight[7] * 0.6
+	rawLight[0] * 2.75 +
+	rawLight[1] * 2.35 +
+	rawLight[2] * 2.00 +
+	rawLight[3] * 1.70 +
+	rawLight[4] * 1.45 +
+	rawLight[5] * 1.25 +
+	rawLight[6] * 1.10 +
+	rawLight[7] * 1.00
 	);
 }

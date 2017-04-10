@@ -31,7 +31,7 @@ task main()
 
 
 
-	float vMax     = 100;
+	float vMax     = 95;
 	float es 			 = 0 ;
 	float e 			 = 0;
 	float eOld 		 = e;

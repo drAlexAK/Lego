@@ -7,7 +7,7 @@
 
 #include "mindsensors-lineleader.h"
 
-// time: 	11:10 (>30 round stable)
+// time: 	09:98 one way, 10:23 another way (stable)
 // motors: 	2
 // ger: 	1:1.67
 
@@ -28,10 +28,10 @@ float const KL5 = 1.00;
 float const KL6 = 1.00;
 float const KL7 = 1.00;
 //--------------------
-int vBase 			= 95;
-int const vMin	= 15;
-int const maxI	= 5;
-float const k 	= 34;
+int vBase 			= 85;
+int const vMin	= 10;
+int const maxI	= 10;
+float const k 	= 33;
 int iAlert			= 0;
 bool leftAlert  = false;
 bool rightAlert = false;
@@ -40,7 +40,7 @@ task speedUp()
 {
 	int vFinish        = vBase;
 	int const vStart   = 30;
-	int const tSpeedUp = 350;
+	int const tSpeedUp = 500;
 	int tSleep = tSpeedUp / ( vFinish - vStart );
 
 	for ( int i = vStart ; i <= vFinish ; i++ )
@@ -74,18 +74,80 @@ task main()
 
 	leftAlert  			= false;
 	rightAlert 			= false;
+	tByteArray rawLightLeft;
+	tByteArray rawLightRight;
 
 	while(true)
 	{
-		rwLeft  = getRWLeft();
-		rwRight = getRWRight();
+		//------------
+		LLreadSensorRaw(sLightLeft, rawLightLeft);
 
+		rwLeft=
+		(
+		rawLightLeft[0] * KL0 +
+		rawLightLeft[1] * KL1 +
+		rawLightLeft[2] * KL2 +
+		rawLightLeft[3] * KL3 +
+		rawLightLeft[4] * KL4 +
+		rawLightLeft[5] * KL5 +
+		rawLightLeft[6] * KL6 +
+		rawLightLeft[7] * KL7
+		);
+		if ((rawLightLeft[7] < 10) && (rawLightLeft[0] > 10)) rwLeft = rwLeft * -1;
+		//-----------------
+		LLreadSensorRaw(sLightRight, rawLightRight);
+
+		rwRight =
+		(
+		rawLightRight[0] * KL7 +
+		rawLightRight[1] * KL6 +
+		rawLightRight[2] * KL5 +
+		rawLightRight[3] * KL4 +
+		rawLightRight[4] * KL3 +
+		rawLightRight[5] * KL2 +
+		rawLightRight[6] * KL1 +
+		rawLightRight[7] * KL0
+		);
+		if ((rawLightRight[0] < 10) && (rawLightRight[7] > 10)) rwRight = rwRight  * -1;
+		//-------------
+		if ((rightAlert == false) && (rawLightLeft[7] < 20) && ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40))) leftAlert = true;
+		if (leftAlert && (iAlert > 0)) leftAlert = ((rawLightLeft[4] > 20) &&
+			(rawLightLeft[3] > 20) &&
+			(rawLightLeft[2] > 20) &&
+			(rawLightLeft[1] > 20) &&
+			(rawLightLeft[0] > 20) &&
+			(rawLightRight[0] > 20) &&
+			(rawLightRight[1] > 20) &&
+			(rawLightRight[2] > 20) &&
+			(rawLightRight[3] > 20) &&
+			(rawLightRight[4] > 20) &&
+			(rawLightRight[5] > 20) &&
+			(rawLightRight[6] > 20) &&
+			(rawLightRight[7] > 20));
+		if (leftAlert) rightAlert = false;
+
+		if ((leftAlert == false) && (rawLightRight[0] < 20) && ((rawLightRight[6] > 40) || (rawLightRight[7] > 40))) rightAlert = true;
+		if (rightAlert && (iAlert > 0)) rightAlert = ((rawLightRight[3] > 20) &&
+			(rawLightRight[4] > 20) &&
+			(rawLightRight[5] > 20) &&
+			(rawLightRight[6] > 20) &&
+			(rawLightRight[7] > 20) &&
+			(rawLightLeft[0] > 20) &&
+			(rawLightLeft[1] > 20) &&
+			(rawLightLeft[2] > 20) &&
+			(rawLightLeft[3] > 20) &&
+			(rawLightLeft[4] > 20) &&
+			(rawLightLeft[5] > 20) &&
+			(rawLightLeft[6] > 20) &&
+			(rawLightLeft[7] > 20));
+		if (rightAlert) leftAlert = false;
+		//--------------
 		e = rwLeft - rwRight - es;
 
 		if (leftAlert)
 		{
 			if ( iAlert == 0 ) playSound(soundBlip);
-			vLeft  = 20;
+			vLeft  = 10;
 			vRight = 90 ;
 			iAlert ++;
 		}
@@ -93,7 +155,7 @@ task main()
 		{
 			if ( iAlert == 0 ) playSound(soundBlip);
 			vLeft  = 90;
-			vRight = 20;
+			vRight = 10;
 			iAlert ++;
 		}
 		else
@@ -103,11 +165,11 @@ task main()
 				playSound(soundBlip);
 				i=0;
 			}
-			i = i + e / 5000;
+			i = i + e / 2500;
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;
-			u = (e * 1  + (e - eOld ) * 6) / k + i ;
-			v = (vBase - abs (u) * 1) ;
-			vLeft  = v + u  ;
+			u = (e * 1  + (e - eOld ) * 7) / k + i ;
+			v = (vBase - abs (u) * 0.65) ;
+			vLeft  = v + u ;
 			vRight = v - u ;
 			iAlert = 0;
 		}
@@ -133,7 +195,7 @@ task main()
 		displayVariableValues(6,vLeft);
 		displayVariableValues(7, vRight);
 #endif
-		sleep (10);
+		sleep (1);
 		if (SensorValue(sTouch) == 1) break;
 	}
 	LLsleep(sLightLeft);  // Sleep to conserve power when not in use
@@ -144,7 +206,7 @@ task main()
 
 void calibrate ()
 {
-	displayBigTextLine(4, "    WHITE");
+	displayBigTextLine(4, "  WHITE");
 
 	while (SensorValue(sTouch) == 0)
 	{
@@ -160,11 +222,11 @@ void calibrate ()
 
 	playSound(soundBlip);
 
-	displayBigTextLine(4, "     Done");
+	displayBigTextLine(4, "   Done");
 
 	sleep(1000);
 
-	displayBigTextLine(4, "    BLACK");
+	displayBigTextLine(4, "  BLACK");
 
 	while (SensorValue(sTouch)== 0)
 	{
@@ -179,7 +241,7 @@ void calibrate ()
 
 	playSound(soundBlip);
 
- displayBigTextLine(4, "     Done");
+	displayBigTextLine(4, "  Done");
 
 	sleep(1000);
 }
@@ -188,7 +250,7 @@ void calibrate ()
 
 void waitTouchRelease()
 {
-	displayBigTextLine(4, "     START");
+	displayBigTextLine(4, " START");
 
 	while (SensorValue(sTouch)== 0)
 	{
@@ -206,11 +268,6 @@ int getRWLeft()
 {
 	tByteArray rawLight;
 	LLreadSensorRaw(sLightLeft, rawLight);
-
-	if ((rightAlert == false) && ( rawLight[7] < 20 ) && (( rawLight[4] > 40) || ( rawLight[3] > 40) || ( rawLight[2] > 40) || ( rawLight[1] > 40) || ( rawLight[0] > 40))) leftAlert = true ;
-	if ( leftAlert && ( iAlert > 0 )) leftAlert = (( rawLight[4] > 20 ) && ( rawLight[3] > 20 ) && ( rawLight[2] > 20 ) && ( rawLight[1] > 20 ) && ( rawLight[0] > 20 )) ;
-	if ( leftAlert ) rightAlert = false;
-
 	int r =
 	(
 	rawLight[0]  * KL0 +
@@ -230,11 +287,6 @@ int getRWRight()
 {
 	tByteArray rawLight;
 	LLreadSensorRaw(sLightRight, rawLight);
-
-	if ((leftAlert == false) && ( rawLight[0] < 20 ) && (( rawLight[5] > 40 ) || ( rawLight[4] > 40 ) || ( rawLight[5] > 40 ) || ( rawLight[6] > 40 ) || ( rawLight[7] > 40 ))) rightAlert = true;
-	if ( rightAlert && ( iAlert > 0 )) rightAlert =	((rawLight[3] > 20 ) && (rawLight[4] > 20 ) && (rawLight[5] > 20 ) && ( rawLight[6] > 20 ) && ( rawLight[7] > 20 ));
-	if ( rightAlert ) leftAlert = false;
-
 	int r =
 	(
 	rawLight[0] * KL7 +

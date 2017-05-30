@@ -77,9 +77,9 @@ void saveResult()
 
 void showResult()
 {
-	displayBigTextLine(3,  "   %2.2f", (float)r1);
-	displayBigTextLine(5,  "   %2.2f", (float)r2);
-	displayBigTextLine(7,  "   %2.2f", (float)r3);
-	displayBigTextLine(9,  "   %2.2f", (float)r4);
-	displayBigTextLine(11, "   %2.2f", (float)r5);
+	displayBigTextLine(3,  "   %2.3f", (float)r1);
+	displayBigTextLine(5,  "   %2.3f", (float)r2);
+	displayBigTextLine(7,  "   %2.3f", (float)r3);
+	displayBigTextLine(9,  "   %2.3f", (float)r4);
+	displayBigTextLine(11, "   %2.3f", (float)r5);
 }

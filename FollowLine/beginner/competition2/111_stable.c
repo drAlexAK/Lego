@@ -1,4 +1,4 @@
-
+#pragma config(Sensor, S1,     sCenter,        sensorLightActive)
 #pragma config(Sensor, S2,     sLightRight,    sensorI2CCustom9V)
 #pragma config(Sensor, S3,     sTouch,         sensorTouch)
 #pragma config(Sensor, S4,     sLightLeft,     sensorI2CCustom9V)
@@ -32,6 +32,7 @@ int iAlert			= 0;
 bool leftAlert  = false;
 bool rightAlert = false;
 //--------------------
+#ifdef SPEEDUP
 task speedUp()
 {
 	clearTimer(timer1);
@@ -71,8 +72,8 @@ task speedUp()
 		}
 		sleep(10);
 	}
-
 }
+#endif
 //--------------------
 task startUp()
 {
@@ -187,6 +188,11 @@ task main()
 		}
 		else
 		{
+
+			if(SensorValue(sCenter) < 25)
+				vBase = 100;
+			else
+				vBase = vCommon;
 
 			i = i + e / 2500;
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;

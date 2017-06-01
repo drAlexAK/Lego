@@ -10,7 +10,7 @@
 
 task main()
 {
-	sleep(3000);
+	sleep(2500);
 	//	SensorType[sColor] = sensorEV3_Color;
 	//SensorMode[sColor] = modeEV3Color_Color;
 	//wait1Msec(2000);

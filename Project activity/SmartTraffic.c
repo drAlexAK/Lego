@@ -1,7 +1,7 @@
 #pragma config(Sensor, S1,     sLightLeft,     sensorLightActive)
 #pragma config(Sensor, S2,     Sonar,          sensorEV3_IRSensor)
 #pragma config(Sensor, S3,     sLightRight,    sensorLightActive)
-#pragma config(Sensor, S4,     sColor,         sensorEV3_Color, modeEV3Color_Ambient)
+#pragma config(Sensor, S4,     sColor,         sensorEV3_Color, modeEV3Color_Color)
 #pragma config(Motor,  motorA,           ,             tmotorEV3_Large, openLoop)
 #pragma config(Motor,  motorB,          motorLeft,     tmotorEV3_Large, PIDControl, encoder)
 #pragma config(Motor,  motorC,          motorRight,    tmotorEV3_Large, PIDControl, encoder)
@@ -14,7 +14,7 @@ task main()
 	//	SensorType[sColor] = sensorEV3_Color;
 	//SensorMode[sColor] = modeEV3Color_Color;
 	//wait1Msec(2000);
-	SensorType[sColor] = sensorNone ;
+	//SensorType[sColor] = sensorNone ;
 	//sleep(2000);
 	//SensorType[sColor] = sensorEV3_Color;
 	//SensorMode[sColor] = modeEV3Color_Color;
@@ -43,8 +43,10 @@ task main()
 			i++ ;
 			if( i % 2 != 0)
 			{
-				motor[motorLeft]  = motor[motorLeft] / 2 ;
-				motor[motorRight] = motor[motorRight] / 2;
+				motor[motorLeft]  = v / 2 ;
+				motor[motorRight] = v / 2;
+				//SensorType[sColor] = sensorEV3_Color;
+				//SensorMode[sColor] = modeEV3Color_Color;
 			}
 			while((SensorValue(sLightLeft) < 30) && (SensorValue(sLightRight) < 30))
 			{
@@ -53,24 +55,20 @@ task main()
 
 			if( i % 2 != 0)
 			{
-				SensorType[sColor] = sensorEV3_Color;
-				SensorMode[sColor] = modeEV3Color_Color;
-				SensorType[sLightLeft] = sensorLightInactive;
-				SensorType[sLightRight] = sensorLightInactive;
 				sleep(100);
-				motor[motorLeft]  = motor[motorLeft] / 2;
-				motor[motorRight] = motor[motorRight] / 2;
-
-
+				//motor[motorLeft]  = motor[motorLeft] / 2;
+				//motor[motorRight] = motor[motorRight] / 2;
 				while(true)
 				{
 					if(getColorName(sColor) == colorGreen) break;
 					motor[motorLeft]  = 0;
 					motor[motorRight] = 0;
+					//SensorType[sLightLeft] = sensorLightInactive;
+					//SensorType[sLightRight] = sensorLightInactive;
 				}
-				SensorType[sColor] = sensorNone;
-				SensorType[sLightLeft] = sensorLightActive;
-				SensorType[sLightRight] = sensorLightActive;
+				//SensorType[sColor] = sensorNone;
+				//SensorType[sLightLeft] = sensorLightActive;
+				//SensorType[sLightRight] = sensorLightActive;
 			}
 		}
 		else
@@ -80,8 +78,8 @@ task main()
 			u = e * 1.5 + (e - eOld) * 5;
 			eOld = e;
 			//-------------------------
-			//motor[motorLeft] = v - u;
-			//motor[motorRight] = v + u;
+			motor[motorLeft] = v - u;
+			motor[motorRight] = v + u;
 		}
 		sleep(10);
 	}

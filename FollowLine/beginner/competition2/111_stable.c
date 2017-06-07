@@ -8,7 +8,7 @@
 
 #include "mindsensors-lineleader.h"
 
-// time: 	09:50 (stable) with accumulator
+// time: 	09:xx (stable) with accumulator
 // motors: 	2
 // ger: 	1:1.67
 

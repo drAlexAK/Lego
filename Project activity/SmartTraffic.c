@@ -82,7 +82,7 @@ task main()
 			//-------------------------
 			v = getSpeedByDistance();
 			e = SensorValue(sLightLeft) - SensorValue(sLightRight) - es;
-			u = (e * 1.0 + (e - eOld) * 7) * 2;
+			u = (e * 1.0 + (e - eOld) * 8) * 2;
 			eOld = e;
 	//		v = v - abs(u) * 2;
 			vLeft = v - u;

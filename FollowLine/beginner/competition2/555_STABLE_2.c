@@ -7,11 +7,9 @@
 
 #include "mindsensors-lineleader.h"
 
-// time: 	    08:30 - 08:40 stable
-// direction: left
-// motors: 	  2
-// ger: 	    direct
-// tire:      \__/ #61481 + #56145c04
+// time: 	09:20 - 09:25 stable
+// motors: 	2
+// ger: 	direct
 
 #define RELEASE
 //#define DEBUG
@@ -30,11 +28,11 @@ float const KL5 = 1.00;
 float const KL6 = 1.00;
 float const KL7 = 1.00;
 //--------------------
-int vBase 			= 90;
+int vBase 			= 85;
 int const vMax  = 100;
-int const vMin	= 10;
+int const vMin	= 5;
 int const maxI	= 10;
-float const k 	= 37;
+float const k 	= 34;
 int iAlert			= 0;
 bool leftAlert  = false;
 bool rightAlert = false;
@@ -170,9 +168,13 @@ task main()
 			}
 
 			i = i + e / 2500;
+
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;
 			u = (e * 1  + (e - eOld ) * 7) / k  + i;
-			v = (vBase - abs (u) * 0.65 ) ;
+			float eee = fabs(e) / 600;
+			//u = u + eee * eee * eee;
+			v = (vBase - abs (((e - eOld ) * 7) / k) * 0.65 - (eee * eee * eee)) ;
+			//v = (vBase - abs ((e * 0  + (e - eOld ) * 7) / k ) * 0.8 ) ;
 
 			vLeft = v + u;
 			vRight = v - u;

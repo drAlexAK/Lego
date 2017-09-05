@@ -7,7 +7,7 @@
 
 #include "mindsensors-lineleader.h"
 
-// time: 	    08:30 - 08:40 stable
+// time: 	    08:30 - 08:50 fast/stable
 // direction: left
 // motors: 	  2
 // ger: 	    direct
@@ -30,11 +30,11 @@ float const KL5 = 1.00;
 float const KL6 = 1.00;
 float const KL7 = 1.00;
 //--------------------
-int vBase 			= 90;
+int vBase 			= 100;
 int const vMax  = 100;
 int const vMin	= 10;
 int const maxI	= 10;
-float const k 	= 37;
+float const k 	= 36;
 int iAlert			= 0;
 bool leftAlert  = false;
 bool rightAlert = false;
@@ -43,7 +43,7 @@ task speedUp()
 {
 	int vFinish        = vBase;
 	int const vStart   = 30;
-	int const tSpeedUp = 500;
+	int const tSpeedUp = 600;
 	int tSleep = tSpeedUp / ( vFinish - vStart );
 
 	for ( int i = vStart ; i <= vFinish ; i++ )
@@ -76,7 +76,7 @@ task main()
 	int   u					= 0 ;
 	int vLeft 			= 0;
 	int vRight 			= 0;
-	long iSpeed      = 0;
+	long iSpeed     = 0;
 	leftAlert  			= false;
 	rightAlert 			= false;
 	tByteArray rawLightLeft;

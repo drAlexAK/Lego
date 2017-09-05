@@ -7,11 +7,10 @@
 
 #include "mindsensors-lineleader.h"
 
-// time: 	    08:30 - 08:40 stable
-// direction: left
-// motors: 	  2
-// ger: 	    direct
-// tire:      \__/ #61481 + #56145c04
+// time: 	  08:40 - 08:50 stable
+// motors: 	2
+// ger: 	  direct
+// wheels:  stock (standart) |___|
 
 #define RELEASE
 //#define DEBUG
@@ -34,7 +33,7 @@ int vBase 			= 90;
 int const vMax  = 100;
 int const vMin	= 10;
 int const maxI	= 10;
-float const k 	= 37;
+float const k 	= 36;
 int iAlert			= 0;
 bool leftAlert  = false;
 bool rightAlert = false;
@@ -76,7 +75,7 @@ task main()
 	int   u					= 0 ;
 	int vLeft 			= 0;
 	int vRight 			= 0;
-	long iSpeed      = 0;
+	long iSpeed     = 0;
 	leftAlert  			= false;
 	rightAlert 			= false;
 	tByteArray rawLightLeft;
@@ -169,10 +168,20 @@ task main()
 				iSpeed = 0;
 			}
 
+			/*	if ((iSpeed <=100) && (fabs(e) < 800))
+			iSpeed = iSpeed + 1;
+			else
+			{
+			//if (iSpeed!=0) playSound(soundBeepBeep);
+			iSpeed=0;
+			}
+			if (iSpeed >=100) playSound(soundBeepBeep);
+			*/
 			i = i + e / 2500;
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;
-			u = (e * 1  + (e - eOld ) * 7) / k  + i;
-			v = (vBase - abs (u) * 0.65 ) ;
+			u = (e * 1  + (e - eOld ) * 6) / k  + i;
+			//v = (vBase - abs (u) * 0.65 ) ;
+			v = (vBase - abs ((e * 0.25  + (e - eOld ) * 7) / k ) * 0.65 ) ;
 
 			vLeft = v + u;
 			vRight = v - u;

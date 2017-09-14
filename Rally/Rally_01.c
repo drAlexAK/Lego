@@ -14,16 +14,16 @@
 // defines
 //
 // distances
-#define DIST_MAX 						110
+#define DIST_MAX 						60
 #define DIST_MIN 						10
 // wheel
-#define WHEEL_DEGREE_MAX 	 	220
-#define WHEEL_ERROR_DEGREE_MIN_IGNORE 	20
+#define WHEEL_DEGREE_MAX 	 	140
+#define WHEEL_ERROR_DEGREE_MIN_IGNORE 	10
 #define WHEEL_SPEED_MAX 		100
-#define WHEEL_SPEED_MIN 		30
+#define WHEEL_SPEED_MIN 		60
 // speed
 #define SPEED_MAX 					100
-#define SPEED_MIN 					65
+#define SPEED_MIN 					70
 // debug info
 #define DEBUG_DIST
 //#define DEBUG_WHEEL
@@ -89,7 +89,7 @@ task speed()
 	while(true)
 	{
 		i++;
-		speed = SPEED_MAX - ((abs(eDist) * 100 / (DIST_MAX - DIST_MIN)) * SPEED_MAX / 200);
+		speed = SPEED_MAX - ((abs(eDist) * 100 / (DIST_MAX - DIST_MIN)) * SPEED_MAX / 150);
 		speed = normalyzeSpeed(speed);
 		motor[mFront] = speed;
 		motor[mRear]  = speed;
@@ -119,7 +119,7 @@ task wheel()
 	{
 
 		wheelDegreeRatio = ((eDist * 100 / (DIST_MAX - DIST_MIN)) * WHEEL_DEGREE_MAX) /100 ;
-		wheelDegree = wheelDegreeRatio * 1.2 + ( wheelDegreeRatio - wheelDegreeRatioOld) * 2;
+		wheelDegree = wheelDegreeRatio * 1.5; // + wheelDegreeRatio - wheelDegreeRatioOld) * 2;
 		wheelDegreeRatioOld = wheelDegreeRatio;
 		if ( abs(wheelDegree) >  WHEEL_DEGREE_MAX ) wheelDegree = sgn(wheelDegree) * WHEEL_DEGREE_MAX; // restrics WHEEL MAX DEGREE
 
@@ -179,7 +179,7 @@ task dist()
 		dLeft 			= normalyzeDist(dLeft);
 		dRight 			= normalyzeDist(dRight);
 
-		eDist = ((dLeft * 2 + dLeftFront) - (dRight * 2 + dRightFront)) / 3;
+		eDist = ((dLeft  + dLeftFront) - (dRight  + dRightFront)) / 2  ;
 		eDistFront = dLeftFront - dRightFront;
 		eDistSide  = dLeft - dRight;
 

@@ -28,11 +28,7 @@ task counterA1();
 task counterA2();
 task counterB1();
 task counterB2();
-/*
-task counterB1();
-task counterB2();
-task counterB3();
-*/
+
 #ifdef DEBUG
 task displayInfo();
 #endif
@@ -188,10 +184,10 @@ task displayInfo()
 {
 	while(true)
 	{
-		displayTextLine(0,"A %d     ",qA);
-		displayTextLine(1,"stopA %d",stopLineA);
-		displayTextLine(2,"B1 %d     ",qB);
-		displayTextLine(3,"stopB %d",stopLineB);
+		displayTextLine(0,"A %d        ",qA);
+		displayTextLine(1,"stopA %d   ",stopLineA);
+		displayTextLine(2,"B1 %d        ",qB);
+		displayTextLine(3,"stopB %d   ",stopLineB);
 		sleep(100);
 	}
 }

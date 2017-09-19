@@ -84,11 +84,11 @@ task main()
 task speed()
 {
 	int speed = 0;
-	int i = 0;
+	//int i = 0;
 
 	while(true)
 	{
-		i++;
+		//i++;
 		speed = SPEED_MAX - ((abs(eDist) * 100 / (DIST_MAX - DIST_MIN)) * SPEED_MAX / 150);
 		speed = normalyzeSpeed(speed);
 		motor[mFront] = speed;
@@ -211,9 +211,11 @@ int normalyzeDist(int d)
 //
 int normalyzeWheelSpeed(int v)
 {
-	if (abs(v) < WHEEL_SPEED_MIN) return sgn(v) * WHEEL_SPEED_MIN; // restrics WHEEL MIN SPEED
-		if (abs(v) > WHEEL_SPEED_MAX) return sgn(v) * WHEEL_SPEED_MAX; // restrict WHEEL MAX SPEED
-		return v;
+	// restrics WHEEL MIN SPEED
+	if (abs(v) < WHEEL_SPEED_MIN) return sgn(v) * WHEEL_SPEED_MIN;
+	// restrict WHEEL MAX SPEED
+	if (abs(v) > WHEEL_SPEED_MAX) return sgn(v) * WHEEL_SPEED_MAX;
+	return v;
 }
 
 //
@@ -225,7 +227,9 @@ int normalyzeSpeed(int v)
 #ifdef STOP
 	return  0;
 #endif
-	if (v < SPEED_MIN) return SPEED_MIN; // restrics MIN SPEED
-		if (v > SPEED_MAX) return SPEED_MAX; // restrict MAX SPEED
-		return v;
+	// restrics MIN SPEED
+	if (v < SPEED_MIN) return SPEED_MIN;
+	// restrict MAX SPEED
+	if (v > SPEED_MAX) return SPEED_MAX;
+	return v;
 }

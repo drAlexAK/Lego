@@ -128,7 +128,9 @@ task wheel()
 	{
 
 		wheelDegreeRatio = ((eDist * 100 / (DIST_MAX - DIST_MIN)) * WHEEL_DEGREE_MAX) /100 ;
+		// front distance
 		kDistFront = (((FRONT_DIST_MAX - FRONT_DIST_MIN) * 100) / (distFront * 100)) * 1;
+
 		wheelDegree = wheelDegreeRatio * kDistFront  + (wheelDegreeRatio - wheelDegreeRatioOld) * 1;
 		wheelDegreeRatioOld = wheelDegreeRatio;
 		if ( abs(wheelDegree) >  WHEEL_DEGREE_MAX ) wheelDegree = sgn(wheelDegree) * WHEEL_DEGREE_MAX; // restrics WHEEL MAX DEGREE

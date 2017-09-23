@@ -1,7 +1,7 @@
 #pragma config(Sensor, S1,     sMUX,           sensorEV3_GenericI2C)
 #pragma config(Sensor, S2,     sSonarRight,    sensorSONAR)
 #pragma config(Sensor, S3,     sSonarLeft,     sensorSONAR)
-#pragma config(Sensor, S4,     sLight,         sensorLightActive)
+#pragma config(Sensor, S4,     sSonarFront,    sensorSONAR)
 #pragma config(Motor,  motorA,          mFront,        tmotorNXT, openLoop, reversed)
 #pragma config(Motor,  motorB,          mRear,         tmotorNXT, openLoop)
 #pragma config(Motor,  motorC,          mWheel,        tmotorNXT, PIDControl, reversed, encoder)
@@ -14,10 +14,10 @@
 // defines
 //
 // distances
-#define DIST_MAX 						60
+#define DIST_MAX 						90
 #define DIST_MIN 						10
 // wheel
-#define WHEEL_DEGREE_MAX 	 	140
+#define WHEEL_DEGREE_MAX 	 	200
 #define WHEEL_ERROR_DEGREE_MIN_IGNORE 	10
 #define WHEEL_SPEED_MAX 		100
 #define WHEEL_SPEED_MIN 		60
@@ -28,7 +28,10 @@
 #define DEBUG_DIST
 //#define DEBUG_WHEEL
 //#define STOP
-
+#define FRONT_DIST_MAX        50.0
+#define FRONT_DIST_MIN				10.0
+//
+//
 // headers
 //
 // calculates distances and error
@@ -53,11 +56,16 @@ int normalyzeWheelSpeed(int v);
 // restrics MIN and MAX speed value
 //
 int normalyzeSpeed(int v);
+//
+// hhghg
+//
+int normalyzeDistFront(int d);
 // variables
 //
 // error of distance
 int eDist = 0;
 // error front distance
+int distFront = FRONT_DIST_MAX;
 int eDistFront = 0;
 // error side distance
 int eDistSide = 0;
@@ -98,7 +106,7 @@ task speed()
 		//{
 		//	motor[mFront] = 0;
 		//	motor[mRear]  = 0;
-		//	sleep(1000);
+		//	sleep(2000);
 		//}
 	}
 
@@ -115,11 +123,13 @@ task wheel()
 	int wheelDegreeRatioOld = 0;
 	int eWheelDegree = 0;
 	int mWheelSpeed  = 0;
+	float kDistFront = 0;
 	while (true)
 	{
 
 		wheelDegreeRatio = ((eDist * 100 / (DIST_MAX - DIST_MIN)) * WHEEL_DEGREE_MAX) /100 ;
-		wheelDegree = wheelDegreeRatio * 1.5; // + wheelDegreeRatio - wheelDegreeRatioOld) * 2;
+		kDistFront = (((FRONT_DIST_MAX - FRONT_DIST_MIN) * 100) / (distFront * 100)) * 1;
+		wheelDegree = wheelDegreeRatio * kDistFront  + (wheelDegreeRatio - wheelDegreeRatioOld) * 1;
 		wheelDegreeRatioOld = wheelDegreeRatio;
 		if ( abs(wheelDegree) >  WHEEL_DEGREE_MAX ) wheelDegree = sgn(wheelDegree) * WHEEL_DEGREE_MAX; // restrics WHEEL MAX DEGREE
 
@@ -165,6 +175,8 @@ task dist()
 
 	while ( true)
 	{
+	  distFront = normalyzeDistFront (SensorValue(sSonarFront));
+
 		readSensor(&muxedSensor[0]);
 		dLeftFront = muxedSensor[0].distance / 10 ; // returns cm
 
@@ -199,6 +211,13 @@ task dist()
 //
 // restrics MIN and MAX value of distance
 //
+int normalyzeDistFront(int d)
+{
+ if (d > FRONT_DIST_MAX) return FRONT_DIST_MAX;
+ if (d < FRONT_DIST_MIN) return FRONT_DIST_MIN;
+return d;
+}
+
 int normalyzeDist(int d)
 {
 	if (d < DIST_MIN) return DIST_MIN;

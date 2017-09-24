@@ -84,7 +84,6 @@ task main()
 	int iBlack = 0;
 	int iWhite = 0;
 
-
 	initSensor(&muxedSensor[0], msensor_S1_1, sonarCM);
 	initSensor(&muxedSensor[1], msensor_S1_2, sonarCM);
 	initSensor(&muxedSensor[2], msensor_S1_3, colorReflectedLight);

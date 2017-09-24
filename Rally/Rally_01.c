@@ -1,7 +1,7 @@
 #pragma config(Sensor, S1,     sMUX,           sensorEV3_GenericI2C)
 #pragma config(Sensor, S2,     sSonarRight,    sensorSONAR)
 #pragma config(Sensor, S3,     sSonarLeft,     sensorSONAR)
-#pragma config(Sensor, S4,     sSonarFront,    sensorSONAR)
+#pragma config(Sensor, S4,     sSonarFront,    sensorI2CCustomFastSkipStates9V)
 #pragma config(Motor,  motorA,          mFront,        tmotorNXT, openLoop, reversed)
 #pragma config(Motor,  motorB,          mRear,         tmotorNXT, openLoop)
 #pragma config(Motor,  motorC,          mWheel,        tmotorNXT, PIDControl, reversed, encoder)
@@ -10,6 +10,7 @@
 // includes
 //
 #include "mindsensors-ev3smux.h"
+#include "mindsensors-irdist.h"
 
 // defines
 //
@@ -25,11 +26,14 @@
 #define SPEED_MAX 					100
 #define SPEED_MIN 					70
 // debug info
-#define DEBUG_DIST
+//#define DEBUG_DIST
+#define LIGHT_BEEP
 //#define DEBUG_WHEEL
 //#define STOP
-#define FRONT_DIST_MAX        50.0
-#define FRONT_DIST_MIN				10.0
+#define FRONT_DIST_MAX      50.0
+#define FRONT_DIST_MIN			10.0
+// line
+#define LIGHT_GREY         			10
 //
 //
 // headers
@@ -71,18 +75,62 @@ int eDistFront = 0;
 int eDistSide = 0;
 // The SMUX can have up to 3 sensors attached to it. Should be GLOBAL variable
 tMSEV3 muxedSensor[3];
-
+// counters black line
+int iLine = 0;
 task main()
 {
+	bool bBlack = false;
 
+	int iBlack = 0;
+	int iWhite = 0;
+
+
+	initSensor(&muxedSensor[0], msensor_S1_1, sonarCM);
+	initSensor(&muxedSensor[1], msensor_S1_2, sonarCM);
+	initSensor(&muxedSensor[2], msensor_S1_3, colorReflectedLight);
 
 	startTask(dist);
 	startTask(wheel);
 	startTask(speed);
 
+	int sLight = 0;
+
+	// light ---
 	while(true)
 	{
-		sleep (1000);
+		readSensor(&muxedSensor[2]);
+		sLight = muxedSensor[2].light;
+
+		if (sLight < LIGHT_GREY)
+		{
+			iBlack++;
+			if (iBlack > 5)
+			{
+				iWhite = 0;
+				bBlack = true;
+			}
+		}
+		else
+		{
+			iWhite++;
+		}
+
+
+
+		if ((iWhite > 5) && (bBlack))
+		{
+			iLine++;
+			bBlack = false;
+			iWhite = 0;
+			iBlack = 0;
+#ifdef LIGHT_BEEP
+			playSound(soundBlip);
+#endif
+		}
+		#ifdef LIGHT_BEEP
+			displayTextLine(2, "      %d", iLine);
+#endif
+		sleep (10);
 	}
 
 }
@@ -170,12 +218,17 @@ task dist()
 	int dLeft 				= 0;
 	int dRight 				= 0;
 
-	initSensor(&muxedSensor[0], msensor_S1_1, sonarCM);
-	initSensor(&muxedSensor[1], msensor_S1_2, sonarCM);
+	// initialyze IR sensors
+	ubyte address = 0x02;
+	//string type = MSDISTreadModuleType(sSonarFront, address);
+	//type = MSDISTreadModuleType(sSonarLeft, address);
+	//type = MSDISTreadModuleType(sSonarRight, address);
+
 
 	while ( true)
 	{
-	  distFront = normalyzeDistFront (SensorValue(sSonarFront));
+		//distFront = normalyzeDistFront (SensorValue(sSonarFront));
+		distFront = normalyzeDistFront (MSDISTreadDist(sSonarFront, address) / 10);
 
 		readSensor(&muxedSensor[0]);
 		dLeftFront = muxedSensor[0].distance / 10 ; // returns cm
@@ -185,6 +238,9 @@ task dist()
 
 		dLeft  = SensorValue[sSonarLeft];
 		dRight = SensorValue[sSonarRight];
+		//	dLeft = MSDISTreadDist(sSonarLeft, address) / 10;
+		//	dRight = MSDISTreadDist(sSonarRight, address) / 10;
+
 
 		dLeftFront	= normalyzeDist(dLeftFront);
 		dRightFront	= normalyzeDist(dRightFront);
@@ -203,7 +259,7 @@ task dist()
 		displayTextLine(3, "R :%d", dRight);
 		displayTextLine(4, "eDist:%d", eDist);
 #endif
-		sleep (100);
+		sleep(25);
 
 	}
 }
@@ -213,9 +269,9 @@ task dist()
 //
 int normalyzeDistFront(int d)
 {
- if (d > FRONT_DIST_MAX) return FRONT_DIST_MAX;
- if (d < FRONT_DIST_MIN) return FRONT_DIST_MIN;
-return d;
+	if (d > FRONT_DIST_MAX) return FRONT_DIST_MAX;
+	if (d < FRONT_DIST_MIN) return FRONT_DIST_MIN;
+	return d;
 }
 
 int normalyzeDist(int d)

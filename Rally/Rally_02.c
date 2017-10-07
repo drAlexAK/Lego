@@ -23,7 +23,7 @@
 #define DIST_MAX 						80
 #define DIST_MIN 						10
 // wheel
-#define WHEEL_DEGREE_MAX 	 	200
+#define WHEEL_DEGREE_MAX 	 	180
 #define WHEEL_ERROR_DEGREE_MIN_IGNORE 	10
 #define WHEEL_SPEED_MAX 		100
 #define WHEEL_SPEED_MIN 		60
@@ -38,8 +38,9 @@
 #define FRONT_DIST_MAX      50.0
 #define FRONT_DIST_MIN			10.0
 // line
-#define LIGHT_GREY         			10
+#define LIGHT_GREY         	10
 //
+#define MAX_I								10.0
 //
 // headers
 //
@@ -175,15 +176,18 @@ task wheel()
 	int wheelDegreeRatioOld = 0;
 	int eWheelDegree = 0;
 	int mWheelSpeed  = 0;
-	float kDistFront = 0;
+	float kDistFront = 0.0;
+	float i = 0.0;
 	while (true)
 	{
 
 		wheelDegreeRatio = ((eDist * 100 / (DIST_MAX - DIST_MIN)) * WHEEL_DEGREE_MAX) /100 ;
+		 i = i + eDist * 0.001;
+		 if (fabs(i) > MAX_I) i = sgn (i) * MAX_I;
 		// front distance
-		kDistFront = (((FRONT_DIST_MAX - FRONT_DIST_MIN) * 100) / (distFront * 100)) * 1.75;
+		kDistFront = (((FRONT_DIST_MAX - FRONT_DIST_MIN) * 100) / (distFront * 100)) * 1.5;
 
-		wheelDegree = (wheelDegreeRatio + (wheelDegreeRatio - wheelDegreeRatioOld)) * kDistFront  ;
+		wheelDegree = (wheelDegreeRatio + (wheelDegreeRatio - wheelDegreeRatioOld) * 6) * kDistFront + i;
 
 		wheelDegreeRatioOld = wheelDegreeRatio;
 		if ( abs(wheelDegree) >  WHEEL_DEGREE_MAX ) wheelDegree = sgn(wheelDegree) * WHEEL_DEGREE_MAX; // restrics WHEEL MAX DEGREE

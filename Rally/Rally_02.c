@@ -70,6 +70,10 @@ int normalyzeSpeed(int v);
 // hhghg
 //
 int normalyzeDistFront(int d);
+//
+//
+//
+void waitButton();
 // variables
 //
 // error of distance
@@ -99,6 +103,10 @@ task main()
 	startTask(speed);
 
 	int sLight = 0;
+
+	playSound(soundException);
+
+	waitButton();
 
 	// light ---
 	while(true)
@@ -132,8 +140,8 @@ task main()
 			playSound(soundBlip);
 #endif
 		}
-		#ifdef LIGHT_BEEP
-			displayTextLine(2, "      %d", iLine);
+#ifdef LIGHT_BEEP
+		displayTextLine(2, "      %d", iLine);
 #endif
 		sleep (10);
 	}
@@ -182,8 +190,8 @@ task wheel()
 	{
 
 		wheelDegreeRatio = ((eDist * 100 / (DIST_MAX - DIST_MIN)) * WHEEL_DEGREE_MAX) /100 ;
-		 i = i + eDist * 0.001;
-		 if (fabs(i) > MAX_I) i = sgn (i) * MAX_I;
+		i = i + eDist * 0.001;
+		if (fabs(i) > MAX_I) i = sgn (i) * MAX_I;
 		// front distance
 		kDistFront = (((FRONT_DIST_MAX - FRONT_DIST_MIN) * 100) / (distFront * 100)) * 1.5;
 
@@ -318,4 +326,22 @@ int normalyzeSpeed(int v)
 	// restrict MAX SPEED
 	if (v > SPEED_MAX) return SPEED_MAX;
 	return v;
+}
+
+void waitButton()
+{
+	playSound(soundBlip);
+	while(true)
+	{
+		if (nNxtButtonPressed == 3)
+		{
+			playSound(soundBeepBeep);
+			while (nNxtButtonPressed == 3)
+			{
+				sleep(10);
+			}
+		}
+		break;
+  }
+  sleep(10);
 }

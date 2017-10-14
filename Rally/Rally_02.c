@@ -98,15 +98,13 @@ task main()
 	initSensor(&muxedSensor[1], msensor_S1_2, sonarCM);
 	initSensor(&muxedSensor[2], msensor_S1_3, colorReflectedLight);
 
+	waitButton();
+
 	startTask(dist);
 	startTask(wheel);
 	startTask(speed);
 
 	int sLight = 0;
-
-	playSound(soundException);
-
-	waitButton();
 
 	// light ---
 	while(true)
@@ -340,8 +338,8 @@ void waitButton()
 			{
 				sleep(10);
 			}
+			break;
 		}
-		break;
-  }
-  sleep(10);
+		sleep(10);
+	}
 }

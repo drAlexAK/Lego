@@ -20,10 +20,10 @@
 // defines
 //
 // distances
-#define DIST_MAX 						80
+#define DIST_MAX 						100
 #define DIST_MIN 						10
 // wheel
-#define WHEEL_DEGREE_MAX 	 	180
+#define WHEEL_DEGREE_MAX 	 	100
 #define WHEEL_ERROR_DEGREE_MIN_IGNORE 	10
 #define WHEEL_SPEED_MAX 		100
 #define WHEEL_SPEED_MIN 		60
@@ -40,7 +40,9 @@
 // line
 #define LIGHT_GREY         	10
 //
-#define MAX_I								10.0
+#define MAX_I								5.0
+//
+//#define GO_AHEAD
 //
 // headers
 //
@@ -87,6 +89,9 @@ int eDistSide = 0;
 tMSEV3 muxedSensor[3];
 // counters black line
 int iLine = 0;
+// multiplicator depend on front sesnors
+float kDistFront = 0.0;
+
 task main()
 {
 	bool bBlack = false;
@@ -101,7 +106,9 @@ task main()
 	waitButton();
 
 	startTask(dist);
+#ifdef GO_AHEAD
 	startTask(wheel);
+#endif
 	startTask(speed);
 
 	int sLight = 0;
@@ -156,7 +163,7 @@ task speed()
 	while(true)
 	{
 		//i++;
-		speed = SPEED_MAX - ((abs(eDist) * 100 / (DIST_MAX - DIST_MIN)) * SPEED_MAX / 150);
+		speed = SPEED_MAX - (((abs(eDist) * 100 / (DIST_MAX - DIST_MIN)) * SPEED_MAX / 200) * kDistFront);
 		speed = normalyzeSpeed(speed);
 		motor[mFront] = speed;
 		motor[mRear]  = speed;
@@ -173,6 +180,7 @@ task speed()
 
 // turns the wheel
 //
+
 task wheel()
 {
 	//int initWheelEncoder = nMotorEncoder[mWheel];
@@ -182,7 +190,6 @@ task wheel()
 	int wheelDegreeRatioOld = 0;
 	int eWheelDegree = 0;
 	int mWheelSpeed  = 0;
-	float kDistFront = 0.0;
 	float i = 0.0;
 	while (true)
 	{
@@ -190,8 +197,6 @@ task wheel()
 		wheelDegreeRatio = ((eDist * 100 / (DIST_MAX - DIST_MIN)) * WHEEL_DEGREE_MAX) /100 ;
 		i = i + eDist * 0.001;
 		if (fabs(i) > MAX_I) i = sgn (i) * MAX_I;
-		// front distance
-		kDistFront = (((FRONT_DIST_MAX - FRONT_DIST_MIN) * 100) / (distFront * 100)) * 1.5;
 
 		wheelDegree = (wheelDegreeRatio + (wheelDegreeRatio - wheelDegreeRatioOld) * 6) * kDistFront + i;
 
@@ -200,15 +205,15 @@ task wheel()
 
 		eWheelDegree = wheelDegree - nMotorEncoder[mWheel] ; // calculates error of wheel, degree
 
-		if (abs(eWheelDegree) < WHEEL_ERROR_DEGREE_MIN_IGNORE )
-		{
-			mWheelSpeed = 0;
-		}
-		else
-		{
-			mWheelSpeed = (( eWheelDegree * 100 / WHEEL_DEGREE_MAX) * WHEEL_SPEED_MAX) / 100 * kDistFront ; // calculates while speed
-			mWheelSpeed = normalyzeWheelSpeed(mWheelSpeed);
-		}
+		//if ((fabs(eDist)  < 20) || (abs(eWheelDegree) < WHEEL_ERROR_DEGREE_MIN_IGNORE ))
+		//{
+		//	mWheelSpeed = 0;
+		//}
+		//else
+		//{
+		mWheelSpeed = (( eWheelDegree * 100 / WHEEL_DEGREE_MAX) * WHEEL_SPEED_MAX) / 100 * kDistFront ; // calculates while speed
+		mWheelSpeed = normalyzeWheelSpeed(mWheelSpeed);
+		//}
 
 		motor[mWheel]  = mWheelSpeed;
 
@@ -221,9 +226,9 @@ task wheel()
 #endif
 
 		sleep(10);
-	}
+ 	 }
 
-}
+ }
 
 //
 // calculates distances and error
@@ -246,6 +251,8 @@ task dist()
 	{
 		//distFront = normalyzeDistFront (SensorValue(sSonarFront));
 		distFront = normalyzeDistFront (MSDISTreadDist(sSonarFront, address) / 10);
+		// front distance
+		kDistFront = (((FRONT_DIST_MAX - FRONT_DIST_MIN) * 100) / (distFront * 100)) * 1.5;
 
 		readSensor(&muxedSensor[0]);
 		dLeftFront = muxedSensor[0].distance / 10 ; // returns cm
@@ -274,7 +281,8 @@ task dist()
 		displayTextLine(1, "L :%d", dLeft);
 		displayTextLine(2, "RF:%d", dRightFront);
 		displayTextLine(3, "R :%d", dRight);
-		displayTextLine(4, "eDist:%d", eDist);
+		displayTextLine(4, "F :%d", distFront);
+		displayTextLine(5, "eDist:%d", eDist);
 #endif
 		sleep(25);
 
@@ -328,7 +336,7 @@ int normalyzeSpeed(int v)
 
 void waitButton()
 {
-	playSound(soundBlip);
+	playSound(soundBeepBeep);
 	while(true)
 	{
 		if (nNxtButtonPressed == 3)

@@ -32,13 +32,15 @@
 #define SPEED_MIN 					75
 // debug info
 //#define DEBUG_DIST
-//#define LIGHT_BEEP
+#define LIGHT_BEEP
 //#define DEBUG_WHEEL
 //#define STOP
 #define FRONT_DIST_MAX      50.0
 #define FRONT_DIST_MIN			10.0
 // line
-#define LIGHT_GREY         	10
+#define REFLACTION_WHITE		18
+#define REFLACTION_BLACK		8
+#define COLOR_REPEATER			3
 //
 #define MAX_I								5.0
 //
@@ -91,6 +93,9 @@ tMSEV3 muxedSensor[3];
 int iLine = 0;
 // multiplicator depend on front sesnors
 float kDistFront = 0.0;
+//
+bool afterStopLine = false;
+bool beforStopLine = false;
 
 task main()
 {
@@ -98,6 +103,7 @@ task main()
 
 	int iBlack = 0;
 	int iWhite = 0;
+	int iGrey = 0;
 
 	initSensor(&muxedSensor[0], msensor_S1_1, sonarCM);
 	initSensor(&muxedSensor[1], msensor_S1_2, sonarCM);
@@ -119,39 +125,66 @@ task main()
 		readSensor(&muxedSensor[2]);
 		sLight = muxedSensor[2].light;
 
-		if (sLight < LIGHT_GREY)
-		{
-			iBlack++;
-			if (iBlack > 5)
-			{
-				iWhite = 0;
-				bBlack = true;
-			}
-		}
-		else
+		if (sLight > REFLACTION_WHITE)
 		{
 			iWhite++;
 		}
-
-
-
-		if ((iWhite > 5) && (bBlack))
+		else if (sLight < REFLACTION_BLACK)
 		{
-			iLine++;
-			bBlack = false;
+			iBlack++;
+		}
+		else
+		{
+			iGrey++;
+		}
+
+		if( iBlack > COLOR_REPEATER)
+		{
+			bBlack = true;
 			iWhite = 0;
 			iBlack = 0;
+			iGrey = 0;
+		}
+
+		if (iWhite > COLOR_REPEATER)
+		{
+			if(bBlack == true)
+			{
+				iLine++;
 #ifdef LIGHT_BEEP
-			playSound(soundBlip);
+				playSound(soundBeepBeep);
 #endif
+			}
+			iBlack = 0;
+			iGrey = 0;
+			iWhite = 0;
+
+			bBlack = false;
+		}
+
+		if (iGrey > COLOR_REPEATER)
+		{
+			if(bBlack == true)
+			{
+				iLine ++;
+#ifdef LIGHT_BEEP
+				playSound(soundBeepBeep);
+#endif
+			}
+			iWhite = 0;
+			iBlack = 0;
+			iGrey = 0;
+			bBlack = false;
 		}
 #ifdef LIGHT_BEEP
-		displayTextLine(2, "      %d", iLine);
+		displayTextLine(2, "%d", iLine);
+		displayTextLine(4, "%d", sLight);
 #endif
-		sleep (10);
+		if(iLine == 4) beforStopLine = true;
+	 sleep (10);
 	}
-
 }
+
 
 // controls car speed
 //
@@ -226,9 +259,9 @@ task wheel()
 #endif
 
 		sleep(10);
- 	 }
+	}
 
- }
+}
 
 //
 // calculates distances and error

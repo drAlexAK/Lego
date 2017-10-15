@@ -20,30 +20,31 @@
 // defines
 //
 // distances
-#define DIST_MAX 						100
-#define DIST_MIN 						10
+#define DIST_MAX 						            100
+#define DIST_MIN 						            10
 // wheel
-#define WHEEL_DEGREE_MAX 	 	100
+#define WHEEL_DEGREE_MAX 	 	            100
 #define WHEEL_ERROR_DEGREE_MIN_IGNORE 	10
-#define WHEEL_SPEED_MAX 		100
-#define WHEEL_SPEED_MIN 		60
+#define WHEEL_SPEED_MAX 		            100
+#define WHEEL_SPEED_MIN 		            60
 // speed
-#define SPEED_MAX 					100
-#define SPEED_MIN 					75
+#define SPEED_MAX 					            100
+#define SPEED_MIN 					            75
+#define SPEED_BEFORE_STOP_LINE          70
 // debug info
 //#define DEBUG_DIST
 #define LIGHT_BEEP
 //#define GO_AHEAD
 //#define DEBUG_WHEEL
 //#define STOP
-#define FRONT_DIST_MAX      50.0
-#define FRONT_DIST_MIN			10.0
+#define FRONT_DIST_MAX                   50.0
+#define FRONT_DIST_MIN			             10.0
 // line
-#define REFLACTION_WHITE		18
-#define REFLACTION_BLACK		6
-#define COLOR_REPEATER			3
+#define REFLACTION_WHITE		             18
+#define REFLACTION_BLACK		             6
+#define COLOR_REPEATER			             3
 //
-#define MAX_I								5.0
+#define MAX_I								             5.0
 //
 // headers
 //
@@ -189,24 +190,15 @@ task main()
 task speed()
 {
 	int speed = 0;
-	//int i = 0;
 
 	while(true)
 	{
-		//i++;
 		speed = SPEED_MAX - (((abs(eDist) * 100 / (DIST_MAX - DIST_MIN)) * SPEED_MAX / 200) * kDistFront);
 		speed = normalyzeSpeed(speed);
 		motor[mFront] = speed;
 		motor[mRear]  = speed;
 		sleep(10);
-		//if (i==300)
-		//{
-		//	motor[mFront] = 0;
-		//	motor[mRear]  = 0;
-		//	sleep(2000);
-		//}
 	}
-
 }
 
 // turns the wheel
@@ -359,7 +351,7 @@ int normalyzeSpeed(int v)
 	return  0;
 #endif
 	if (afterStopLine) return 0;
-	if (beforeStopLine) return SPEED_MIN - 5;
+	if (beforeStopLine) return SPEED_BEFORE_STOP_LINE;
 
 
 	// restrics MIN SPEED

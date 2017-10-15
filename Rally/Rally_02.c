@@ -24,7 +24,7 @@
 #define DIST_MIN 						            10
 // wheel
 #define WHEEL_DEGREE_MAX 	 	            100
-#define WHEEL_ERROR_DEGREE_MIN_IGNORE 	10
+#define WHEEL_ERROR_DEGREE_MIN_IGNORE 	2
 #define WHEEL_SPEED_MAX 		            100
 #define WHEEL_SPEED_MIN 		            60
 // speed
@@ -52,7 +52,7 @@
 //
 task dist();
 //
-// restrics MIN and MAX valur of distance
+// restrics MIN and MAX value of distance
 //
 int normalyzeDist(int d);
 //
@@ -143,17 +143,14 @@ task main()
 		{
 			if (beforeStopLine)
 			{
-			 afterStopLine = true;
-
-			 playSound(soundBeepBeep);
-
-			 sleep(10000);
-
-			 afterStopLine = false;
-			 beforeStopLine = false;
-
-		  }
-
+				iLine = 0;
+				afterStopLine = true;
+				playSound(soundException);
+				sleep(1000);
+				afterStopLine = false;
+				beforeStopLine = false;
+				break; // exit here. stops analyze light sensor after stop line
+			}
 			bBlack = true;
 			iWhite = 0;
 			iBlack = 0;
@@ -182,6 +179,12 @@ task main()
 		if (iLine == 4) beforeStopLine = true;
 		sleep (10);
 	}
+
+	while(true)
+	{
+		sleep(100);
+	}
+
 }
 
 
@@ -228,15 +231,15 @@ task wheel()
 
 		eWheelDegree = wheelDegree - nMotorEncoder[mWheel] ; // calculates error of wheel, degree
 
-		//if ((fabs(eDist)  < 20) || (abs(eWheelDegree) < WHEEL_ERROR_DEGREE_MIN_IGNORE ))
-		//{
-		//	mWheelSpeed = 0;
-		//}
-		//else
-		//{
-		mWheelSpeed = (( eWheelDegree * 100 / WHEEL_DEGREE_MAX) * WHEEL_SPEED_MAX) / 100 * kDistFront ; // calculates while speed
-		mWheelSpeed = normalyzeWheelSpeed(mWheelSpeed);
-		//}
+		if (abs(eWheelDegree) < WHEEL_ERROR_DEGREE_MIN_IGNORE )
+		{
+			mWheelSpeed = 0;
+		}
+		else
+		{
+			mWheelSpeed = (( eWheelDegree * 100 / WHEEL_DEGREE_MAX) * WHEEL_SPEED_MAX) / 100 * kDistFront ; // calculates while speed
+			mWheelSpeed = normalyzeWheelSpeed(mWheelSpeed);
+		}
 
 		motor[mWheel]  = mWheelSpeed;
 

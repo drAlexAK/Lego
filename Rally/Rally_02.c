@@ -33,18 +33,17 @@
 // debug info
 //#define DEBUG_DIST
 #define LIGHT_BEEP
+//#define GO_AHEAD
 //#define DEBUG_WHEEL
 //#define STOP
 #define FRONT_DIST_MAX      50.0
 #define FRONT_DIST_MIN			10.0
 // line
 #define REFLACTION_WHITE		18
-#define REFLACTION_BLACK		8
+#define REFLACTION_BLACK		6
 #define COLOR_REPEATER			3
 //
 #define MAX_I								5.0
-//
-//#define GO_AHEAD
 //
 // headers
 //
@@ -95,7 +94,8 @@ int iLine = 0;
 float kDistFront = 0.0;
 //
 bool afterStopLine = false;
-bool beforStopLine = false;
+bool beforeStopLine = false;
+
 
 task main()
 {
@@ -112,7 +112,7 @@ task main()
 	waitButton();
 
 	startTask(dist);
-#ifdef GO_AHEAD
+#ifndef GO_AHEAD
 	startTask(wheel);
 #endif
 	startTask(speed);
@@ -140,13 +140,26 @@ task main()
 
 		if( iBlack > COLOR_REPEATER)
 		{
+			if (beforeStopLine)
+			{
+			 afterStopLine = true;
+
+			 playSound(soundBeepBeep);
+
+			 sleep(10000);
+
+			 afterStopLine = false;
+			 beforeStopLine = false;
+
+		  }
+
 			bBlack = true;
 			iWhite = 0;
 			iBlack = 0;
 			iGrey = 0;
 		}
 
-		if (iWhite > COLOR_REPEATER)
+		if ((iWhite > COLOR_REPEATER) || (iGrey > COLOR_REPEATER))
 		{
 			if(bBlack == true)
 			{
@@ -158,30 +171,15 @@ task main()
 			iBlack = 0;
 			iGrey = 0;
 			iWhite = 0;
-
-			bBlack = false;
+			if (bBlack) bBlack = false;
 		}
 
-		if (iGrey > COLOR_REPEATER)
-		{
-			if(bBlack == true)
-			{
-				iLine ++;
-#ifdef LIGHT_BEEP
-				playSound(soundBeepBeep);
-#endif
-			}
-			iWhite = 0;
-			iBlack = 0;
-			iGrey = 0;
-			bBlack = false;
-		}
 #ifdef LIGHT_BEEP
 		displayTextLine(2, "%d", iLine);
 		displayTextLine(4, "%d", sLight);
 #endif
-		if(iLine == 4) beforStopLine = true;
-	 sleep (10);
+		if (iLine == 4) beforeStopLine = true;
+		sleep (10);
 	}
 }
 
@@ -360,6 +358,10 @@ int normalyzeSpeed(int v)
 #ifdef STOP
 	return  0;
 #endif
+	if (afterStopLine) return 0;
+	if (beforeStopLine) return SPEED_MIN - 5;
+
+
 	// restrics MIN SPEED
 	if (v < SPEED_MIN) return SPEED_MIN;
 	// restrict MAX SPEED

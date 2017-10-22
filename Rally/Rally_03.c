@@ -20,10 +20,10 @@
 // defines
 //
 // distances
-#define DIST_MAX 						            100
-#define DIST_MIN 						            10
+#define DIST_MAX 						            120
+#define DIST_MIN 						            20
 // wheel
-#define WHEEL_DEGREE_MAX 	 	            100
+#define WHEEL_DEGREE_MAX 	 	            80
 #define WHEEL_ERROR_DEGREE_MIN_IGNORE 	2
 #define WHEEL_SPEED_MAX 		            100
 #define WHEEL_SPEED_MIN 		            60
@@ -37,7 +37,7 @@
 //#define GO_AHEAD
 //#define DEBUG_WHEEL
 //#define STOP
-#define FRONT_DIST_MAX                   50.0
+#define FRONT_DIST_MAX                   40.0
 #define FRONT_DIST_MIN			             10.0
 // line
 #define REFLACTION_WHITE		             18
@@ -45,7 +45,7 @@
 #define COLOR_REPEATER			             3
 #define LOST_LINE 											 10
 //
-#define MAX_I								             5.0
+#define MAX_I								             0.0
 //
 // headers
 //
@@ -227,7 +227,7 @@ task wheel()
 	//int initWheelEncoder = nMotorEncoder[mWheel];
 	nMotorEncoder[mWheel] = 0;
 
-	int wheelDegree  = 0;
+	float wheelDegree  = 0.0;
 	int wheelDegreeRatio  = 0;
 	int wheelDegreeRatioOld = 0;
 	int eWheelDegree = 0;
@@ -238,26 +238,40 @@ task wheel()
 	while (true)
 	{
 
+
 		wheelDegreeRatio = ((eDist * 100 / (DIST_MAX - DIST_MIN)) * WHEEL_DEGREE_MAX) /100 ;
 		i = i + eDist * 0.001;
 		if (fabs(i) > MAX_I) i = sgn (i) * MAX_I;
 
 		wheelDegree = (wheelDegreeRatio + (wheelDegreeRatio - wheelDegreeRatioOld) * 6) * kDistFront + i ;
 
+
+
 		wheelDegreeRatioOld = wheelDegreeRatio;
 		if ( abs(wheelDegree) >  WHEEL_DEGREE_MAX ) wheelDegree = sgn(wheelDegree) * WHEEL_DEGREE_MAX; // restrics WHEEL MAX DEGREE
 
+		if ( kDistFront >= FRONT_DIST_MAX )
+		{
+			if (abs(eDist) < 10) wheelDegree = wheelDegree / 5.0;
+			else if (abs(eDist) < 20) wheelDegree = wheelDegree / 3.5;
+			else if (abs(eDist) < 30) wheelDegree = wheelDegree / 2.5;
+			else if (abs(eDist) < 40) wheelDegree = wheelDegree / 1.75;
+			else if (abs(eDist) < 50) wheelDegree = wheelDegree / 1.25;
+		}
 		eWheelDegree = wheelDegree - nMotorEncoder[mWheel] ; // calculates error of wheel, degree
 
-		if (abs(eWheelDegree) < WHEEL_ERROR_DEGREE_MIN_IGNORE )
-		{
-			mWheelSpeed = 0;
-		}
-		else
-		{
-			mWheelSpeed = (( eWheelDegree * 100 / WHEEL_DEGREE_MAX) * WHEEL_SPEED_MAX) / 100 * kDistFront ; // calculates while speed
+		mWheelSpeed = (( eWheelDegree * 100 / WHEEL_DEGREE_MAX) * WHEEL_SPEED_MAX) / 100 * kDistFront ; // calculates while speed
 			mWheelSpeed = normalyzeWheelSpeed(mWheelSpeed);
-		}
+
+		//if (abs(eWheelDegree) < WHEEL_ERROR_DEGREE_MIN_IGNORE )
+		//{
+		//	mWheelSpeed = 0;
+		//}
+		//else
+		//{
+		//	mWheelSpeed = (( eWheelDegree * 100 / WHEEL_DEGREE_MAX) * WHEEL_SPEED_MAX) / 100 * kDistFront ; // calculates while speed
+		//	mWheelSpeed = normalyzeWheelSpeed(mWheelSpeed);
+		//}
 
 		motor[mWheel]  = mWheelSpeed;
 
@@ -283,7 +297,7 @@ task dist()
 	int dRightFront 	= 0;
 	int dLeft 				= 0;
 	int dRight 				= 0;
-
+	int eDistOld      = 0;
 	// initialyze IR sensors
 	ubyte address = 0x02;
 	string type = MSDISTreadModuleType(sSonarFront, address);
@@ -319,6 +333,8 @@ task dist()
 		eDist = ((dLeft  + dLeftFront) - (dRight  + dRightFront)) / 2;
 		eDistFront = dLeftFront - dRightFront;
 		eDistSide  = dLeft - dRight;
+
+		eDistOld = eDist;
 
 #ifdef DEBUG_DIST
 		displayTextLine(0, "LF: %d", dLeftFront);

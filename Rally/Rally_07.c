@@ -77,6 +77,10 @@ int normalyzeSpeed(int v);
 //
 int normalyzeDistFront(int d);
 //
+// test sensor setup
+//
+bool Test();
+//
 //
 //
 void waitButton();
@@ -116,6 +120,22 @@ task main()
 	initSensor(&muxedSensor[1], msensor_S1_2, sonarCM);
 	initSensor(&muxedSensor[2], msensor_S1_3, colorReflectedLight);
 
+	if (Test() == false)
+	{
+		motor[mRear] = -30;
+		motor[mFront] = -30;
+
+		playSound(soundBeepBeep);
+
+		sleep(500);
+
+		playSound(soundBeepBeep);
+
+		motor[mFront] = 0;
+		motor[mRear] = 0;
+
+		return;
+	}
 	waitButton();
 
 	startTask(dist);
@@ -401,4 +421,43 @@ void waitButton()
 		}
 		sleep(10);
 	}
+}
+
+bool Test()
+{
+	int TestsLight = 0;
+	int dist = 0;
+	int TestdLeftFront =0;
+	int TestdRightFront =0;
+
+	ubyte address = 0x02;
+	string type = MSDISTreadModuleType(sSonarFront, address);
+
+
+	for(int i = 0; i < 2; i++)
+	{
+		dist = MSDISTreadDist(sSonarFront, address);
+
+		if(((SensorValue(sSonarLeft) == 0) | (SensorValue(sSonarLeft) == 255)) && i == 1) return false;
+		if(((SensorValue(sSonarRight) == 0) | (SensorValue(sSonarRight) == 255)) && i == 1) return false;
+
+		if(((dist < 100) | (dist > 800)) && i == 1) return false;
+
+		readSensor(&muxedSensor[2]);
+		TestsLight = muxedSensor[2].light;
+		sleep(50);
+		if(((TestsLight <= 0) | (TestsLight >= 255)) && i == 1) return false;
+
+		readSensor(&muxedSensor[0]);
+		TestdLeftFront = muxedSensor[0].distance;
+		sleep(50);
+		readSensor(&muxedSensor[1]);
+		TestdRightFront = muxedSensor[1].distance;
+
+		if(((TestdRightFront <= 0) | (TestdRightFront >= 2550)) && i == 1) return false;
+		if(((TestdLeftFront <= 0) | (TestdLeftFront >= 2550)) && i == 1) return false;
+
+		sleep(200);
+	}
+	return true;
 }

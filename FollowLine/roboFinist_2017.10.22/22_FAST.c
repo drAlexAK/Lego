@@ -241,7 +241,7 @@ void calibrate ()
 	{
 		if (nNxtButtonPressed == 3)
 		{
-			while (SensorValue(sTouch)== 1)
+			while (nNxtButtonPressed == 3)
 			{
 				sleep (10);
 			}

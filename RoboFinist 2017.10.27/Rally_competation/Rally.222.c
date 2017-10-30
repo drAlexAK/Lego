@@ -23,7 +23,7 @@
 #define DIST_MAX 						            120
 #define DIST_MIN 						            5
 // wheel
-#define WHEEL_DEGREE_MAX 	 	            100
+#define WHEEL_DEGREE_MAX 	 	            80
 #define WHEEL_ERROR_DEGREE_MIN_IGNORE 	2
 #define WHEEL_SPEED_MAX 		            100
 #define WHEEL_SPEED_MIN 		            60
@@ -43,8 +43,8 @@
 // line
 #define REFLACTION_WHITE		             18
 #define REFLACTION_BLACK		             6
-#define COLOR_REPEATER			             3
-#define LOST_LINE 											 10
+#define COLOR_REPEATER			             2
+#define LOST_LINE 											 5
 //
 #define MAX_I								             5.0
 //
@@ -174,7 +174,7 @@ task main()
 				iLine = 0;
 				afterStopLine = true;
 				playSound(soundException);
-				sleep(1000);
+				sleep(400);
 				afterStopLine = false;
 				beforeStopLine = false;
 				break; // exit here. stops analyze light sensor after stop line
@@ -436,12 +436,12 @@ bool test()
 
 	for(int i = 0; i < 2; i++)
 	{
-		dist = MSDISTreadDist(sSonarFront, address);
+		//dist = MSDISTreadDist(sSonarFront, address);
 
 		if(((SensorValue(sSonarLeft) == 0) | (SensorValue(sSonarLeft) == 255)) && i == 1) return false;
 		if(((SensorValue(sSonarRight) == 0) | (SensorValue(sSonarRight) == 255)) && i == 1) return false;
 
-		if(((dist < 100) | (dist > 800)) && i == 1) return false;
+		//if(((dist < 100) | (dist > 800)) && i == 1) return false;
 
 		readSensor(&muxedSensor[2]);
 		testsLight = muxedSensor[2].light;

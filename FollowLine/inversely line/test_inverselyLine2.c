@@ -13,8 +13,8 @@
 // ger: 	    direct
 // tire:      \__/ #61481 + #56145c04
 
-//#define RELEASE
-#define DEBUG
+#define RELEASE
+//#define DEBUG
 
 int getRWRight();
 int getRWLeft();
@@ -30,12 +30,13 @@ float const KL5 = 1.00;
 float const KL6 = 1.00;
 float const KL7 = 1.00;
 //--------------------
-int vBase 			= 85;
-int const vMax  = 100;
+int vBase 			= 50;
+int const vMax  = 60;
 int const vMin	= 10;
 int const maxI	= 10;
 float const k 	= 35;
 int iAlert			= 0;
+bool isItBlack = false;
 bool leftAlert  = false;
 bool rightAlert = false;
 //--------------------
@@ -82,37 +83,101 @@ task main()
 	tByteArray rawLightLeft;
 	tByteArray rawLightRight;
 
+	int b[8] ={0,0,0,0,0,0,0,0};
+	int summSensor = 0;
+
 	while(true)
 	{
 		//------------
 		LLreadSensorRaw(sLightLeft, rawLightLeft);
-
-		rwLeft=
-		(
-		rawLightLeft[0] * KL0 +
-		rawLightLeft[1] * KL1 +
-		rawLightLeft[2] * KL2 +
-		rawLightLeft[3] * KL3 +
-		rawLightLeft[4] * KL4 +
-		rawLightLeft[5] * KL5 +
-		rawLightLeft[6] * KL6 +
-		rawLightLeft[7] * KL7
-		);
-		if ((rawLightLeft[7] < 10) && (rawLightLeft[0] > 10)) rwLeft = rwLeft * -1;
-		//-----------------
 		LLreadSensorRaw(sLightRight, rawLightRight);
 
-		rwRight =
-		(
-		rawLightRight[0] * KL7 +
-		rawLightRight[1] * KL6 +
-		rawLightRight[2] * KL5 +
-		rawLightRight[3] * KL4 +
-		rawLightRight[4] * KL3 +
-		rawLightRight[5] * KL2 +
-		rawLightRight[6] * KL1 +
-		rawLightRight[7] * KL0
-		);
+		for(int i =0; i < 8; i++)
+		{
+			b[i] = rawLightLeft[i] + rawLightRight[i];
+			summSensor = summSensor + b[i];
+		}
+
+		if(summSensor < 800) isItBlack = true;
+
+		if(isItBlack == false)
+		{
+			rwLeft=
+			(
+			rawLightLeft[0] * KL0 +
+			rawLightLeft[1] * KL1 +
+			rawLightLeft[2] * KL2 +
+			rawLightLeft[3] * KL3 +
+			rawLightLeft[4] * KL4 +
+			rawLightLeft[5] * KL5 +
+			rawLightLeft[6] * KL6 +
+			rawLightLeft[7] * KL7
+			);
+		}
+		else
+		{
+			rawLightLeft[7] = abs(rawLightLeft[7] - 100);
+			rawLightLeft[6] = abs(rawLightLeft[6] - 100);
+			rawLightLeft[5] = abs(rawLightLeft[5] - 100);
+			rawLightLeft[4] = abs(rawLightLeft[4] - 100);
+			rawLightLeft[3] = abs(rawLightLeft[3] - 100);
+			rawLightLeft[2] = abs(rawLightLeft[2] - 100);
+			rawLightLeft[1] = abs(rawLightLeft[1] - 100);
+			rawLightLeft[0] = abs(rawLightLeft[0] - 100);
+
+			rwLeft=
+			(
+			rawLightLeft[0] * KL0 +
+			rawLightLeft[1] * KL1 +
+			rawLightLeft[2] * KL2 +
+			rawLightLeft[3] * KL3 +
+			rawLightLeft[4] * KL4 +
+			rawLightLeft[5] * KL5 +
+			rawLightLeft[6] * KL6 +
+			rawLightLeft[7] * KL7
+			);
+
+		}
+
+		if ((rawLightLeft[7] < 10) && (rawLightLeft[0] > 10)) rwLeft = rwLeft * -1;
+		//-----------------
+		if(isItBlack == false)
+		{
+			rawLightRight[7] = abs(rawLightRight[7] - 100);
+			rawLightRight[6] = abs(rawLightRight[6] - 100);
+			rawLightRight[5] = abs(rawLightRight[5] - 100);
+			rawLightRight[4] = abs(rawLightRight[4] - 100);
+			rawLightRight[3] = abs(rawLightRight[3] - 100);
+			rawLightRight[2] = abs(rawLightRight[2] - 100);
+			rawLightRight[1] = abs(rawLightRight[1] - 100);
+			rawLightRight[0] = abs(rawLightRight[0] - 100);
+
+			rwRight =
+			(
+			rawLightRight[0] * KL7 +
+			rawLightRight[1] * KL6 +
+			rawLightRight[2] * KL5 +
+			rawLightRight[3] * KL4 +
+			rawLightRight[4] * KL3 +
+			rawLightRight[5] * KL2 +
+			rawLightRight[6] * KL1 +
+			rawLightRight[7] * KL0
+			);
+		}
+		else
+		{
+			rwRight =
+			(
+			rawLightRight[0] * KL7 +
+			rawLightRight[1] * KL6 +
+			rawLightRight[2] * KL5 +
+			rawLightRight[3] * KL4 +
+			rawLightRight[4] * KL3 +
+			rawLightRight[5] * KL2 +
+			rawLightRight[6] * KL1 +
+			rawLightRight[7] * KL0
+			);
+		}
 		if ((rawLightRight[0] < 10) && (rawLightRight[7] > 10)) rwRight = rwRight  * -1;
 		//-------------
 		if ((rightAlert == false) && (rawLightLeft[7] < 20) && ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40))) leftAlert = true;

@@ -13,8 +13,8 @@
 // ger: 	    direct
 // tire:      \__/ #61481 + #56145c04
 
-//#define RELEASE
-#define DEBUG
+#define RELEASE
+//#define DEBUG
 
 int getRWRight();
 int getRWLeft();
@@ -30,8 +30,8 @@ float const KL5 = 1.00;
 float const KL6 = 1.00;
 float const KL7 = 1.00;
 //--------------------
-int vBase 			= 85;
-int const vMax  = 100;
+int vBase 			= 40;
+int const vMax  = 60;
 int const vMin	= 10;
 int const maxI	= 10;
 float const k 	= 35;
@@ -76,6 +76,7 @@ task main()
 	int   u					= 0 ;
 	int vLeft 			= 0;
 	int vRight 			= 0;
+	int isItBlack   = 0;
 	long iSpeed     = 0;
 	leftAlert  			= false;
 	rightAlert 			= false;
@@ -98,7 +99,7 @@ task main()
 		rawLightLeft[6] * KL6 +
 		rawLightLeft[7] * KL7
 		);
-		if ((rawLightLeft[7] < 10) && (rawLightLeft[0] > 10)) rwLeft = rwLeft * -1;
+
 		//-----------------
 		LLreadSensorRaw(sLightRight, rawLightRight);
 
@@ -113,11 +114,16 @@ task main()
 		rawLightRight[6] * KL1 +
 		rawLightRight[7] * KL0
 		);
+
+		if(rwRight + rwLeft < 800) isItBlack = -1;
+		else isItBlack = 1;
+
+		if ((rawLightLeft[7] < 10) && (rawLightLeft[0] > 10)) rwLeft = rwLeft * -1;
 		if ((rawLightRight[0] < 10) && (rawLightRight[7] > 10)) rwRight = rwRight  * -1;
 		//-------------
-		if ((rightAlert == false) && (rawLightLeft[7] < 20) && ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40))) leftAlert = true;
+		if ((rightAlert == false) && (rawLightLeft[7] < (20 + (isItBlack - 1) + 50)) && ((rawLightLeft[1] > (40 + (isItBlack-1) * 50)) || (rawLightLeft[0] > (40 + (isItBlack-1) * 50)))) leftAlert = true;
 		if (leftAlert && (iAlert > 0)) leftAlert = ((rawLightLeft[4] > 20) &&
-			(rawLightLeft[3] > 20) &&
+		(rawLightLeft[3] > 20) &&
 		(rawLightLeft[2] > 20) &&
 		(rawLightLeft[1] > 20) &&
 		(rawLightLeft[0] > 20) &&
@@ -131,7 +137,7 @@ task main()
 		(rawLightRight[7] > 20));
 		if (leftAlert) rightAlert = false;
 
-		if ((leftAlert == false) && (rawLightRight[0] < 20) && ((rawLightRight[6] > 40) || (rawLightRight[7] > 40))) rightAlert = true;
+		if ((leftAlert == false) && (rawLightRight[0] < (20 + (isItBlack - 1) * 50)) && ((rawLightRight[6] > (40 + (isItBlack-1) * 50)) || (rawLightRight[7] > (40 + (isItBlack-1) * 50)))) rightAlert = true;
 		if (rightAlert && (iAlert > 0)) rightAlert = ((rawLightRight[3] > 20) &&
 			(rawLightRight[4] > 20) &&
 		(rawLightRight[5] > 20) &&
@@ -171,7 +177,7 @@ task main()
 
 			i = i + e / 2500;
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;
-			u = (e * 1  + (e - eOld ) * 7) / k  + i;
+			u = ((e * 1  + (e - eOld ) * 7) / k  + i) * isItBlack;
 			v = (vBase - abs (u) * 0.65 ) ;
 
 			vLeft = v + u;
@@ -180,7 +186,7 @@ task main()
 			iAlert = 0;
 		}
 
-		eOld = e ;
+		eOld = e * isItBlack;
 
 		if (vLeft  < vMin)  vLeft  = vMin;
 		if (vRight < vMin)  vRight = vMin;

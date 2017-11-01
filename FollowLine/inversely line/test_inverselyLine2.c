@@ -92,6 +92,8 @@ task main()
 		LLreadSensorRaw(sLightLeft, rawLightLeft);
 		LLreadSensorRaw(sLightRight, rawLightRight);
 
+		summSensor = 0;
+
 		for(int i =0; i < 8; i++)
 		{
 			b[i] = rawLightLeft[i] + rawLightRight[i];
@@ -99,6 +101,7 @@ task main()
 		}
 
 		if(summSensor < 800) isItBlack = true;
+		else isItBlack = false;
 
 		if(isItBlack == false)
 		{

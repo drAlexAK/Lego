@@ -16,23 +16,18 @@
 #define RELEASE
 //#define DEBUG
 
-int getRWRight();
-int getRWLeft();
+typedef float tFloatArray[8];
+
+int getRWRight( tByteArray rawLight, tFloatArray KL);
+int getRWLeft ( tByteArray rawLight, tFloatArray KL);
 void calibrate ();
 void waitTouchRelease();
 void reverse(tByteArray a);
 //-------------------
-float const KL0 = 1.00;
-float const KL1 = 1.00;
-float const KL2 = 1.00;
-float const KL3 = 1.00;
-float const KL4 = 1.00;
-float const KL5 = 1.00;
-float const KL6 = 1.00;
-float const KL7 = 1.00;
+float KL[8] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
 //--------------------
-int vBase 			= 50;
-int const vMax  = 60;
+int vBase 			= 75;
+int const vMax  = 100;
 int const vMin	= 10;
 int const maxI	= 10;
 float const k 	= 35;
@@ -65,12 +60,18 @@ task main()
 
 	calibrate();
 	waitTouchRelease();
+
 	startTask(speedUp);
+
+	tByteArray rawLight;
+	LLreadSensorRaw(sLightLeft, rawLight);
+	int rwLeft  		= getRWLeft(rawLight, KL);
+
+	LLreadSensorRaw(sLightRight, rawLight);
+	int rwRight 		= getRWRight(rawLight, KL);
 
 	int e       		= 0;
 	int eOld 				= e;
-	int rwLeft  		= getRWLeft();
-	int rwRight 		= getRWRight();
 	int es 					= rwLeft - rwRight;
 	float i 				= 0;
 	int 	v 				= 0 ;
@@ -93,41 +94,22 @@ task main()
 
 		summSensor = 0;
 
-		for(int i =0; i < 8; i++)
+		for(int i = 0; i < 8; i++)
 		{
 			summSensor = summSensor + rawLightLeft[i] + rawLightRight[i];
 		}
 
-		if (summSensor < 800) isItBlack = true;
-		else isItBlack = false;
+	  isItBlack = (summSensor < 600);
 
 		if ( isItBlack == true ) reverse( rawLightLeft );
-		rwLeft=
-		(
-		rawLightLeft[0] * KL0 +
-		rawLightLeft[1] * KL1 +
-		rawLightLeft[2] * KL2 +
-		rawLightLeft[3] * KL3 +
-		rawLightLeft[4] * KL4 +
-		rawLightLeft[5] * KL5 +
-		rawLightLeft[6] * KL6 +
-		rawLightLeft[7] * KL7
-		);
+
+		rwLeft = getRWLeft(rawLightLeft, KL);
 
 		if ((rawLightLeft[7] < 10) && (rawLightLeft[0] > 10)) rwLeft = rwLeft * -1;
 		//-----------------
 		if ( isItBlack == true ) reverse( rawLightRight );
-		rwRight =
-		(
-		rawLightRight[0] * KL7 +
-		rawLightRight[1] * KL6 +
-		rawLightRight[2] * KL5 +
-		rawLightRight[3] * KL4 +
-		rawLightRight[4] * KL3 +
-		rawLightRight[5] * KL2 +
-		rawLightRight[6] * KL1 +
-		rawLightRight[7] * KL0
-		);
+
+		rwRight = getRWRight(rawLightRight,KL);
 
 		if ((rawLightRight[0] < 10) && (rawLightRight[7] > 10)) rwRight = rwRight  * -1;
 		//-------------
@@ -189,6 +171,9 @@ task main()
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;
 			u = (e * 1  + (e - eOld ) * 7) / k  + i;
 			v = (vBase - abs (u) * 0.65 ) ;
+			vLeft = v + u;
+			vRight = v - u;
+			iAlert = 0;
 		}
 
 		eOld = e ;
@@ -215,10 +200,8 @@ task main()
 		sleep (1);
 	}
 	//if (SensorValue(sTouch) == 1) break;
-	{
 		LLsleep(sLightLeft);  // Sleep to conserve power when not in use
 		LLsleep(sLightRight); // Sleep to conserve power when not in use
-	}
 }
 //---------------------------------
 
@@ -292,42 +275,34 @@ void waitTouchRelease()
 	eraseDisplay();
 }
 //---------------
-int getRWLeft()
+int getRWLeft( tByteArray rawLight, tFloatArray KL)
 {
-	tByteArray rawLight;
-	LLreadSensorRaw(sLightLeft, rawLight);
-	int r =
-	(
-	rawLight[0]  * KL0 +
-	rawLight[1]  * KL1 +
-	rawLight[2]  * KL2 +
-	rawLight[3]  * KL3 +
-	rawLight[4]  * KL4 +
-	rawLight[5]  * KL5 +
-	rawLight[6]  * KL6 +
-	rawLight[7]  * KL7
-	) ;
+
+	int r = 0 ;
+
+	for(int i = 0; i < 8; i++)
+	{
+	r = r + rawLight[i] * KL[i];
+	}
+
 	if (( rawLight[7] < 10 ) && ( rawLight[0] > 10 )) r = r * -1;
 	return r;
 }
 //--------------------
-int getRWRight()
+int getRWRight ( tByteArray rawLight, tFloatArray KL)
 {
-	tByteArray rawLight;
-	LLreadSensorRaw(sLightRight, rawLight);
-	int r =
-	(
-	rawLight[0] * KL7 +
-	rawLight[1] * KL6 +
-	rawLight[2] * KL5 +
-	rawLight[3] * KL4 +
-	rawLight[4] * KL3 +
-	rawLight[5] * KL2 +
-	rawLight[6] * KL1 +
-	rawLight[7] * KL0
-	) ;
+
+
+	int r = 0 ;
+
+	for(int i = 0; i < 8; i++)
+	{
+	r = r + rawLight[i] * KL[7 - i];
+	}
+
 	if (( rawLight[0] < 10 ) && ( rawLight[7] > 10 )) r = r * -1;
 	return r;
+
 }
 
 void reverse(tByteArray a)

@@ -26,7 +26,7 @@ void reverse(tByteArray a);
 //-------------------
 float KL[8] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
 //--------------------
-int vBase 			= 75;
+int vBase 			= 85;
 int const vMax  = 100;
 int const vMin	= 10;
 int const maxI	= 10;
@@ -63,12 +63,14 @@ task main()
 
 	startTask(speedUp);
 
-	tByteArray rawLight;
-	LLreadSensorRaw(sLightLeft, rawLight);
-	int rwLeft  		= getRWLeft(rawLight, KL);
+	tByteArray rawLightLeft;
+	tByteArray rawLightRight;
 
-	LLreadSensorRaw(sLightRight, rawLight);
-	int rwRight 		= getRWRight(rawLight, KL);
+	LLreadSensorRaw(sLightLeft, rawLightLeft);
+	int rwLeft  		= getRWLeft(rawLightLeft, KL);
+
+	LLreadSensorRaw(sLightRight, rawLightRight);
+	int rwRight 		= getRWRight(rawLightRight, KL);
 
 	int e       		= 0;
 	int eOld 				= e;
@@ -81,8 +83,7 @@ task main()
 	long iSpeed     = 0;
 	leftAlert  			= false;
 	rightAlert 			= false;
-	tByteArray rawLightLeft;
-	tByteArray rawLightRight;
+
 
 	int summSensor = 0;
 
@@ -94,24 +95,24 @@ task main()
 
 		summSensor = 0;
 
-		for(int i = 0; i < 8; i++)
+		//for(int i = 0; i < 8; i++)
+		//{
+		//	summSensor = summSensor + rawLightLeft[i] + rawLightRight[i];
+		//}
+
+		//isItBlack = (summSensor < 600);
+
+		isItBlack =((rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7]) < 200);
+
+		if ( isItBlack == true )
 		{
-			summSensor = summSensor + rawLightLeft[i] + rawLightRight[i];
+			reverse( rawLightRight );
+			reverse( rawLightLeft );
 		}
 
-	  isItBlack = (summSensor < 600);
-
-		if ( isItBlack == true ) reverse( rawLightLeft );
-
 		rwLeft = getRWLeft(rawLightLeft, KL);
-
-		if ((rawLightLeft[7] < 10) && (rawLightLeft[0] > 10)) rwLeft = rwLeft * -1;
-		//-----------------
-		if ( isItBlack == true ) reverse( rawLightRight );
-
 		rwRight = getRWRight(rawLightRight,KL);
 
-		if ((rawLightRight[0] < 10) && (rawLightRight[7] > 10)) rwRight = rwRight  * -1;
 		//-------------
 		if ((rightAlert == false) && (rawLightLeft[7] < 20) && ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40))) leftAlert = true;
 		if (leftAlert && (iAlert > 0)) leftAlert = ((rawLightLeft[4] > 20) &&
@@ -200,8 +201,8 @@ task main()
 		sleep (1);
 	}
 	//if (SensorValue(sTouch) == 1) break;
-		LLsleep(sLightLeft);  // Sleep to conserve power when not in use
-		LLsleep(sLightRight); // Sleep to conserve power when not in use
+	LLsleep(sLightLeft);  // Sleep to conserve power when not in use
+	LLsleep(sLightRight); // Sleep to conserve power when not in use
 }
 //---------------------------------
 
@@ -275,37 +276,29 @@ void waitTouchRelease()
 	eraseDisplay();
 }
 //---------------
-int getRWLeft( tByteArray rawLight, tFloatArray KL)
+int getRWLeft( tByteArray &rawLight, tFloatArray &KL)
 {
-
 	int r = 0 ;
-
 	for(int i = 0; i < 8; i++)
 	{
-	r = r + rawLight[i] * KL[i];
+		r = r + rawLight[i] * KL[i];
 	}
-
 	if (( rawLight[7] < 10 ) && ( rawLight[0] > 10 )) r = r * -1;
 	return r;
 }
 //--------------------
-int getRWRight ( tByteArray rawLight, tFloatArray KL)
+int getRWRight ( tByteArray &rawLight, tFloatArray &KL)
 {
-
-
 	int r = 0 ;
-
 	for(int i = 0; i < 8; i++)
 	{
-	r = r + rawLight[i] * KL[7 - i];
+		r = r + rawLight[i] * KL[7 - i];
 	}
-
 	if (( rawLight[0] < 10 ) && ( rawLight[7] > 10 )) r = r * -1;
 	return r;
-
 }
 
-void reverse(tByteArray a)
+void reverse(tByteArray &a)
 {
 	for(int i = 0; i < 8; i++)
 	{

@@ -30,9 +30,8 @@ int vBase 			= 85;
 int const vMax  = 100;
 int const vMin	= 10;
 int const maxI	= 10;
-float const k 	= 35;
+float const k 	= 30;
 int iAlert			= 0;
-bool isItBlack = false;
 bool leftAlert  = false;
 bool rightAlert = false;
 //--------------------
@@ -53,6 +52,7 @@ task speedUp()
 //--------------------
 task main()
 {
+
 	LLinit(sLightLeft); 	// Set up Line Leader sensor type
 	LLinit(sLightRight); 	// Set up Line Leader sensor type
 	_lineLeader_cmd(sLightLeft, 'E'); // European frequency compensation
@@ -71,6 +71,17 @@ task main()
 
 	LLreadSensorRaw(sLightRight, rawLightRight);
 	int rwRight 		= getRWRight(rawLightRight, KL);
+
+	int summSensors = rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7];
+
+	bool isItBlack = (summSensors < 200);
+	bool isItBlackOld = isItBlack;
+
+	if ( isItBlack == true )
+	{
+		reverse( rawLightRight );
+		reverse( rawLightLeft );
+	}
 
 	int e       		= 0;
 	int eOld 				= e;
@@ -102,7 +113,8 @@ task main()
 
 		//isItBlack = (summSensor < 600);
 
-		isItBlack =((rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7]) < 200);
+		summSensors = rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7];
+		isItBlack = (summSensors < 200);
 
 		if ( isItBlack == true )
 		{
@@ -114,11 +126,8 @@ task main()
 		rwRight = getRWRight(rawLightRight,KL);
 
 		//-------------
-		if ((rightAlert == false) && (rawLightLeft[7] < 20) && ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40))) leftAlert = true;
-		if (leftAlert && (iAlert > 0)) leftAlert = ((rawLightLeft[4] > 20) &&
-			(rawLightLeft[3] > 20) &&
-		(rawLightLeft[2] > 20) &&
-		(rawLightLeft[1] > 20) &&
+		if ((rightAlert == false) && (isItBlack == isItBlackOld) & (rawLightLeft[7] < 20) && ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40))) leftAlert = true;
+		if (leftAlert && (iAlert > 0) & (isItBlack == isItBlackOld)) leftAlert = (
 		(rawLightLeft[0] > 20) &&
 		(rawLightRight[0] > 20) &&
 		(rawLightRight[1] > 20) &&
@@ -130,11 +139,8 @@ task main()
 		(rawLightRight[7] > 20));
 		if (leftAlert) rightAlert = false;
 
-		if ((leftAlert == false) && (rawLightRight[0] < 20) && ((rawLightRight[6] > 40) || (rawLightRight[7] > 40))) rightAlert = true;
-		if (rightAlert && (iAlert > 0)) rightAlert = ((rawLightRight[3] > 20) &&
-			(rawLightRight[4] > 20) &&
-		(rawLightRight[5] > 20) &&
-		(rawLightRight[6] > 20) &&
+		if ((leftAlert == false) && (isItBlack == isItBlackOld) & (rawLightRight[0] < 20) && ((rawLightRight[6] > 40) || (rawLightRight[7] > 40))) rightAlert = true;
+		if (rightAlert && (iAlert > 0) & (isItBlack == isItBlackOld)) rightAlert = (
 		(rawLightRight[7] > 20) &&
 		(rawLightLeft[0] > 20) &&
 		(rawLightLeft[1] > 20) &&
@@ -150,14 +156,14 @@ task main()
 
 		if (leftAlert)
 		{
-			vLeft  = vMin;
-			vRight = 90 ;
+				vLeft  = vMin;
+				vRight = 75 ;
 			iAlert ++;
 		}
 		else if (rightAlert)
 		{
-			vLeft  = 90;
-			vRight = vMin;
+				vLeft  = 75;
+				vRight = vMin;
 			iAlert ++;
 		}
 		else
@@ -171,13 +177,15 @@ task main()
 			i = i + e / 2500;
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;
 			u = (e * 1  + (e - eOld ) * 7) / k  + i;
-			v = (vBase - abs (u) * 0.65 ) ;
+			v = (vBase - abs (u) * 0.85 ) ;
 			vLeft = v + u;
 			vRight = v - u;
 			iAlert = 0;
 		}
 
 		eOld = e ;
+
+		isItBlackOld = isItBlack;
 
 		if (vLeft  < vMin)  vLeft  = vMin;
 		if (vRight < vMin)  vRight = vMin;
@@ -189,7 +197,7 @@ task main()
 		motor[mRight] = vRight;
 #endif
 #ifdef DEBUG
-		displayTextLine(0,"rwL %d",rwLeft);
+		displayTextLine(0,"rwL %d",rwLeft);s
 		displayTextLine(1,"rwR %d", rwRight);
 		displayTextLine(2,"lAlert %d", leftAlert);
 		displayTextLine(3,"rAlert %d",rightAlert);
@@ -222,6 +230,7 @@ void calibrate ()
 		}
 		sleep (10);
 	}
+
 	LLcalWhite(sLightLeft);
 	LLcalWhite(sLightRight);
 
@@ -283,7 +292,7 @@ int getRWLeft( tByteArray &rawLight, tFloatArray &KL)
 	{
 		r = r + rawLight[i] * KL[i];
 	}
-	if (( rawLight[7] < 10 ) && ( rawLight[0] > 10 )) r = r * -1;
+	//if (( rawLight[7] < 10 ) && ( rawLight[0] > 10 )) r = r * -1;
 	return r;
 }
 //--------------------
@@ -294,7 +303,7 @@ int getRWRight ( tByteArray &rawLight, tFloatArray &KL)
 	{
 		r = r + rawLight[i] * KL[7 - i];
 	}
-	if (( rawLight[0] < 10 ) && ( rawLight[7] > 10 )) r = r * -1;
+	//if (( rawLight[0] < 10 ) && ( rawLight[7] > 10 )) r = r * -1;
 	return r;
 }
 

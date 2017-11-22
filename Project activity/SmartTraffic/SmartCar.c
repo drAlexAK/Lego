@@ -15,6 +15,11 @@ int vRight 			= 0;
 //---------------------
 int getSpeedByDistance ();
 //---------------------
+
+long redValue;
+long greenValue;
+long blueValue;
+
 task manageMotors()
 {
 	while(true)
@@ -53,6 +58,7 @@ task main()
 	//----------------------------------
 	e  = SensorValue(sLightLeft) - SensorValue(sLightRight) - es;
 	eOld = e;
+	int iGreen = 0;
 	//----------------------------------
 	while(true)
 	{
@@ -68,13 +74,25 @@ task main()
 			}
 			if( i % 2 != 0)
 			{
+				iGreen = 0;
 				while(true)
-				{//getColorRGB(nDeviceIndex, pRedChannel, pGreenChannel, pBlueChannel);
-
-					if(getColorName(sColor) == colorGreen) break; // HERE IS A PROBLEM. IF WE CATCHE THE GREEN COLOR ROBOT SHOOLD GO AHEAD BUT FRONT HIM HERE IS UNATHERA ROBOT.
-					vLeft  = 0;
-					vRight = 0;
-					sleep(1);
+				{
+					vLeft  = vLeft / 2;
+					vRight = vRight / 2;
+					getColorRGB(sColor, redValue, greenValue, blueValue);
+					//if(getColorName(sColor) == colorGreen) break; // HERE IS A PROBLEM. IF WE CATCHE THE GREEN COLOR ROBOT SHOOLD GO AHEAD BUT FRONT HIM HERE IS UNATHERA ROBOT.
+					if(greenValue >= 5)
+					{
+						iGreen++;
+						if(iGreen >= 6)break;
+					}
+					else
+					{
+						vLeft = 0;
+						vRight = 0;
+						iGreen = 0;
+					}
+					sleep(10);
 				}
 			}
 		}
@@ -85,7 +103,7 @@ task main()
 			u = (e * 1.0 + (e - eOld) * 7) * 3;
 			v = getSpeedByDistance() - abs(u) * 0.5;
 			eOld = e;
-	//		v = v - abs(u) * 2;
+			//		v = v - abs(u) * 2;
 			vLeft = v - u;
 			vRight = v + u;
 			//-------------------------

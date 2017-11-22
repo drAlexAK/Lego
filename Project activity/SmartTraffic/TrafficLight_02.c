@@ -53,6 +53,7 @@ task main()
 
 #ifdef DEBUG
 	startTask(displayInfo);
+	int i = 0;
 #endif
 	while(true)
 	{

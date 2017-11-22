@@ -69,7 +69,8 @@ task main()
 			if( i % 2 != 0)
 			{
 				while(true)
-				{
+				{//getColorRGB(nDeviceIndex, pRedChannel, pGreenChannel, pBlueChannel);
+
 					if(getColorName(sColor) == colorGreen) break; // HERE IS A PROBLEM. IF WE CATCHE THE GREEN COLOR ROBOT SHOOLD GO AHEAD BUT FRONT HIM HERE IS UNATHERA ROBOT.
 					vLeft  = 0;
 					vRight = 0;

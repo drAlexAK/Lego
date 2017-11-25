@@ -27,11 +27,11 @@ void reverse(tByteArray a);
 //-------------------
 float KL[8] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
 //--------------------
-int vBase 			= 85;
+int vBase 			= 75;
 int const vMax  = 100;
 int const vMin	= 10;
 int const maxI	= 10;
-float const k 	= 35;
+float const k 	= 34;
 int iAlert			= 0;
 bool isItBlack = false;
 bool leftAlert  = false;
@@ -104,8 +104,8 @@ task main()
 
 		summSensor = 0;
 
-	 isItBlack =((rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7] + rawLightCenter[0] + rawLightCenter[7] ) < 300);
-	// isItBlack =((rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7]) < 200);
+		isItBlack =((rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7] + rawLightCenter[0] + rawLightCenter[7] ) < 300);
+		// isItBlack =((rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7]) < 200);
 		if ( isItBlack == true )
 		{
 			reverse( rawLightRight );
@@ -119,12 +119,21 @@ task main()
 
 		//-------------
 
-		if ((rightAlert == false) && ((rawLightLeft[7] < 20) || (rawLightLeft[6] < 20)) && ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40))) leftAlert = true;
+		if ((rightAlert == false) &&
+			((rawLightLeft[7] < 20) || (rawLightLeft[6] < 20) || (rawLightLeft[5] < 20) || (rawLightLeft[4] < 20)) &&
+		  ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40))) leftAlert = true;
 		if (leftAlert && (iAlert > 0))
 		{
-			if ((	rawLightLeft[7] > 20) || (rawLightLeft[6] > 20 ) || (rawLightLeft[5] > 20 ) || (rawLightLeft[4] > 20 ))
+			if ((	rawLightLeft[7] > 20) || (rawLightLeft[6] > 20 ) || (rawLightLeft[5] > 20 ) || (rawLightLeft[4] > 20 || (rawLightLeft[3] > 20 || (rawLightLeft[2] > 20 ))
 			{
-				leftAlert = ((rawLightCenter[0] > 20) && (rawLightCenter[1] > 20) && (rawLightCenter[2] > 20) && (rawLightCenter[3] > 20));
+				leftAlert = ((rawLightCenter[0] > 20) &&
+				             (rawLightCenter[1] > 20) &&
+				             (rawLightCenter[2] > 20) &&
+				             (rawLightCenter[3] > 20) &&
+				             (rawLightCenter[4] > 20) &&
+				             (rawLightCenter[5] > 20) &&
+				             (rawLightCenter[6] > 20) &&
+				             (rawLightCenter[7] > 20));
 			}
 		}
 		/*if (leftAlert && (iAlert > 0)) leftAlert = ((rawLightCenter[0] > 20) && (rawLightLeft[4] > 20) &&
@@ -142,12 +151,19 @@ task main()
 		(rawLightRight[7] > 20)); */
 		if (leftAlert) rightAlert = false;
 
-		if ((leftAlert == false) && ((rawLightRight[0] < 20) || (rawLightRight[1] < 20)) && ((rawLightRight[6] > 40) || (rawLightRight[7] > 40))) rightAlert = true;
+		if ((leftAlert == false) && ((rawLightRight[0] < 20) || (rawLightRight[1] < 20) || (rawLightRight[2] < 20) || (rawLightRight[3] < 20)) && ((rawLightRight[6] > 40) || (rawLightRight[7] > 40))) rightAlert = true;
 		if (rightAlert && (iAlert > 0))
 		{
-			if ((	rawLightRight[0] > 20) || ( rawLightRight[1] > 20 ) || ( rawLightRight[2] > 20 ) || ( rawLightRight[3] > 20 ))
+			if ((	rawLightRight[0] > 20) || ( rawLightRight[1] > 20 ) || ( rawLightRight[2] > 20 ) || ( rawLightRight[3] > 20 )  || ( rawLightRight[4] > 20 )  || ( rawLightRight[5] > 20 ))
 			{
-				rightAlert = ((rawLightCenter[7] > 20) && (rawLightCenter[6] > 20) && (rawLightCenter[5] > 20)  && (rawLightCenter[4] > 20));
+				rightAlert = ((rawLightCenter[7] > 20) &&
+				              (rawLightCenter[6] > 20) &&
+				              (rawLightCenter[5] > 20) &&
+				              (rawLightCenter[4] > 20) &&
+				              (rawLightCenter[3] > 20) &&
+				              (rawLightCenter[2] > 20) &&
+				              (rawLightCenter[1] > 20) &&
+				              (rawLightCenter[0] > 20) );
 			}
 		}
 
@@ -172,9 +188,13 @@ task main()
 		{
 			vLeft  = vMin;
 			vRight = 90 ;
-			for (int j = 7; j >= 0; j--  )
+			for (int j = 0; j <= 7; j++  )
 			{
-				if (rawLightLeft[j] < 20 ) vRight = vRight - 7;
+				if (rawLightLeft[j] < 20 )
+				{
+					vRight = vRight - (8 - j) * 7;
+					break;
+				}
 			}
 			iAlert ++;
 		}
@@ -182,9 +202,13 @@ task main()
 		{
 			vLeft  = 90;
 			vRight = vMin;
-			for (int j = 0; j <= 7; j++  )
+			for (int j = 7; j >= 0; j--  )
 			{
-				if (rawLightRight[j] < 20 ) vLeft = vLeft - 7;
+				if (rawLightRight[j] < 20 )
+				{
+					vLeft = vLeft - (j + 1 ) * 7;
+					break;
+				}
 			}
 			iAlert ++;
 		}
@@ -331,7 +355,7 @@ int getRWRight ( tByteArray &rawLight, tFloatArray &KL)
 int getRWCenter( tByteArray &rawLight, tFloatArray &KL)
 {
 	int r = 0 ;
-	for(int i = 0; i < 3; i++)
+	for(int i = 0; i < 4; i++)
 	{
 		r = r + ((rawLight[i] * KL[7 - i]) - (rawLight[i + 4] * KL[7 - (i + 4)]));
 	}

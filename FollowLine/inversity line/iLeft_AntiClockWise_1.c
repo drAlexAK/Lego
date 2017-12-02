@@ -49,7 +49,7 @@ int const vMax  = 100;
 int const vMin	= 10;
 int const maxI	= 10;
 int const kReturn = 4;
-float const k 	= 32;
+float const k 	= 31;
 int iAlert			= 0;
 
 bool leftAlert  = false;

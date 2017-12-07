@@ -7,21 +7,21 @@
 #include "mindsensors-lineleader.h"
 
  /*
-         COME TO THE DARK SIDE!!!
-                  _.-'~~~~~~`-._
-                 /      ||      \
-                /       ||       \
-               |        ||        |
-               | _______||_______ |
-               |/ ----- \/ ----- \|
-              /  (     )  (     )  \
-             / \  ----- () -----  / \
-            /   \      /||\      /   \
-           /     \    /||||\    /     \
-          /       \  /||||||\  /       \
-         /_        \o========o/        _\
-           `--...__|`-._  _.-'|__...--'
-                   |    `'    |
+        COME TO THE DARK SIDE!!!
+                 _.-'~~~~~~`-._
+                /      ||      \
+               /       ||       \
+              |        ||        |
+              | _______||_______ |
+              |/ ----- \/ ----- \|
+             /  (     )  (     )  \
+            / \  ----- () -----  / \
+           /   \      /||\      /   \
+          /     \    /||||\    /     \
+         /       \  /||||||\  /       \
+        /_        \o========o/        _\
+          `--...__|`-._  _.-'|__...--'
+                  |    `'    |
     */
 
 // time: 	      stable
@@ -44,12 +44,12 @@ void reverse(tByteArray a);
 //-------------------
 float KL[8] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
 //--------------------
-int vBase 			= 80;
+int vBase 			= 75;
 int const vMax  = 100;
 int const vMin	= 10;
 int const maxI	= 10;
 int const kReturn = 4;
-float const k 	= 32;
+float const k 	= 33;
 int iAlert			= 0;
 
 bool leftAlert  = false;
@@ -59,7 +59,7 @@ task speedUp()
 {
 	int vFinish        = vBase;
 	int const vStart   = 30;
-	int const tSpeedUp = 600;
+	int const tSpeedUp = 400;
 	int tSleep = tSpeedUp / ( vFinish - vStart );
 
 	for ( int i = vStart ; i <= vFinish ; i++ )
@@ -74,7 +74,6 @@ task main()
 {
 	LLinit(sLightLeft); 	// Set up Line Leader sensor type
 	LLinit(sLightRight); 	// Set up Line Leader sensor type
-
 
 	_lineLeader_cmd(sLightLeft, 'E'); // European frequency compensation
 	_lineLeader_cmd(sLightRight, 'E'); // European frequency compensation
@@ -107,19 +106,9 @@ task main()
 	int kAlert      = 0;
 	leftAlert  			= false;
 	rightAlert 			= false;
-	bool isItBlack   = false;
+	bool isItBlack = false;
 	bool isItBlackOld    = false;
 	int summSensor =0;
-
-		LLreadSensorRaw(sLightLeft, rawLightLeft);
-		LLreadSensorRaw(sLightRight, rawLightRight);
-
-		for(int i = 0; i < 8; i++)
-		{
-		summSensor = summSensor + rawLightLeft[i] + rawLightRight[i];
-		}
-
-		isItBlackOld = (summSensor < 800);
 
 	while(true)
 	{
@@ -130,26 +119,27 @@ task main()
 		//	if (rightAlert) isItBlack =((rawLightLeft[7] + rawLightLeft[6]) < 200);
 		//	else if (leftAlert) isItBlack =((rawLightRight[0] + rawLightRight[1]) < 200);
 		//	else isItBlack =((rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7] + rawLightCenter[0] + rawLightCenter[7] ) < 300);
-		//  isItBlack =((rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7]) < 200) ;
-
+		//int p =(rawLightLeft[0] + rawLightLeft[7] + rawLightRight[0] + rawLightRight[7]) ;
+		//isItBlack =( p < 200);
 
 		summSensor = 0;
-
 		for(int i = 0; i < 8; i++)
 		{
 		summSensor = summSensor + rawLightLeft[i] + rawLightRight[i];
 		}
-
 		isItBlack = (summSensor < 800);
 
+
+		//if((isItBlackOld != isItBlack) && ((leftAlert == true) || (rightAlert == true)) && (kAlert >= 1))
 		//if (isItBlackOld != isItBlack) sleep(20);
-		//if((isItBlackOld != isItBlack) && ((leftAlert == true))
 		//{
-		//leftAlert = true;
-		//rightAlert = false;
+		//leftAlert = rightAlert;
+		//rightAlert = leftAlert;
 		//kAlert = 0;
 		//}
-		//else if(rightAlert == true)) && (kAlert >= 1)
+
+
+
 
 		if ( isItBlack == true )
 		{
@@ -161,31 +151,32 @@ task main()
 		rwRight = getRWRight(rawLightRight,KL);
 		//-----------------------
 
+
 		// begin original line
     // left
-		//if (((rawLightLeft[7] < 20) || (rawLightLeft[6] < 20)) &&
-		//	 ((rawLightLeft[0] > 40) || (rawLightLeft[1] > 40)) &&
-		//   ((rawLightRight[7] > 40) || (rawLightRight[6] > 40)) &&
-		//   ((rawLightRight[0] < 20) || (rawLightRight[1] < 20))) leftAlert = true;
+		if ((rightAlert == false) && ((rawLightLeft[7] < 20) || (rawLightLeft[6] < 20)) &&
+			 ((rawLightLeft[0] > 40) || (rawLightLeft[1] > 40)) &&
+		   ((rawLightRight[7] > 40) || (rawLightRight[6] > 40)) &&
+		   ((rawLightRight[0] < 20) || (rawLightRight[1] < 20))) leftAlert = true;
 
-		//if (((rightAlert == false) && ((rawLightLeft[7] < 20) || (rawLightLeft[6] < 20) || (rawLightLeft[5] < 20)) && ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40)) &&
-		//	((rawLightRight[0] > 20) || (rawLightRight[1] > 20) || (rawLightRight[2] > 20) ))) leftAlert = true;
-    if (((rightAlert == false) && ((rawLightLeft[7] < 20) || (rawLightLeft[6] < 20)) && ((rawLightLeft[3] > 40) || (rawLightLeft[2] > 40) || (rawLightLeft[1] > 40) || (rawLightLeft[0] > 40)))) leftAlert = true;
-		if (((leftAlert && (iAlert > 2)) && (rawLightLeft[7] > 40) && (rawLightLeft[6] > 40) && (rawLightRight[0] > 40)) && (isItBlackOld == isItBlack))
+		if (((rightAlert == false) && ((rawLightLeft[7] < 20) || (rawLightLeft[6] < 20)) && ((rawLightLeft[1] > 40) || (rawLightLeft[0] > 40)) &&
+			((rawLightRight[0] > 20) && (rawLightRight[1] > 20)))) leftAlert = true;
+
+		if ((leftAlert && (iAlert > 0)) && (rawLightLeft[7] > 40) && (rawLightLeft[6] > 40) && (rawLightRight[0] > 40) && (isItBlackOld == isItBlack))
 		{
-			if (((rawLightLeft[2] < 20) || (rawLightLeft[1] < 20) || (rawLightLeft[0] < 20) ||
+			if (( (rawLightLeft[3] < 20) || (rawLightLeft[2] < 20) || (rawLightLeft[1] < 20) || (rawLightLeft[0] < 20) ||
 				(rawLightRight[7] < 20) || (rawLightRight[6] < 20) || (rawLightRight[5] < 20) || (rawLightRight[4] < 20) || (rawLightRight[3] < 20) ||
 			(rawLightRight[2] < 20) || (rawLightRight[1] < 20))) leftAlert = false;
 		}
 		if (leftAlert) rightAlert = false;
     // end left
 		// right
-		//if (((leftAlert == false) && ((rawLightRight[0] < 20) || (rawLightRight[1] < 20) || (rawLightRight[2] < 20)) && ((rawLightRight[6] > 40) || (rawLightRight[7] > 40)) &&
-		//	((rawLightLeft[7] > 20) || (rawLightLeft[6] > 20) || (rawLightLeft[5] > 20)))) rightAlert = true;
-    if (((leftAlert == false) && ((rawLightRight[0] < 20) || (rawLightRight[1] < 20)) && ((rawLightRight[4] > 40) ||  (rawLightRight[5] > 40) ||  (rawLightRight[6] > 40) || (rawLightRight[7] > 40)))) rightAlert = true;
-		if (((rightAlert && (iAlert > 3)) && ( rawLightRight[0] > 40) && ( rawLightRight[1] > 40) && (rawLightLeft[7] >  40)) &&  (isItBlackOld == isItBlack))
+		if (((leftAlert == false) && ((rawLightRight[0] < 20) || (rawLightRight[1] < 20)) && ((rawLightRight[6] > 40) || (rawLightRight[7] > 40)) &&
+			((rawLightLeft[7] > 20) && (rawLightLeft[6] > 20)))) rightAlert = true;
+
+		if ((rightAlert && (iAlert > 0)) && ( rawLightRight[0] > 40) && ( rawLightRight[1] > 40) && (rawLightLeft[7] >  40) &&  (isItBlackOld == isItBlack))
 		{
-			if (( (rawLightRight[5] < 20) || (rawLightRight[6] < 20) || (rawLightRight[7] < 20) ||
+			if (((rawLightRight[4] < 20) || (rawLightRight[5] < 20) || (rawLightRight[6] < 20) || (rawLightRight[7] < 20) ||
 				(rawLightLeft[0] < 20) || (rawLightLeft[1] < 20) || (rawLightLeft[2] < 20) || (rawLightLeft[3] < 20) || (rawLightLeft[4] < 20) ||
 			(rawLightLeft[5] < 20) || (rawLightLeft[6] < 20))) rightAlert = false ;
 		}
@@ -193,18 +184,12 @@ task main()
     // end right
 		// end of original line
 
-		if (isItBlackOld != isItBlack)
-		{
-			i = 0;
-			if (rightAlert == false) leftAlert = true;
-		}
-
 		e = rwLeft - rwRight  - es;
 
 		if (leftAlert)
 		{
 			vLeft  = vMin;
-			vRight = 75 ;
+			vRight = 85 ;
 			for (int j = 0; j <= 7; j++  )
 			{
 				if (rawLightLeft[j] < 20 )
@@ -218,7 +203,7 @@ task main()
 		}
 		else if (rightAlert)
 		{
-			vLeft  = 75;
+			vLeft  = 85;
 			vRight = vMin;
 			for (int j = 7; j >= 0; j--  )
 			{
@@ -241,7 +226,7 @@ task main()
 
 			i = i + e / 2500;
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;
-			u = (e * 1  + (e - eOld ) * 7) / k + i;
+			u = (e * 1  + (e - eOld ) * 7) / k  + i;
 			v = (vBase - abs (u) * 0.75 ) ;
 			vLeft = v + u;
 			vRight = v - u;
@@ -249,11 +234,6 @@ task main()
 		}
 
 		eOld = e ;
-		if (isItBlackOld != isItBlack)
-		{
-			vLeft = vLeft/2;
-			vRight = vRight /2;
-		}
 		isItBlackOld = isItBlack;
 
 		if (vLeft  < vMin)  vLeft  = vMin;
@@ -261,7 +241,8 @@ task main()
 		if (vLeft  > vMax)  vLeft  = vMax;
 		if (vRight > vMax)  vRight = vMax;
 
-
+				displayTextLine(2,"lAlert %d", leftAlert);
+		displayTextLine(3,"rAlert %d",rightAlert);
 
 #ifdef RELEASE
 		motor[mLeft]  = vLeft;
@@ -275,9 +256,6 @@ task main()
 		displayTextLine(3,"rwRight %d", rwRight);
 		displayTextLine(4,"rwLeft %d", rwLeft);
 		displayTextLine(6,"e %d",e);
-
-	  displayTextLine(2,"lAlert %d", leftAlert);
-		displayTextLine(3,"rAlert %d",rightAlert);
 		/*
 		displayTextLine(6,"vLeft %d",vLeft);
 		displayTextLine(7, "vRight %d",vRight);
@@ -373,7 +351,7 @@ int getRWLeft( tByteArray &rawLight, tFloatArray &kl)
 	int r = 0 ;
 	for(int i = 0; i < 8; i++)
 	{
-		r = r + rawLight[i];
+		r = r + rawLight[i] * kl[i];
 	}
 	if (( rawLight[7] < 20 ) && ( rawLight[0] > 20 )) r = r * -1;
 	return r;
@@ -384,7 +362,7 @@ int getRWRight ( tByteArray &rawLight, tFloatArray &kl)
 	int r = 0 ;
 	for(int i = 0; i < 8; i++)
 	{
-		r = r + rawLight[i] ;
+		r = r + rawLight[i] * kl[7 - i];
 	}
 	if (( rawLight[0] < 20 ) && ( rawLight[7] > 20 )) r = r * -1;
 	return r;

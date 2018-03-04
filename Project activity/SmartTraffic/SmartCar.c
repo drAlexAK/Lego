@@ -89,7 +89,7 @@ task main()
 		{
 			//-------------------------
 			e = SensorValue(sLightLeft) - SensorValue(sLightRight) - es;
-			u = (e  + (e - eOld) * 10) * 0.75;
+			u = (e  + (e - eOld) * 10) * 0.9;
 			v = v - abs(u) * 0.8;
 			eOld = e;
 			vLeft = v - u;
@@ -128,7 +128,7 @@ void waitGRcolor()
 
 		getColorRGB(sLightLeft, redValue, greenValue, blueValue);
 		//if(getColorName(sColor) == colorGreen) break; // HERE IS A PROBLEM. IF WE CATCHE THE GREEN COLOR ROBOT SHOOLD GO AHEAD BUT FRONT HIM HERE IS UNATHERA ROBOT.
-		if ((greenValue >= 17) && (redValue <= 10) && (blueValue <= 10)) //&& (redValue < 5))
+		if ((greenValue >= 16) && (redValue <= 10) && (blueValue <= 10)) //&& (redValue < 5))
 		{
 			iGreen++;
 			if(iGreen >= 6)

@@ -38,8 +38,34 @@ task manageMotors()
 }
 task main()
 {
+	int es 					= SensorValue(sLightLeft) - SensorValue(sLightRight);
 	sleep(2500);
 	startTask (manageMotors);
+
+	vLeft = vMax;
+	vRight = vMax;
+
+	while((SensorValue(sLightLeft) > BLACK_LINE) && (SensorValue(sLightRight) > BLACK_LINE)){
+		sleep(10);
+	}
+	while((SensorValue(sLightLeft) < BLACK_LINE) && (SensorValue(sLightRight) < BLACK_LINE)){
+		vLeft = vMax /2;
+		vRight = vMax / 2;
+		sleep(10);
+	}
+	vLeft = 40;
+	vRight = 40;
+	sleep(50);
+	while(SensorValue(sLightRight) > BLACK_LINE){
+	vLeft =  0;
+	vRight = 80;
+	sleep(10);
+	}
+
+	vLeft =80;
+	vRight =80;
+
+		playSound(soundException);
 	//	SensorType[sColor] = sensorEV3_Color;
 	//SensorMode[sColor] = modeEV3Color_Color;
 	//wait1Msec(2000);
@@ -52,7 +78,6 @@ task main()
 	//sleep(2000);
 
 	//----------------------------------
-	int es 					= SensorValue(sLightLeft) - SensorValue(sLightRight);
 	int e     			= 0;
 	int eOld  			= 0;
 	int u     			= 0;
@@ -128,7 +153,7 @@ void waitGRcolor()
 
 		getColorRGB(sLightLeft, redValue, greenValue, blueValue);
 		//if(getColorName(sColor) == colorGreen) break; // HERE IS A PROBLEM. IF WE CATCHE THE GREEN COLOR ROBOT SHOOLD GO AHEAD BUT FRONT HIM HERE IS UNATHERA ROBOT.
-		if ((greenValue >= 16) && (redValue <= 10) && (blueValue <= 10)) //&& (redValue < 5))
+		if ((greenValue >= 14) && (redValue <= 10) && (blueValue <= 10)) //&& (redValue < 5))
 		{
 			iGreen++;
 			if(iGreen >= 6)

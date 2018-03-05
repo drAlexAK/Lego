@@ -14,12 +14,14 @@
 //
 #define DEBUG
 
-#define ZONE_A 1
-#define ZONE_B -1
+#define ZONE_A -1
+#define ZONE_B 1
 //
-#define DIST_SHORT     150 		// calculates minimum distance for short distance sensor
-#define INTERVAL_SMALL 10     // sleep interval for release car
-#define INTERVAL_LONG  20     // sleep interval for new car
+#define DIST_SHORT     150    // calculates minimum distance for short distance sensor
+#define DIST_MIN_IGNORE 100   // minimum of distance
+#define INTERVAL_SMALL 15     // sleep interval for release car
+#define INTERVAL_LONG  15     // sleep interval for new car
+#define IR_COUNT			 3      // repeats quantity
 //
 // light
 const int vMaxLight = 40;
@@ -47,7 +49,19 @@ bool stopLineB = false; // car stops near stop line zone B
 
 task main()
 {
-	int activeZone = ZONE_A;
+	int z = -1;
+	while(nNxtButtonPressed != 3)
+	{
+		if((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2))
+		{
+			while((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2)) sleep(1);
+
+			z *= -1;
+			if(z == 1) displayBigTextLine(4,"B",);
+			else displayBigTextLine(4,"A",);
+		}
+	}
+	int activeZone = z;
 
 	startTask(counterA1);
 	startTask(counterA2);
@@ -83,7 +97,6 @@ task main()
 	}
 }
 
-
 void Switch(int direction)
 {
 	nMotorEncoder[mLightA] = 0;
@@ -105,98 +118,125 @@ void Switch(int direction)
 	motor[mLightB] =0;
 }
 
-
 task counterA1()
 {
 	int d = 0 ;
+	int i =0;
 	ubyte address = 0x02;
 	string type = MSDISTreadModuleType(sDistA1, address);
 	while(true)
 	{
-		do
-		{
-			sleep(INTERVAL_LONG);
-			d = MSDISTreadDist(sDistA1, address);
-		} while (d  >= DIST_SHORT  | d == -1);
-
-		do
-		{
-			sleep(INTERVAL_LONG);
-			d = MSDISTreadDist(sDistA1, address);
-		} while (d  < DIST_SHORT  | d == -1);
-
+		while(i <=IR_COUNT){
+			while ((d  > DIST_SHORT)  || (d < DIST_MIN_IGNORE)){
+				sleep(INTERVAL_LONG);
+				d = MSDISTreadDist(sDistA1, address);
+				i =0;
+			}
+			i++;
+		}
+		i =0;
+		while(i <= IR_COUNT){
+			while ((d  <= DIST_SHORT)  && (d >= DIST_MIN_IGNORE)){
+				sleep(INTERVAL_LONG);
+				d = MSDISTreadDist(sDistA1, address);
+				i=0;
+			}
+			i++;
+		}
 		qA++;
+		i=0;
 	}
 }
 
 task counterA2()
 {
 	int d = 0 ;
+	int i =0;
 	ubyte address = 0x02;
 	string type = MSDISTreadModuleType(sDistA2, address);
 	while(true)
 	{
-		do
-		{
-			sleep(INTERVAL_LONG);
-			d = MSDISTreadDist(sDistA2, address);
-		} while (d  >= DIST_SHORT  | d == -1);
-
-		do
-		{
-			sleep(INTERVAL_LONG);
-			d = MSDISTreadDist(sDistA2, address);
-		} while (d  < DIST_SHORT  | d == -1);
-
+		while(i <=IR_COUNT){
+			while ((d  > DIST_SHORT)  || (d < DIST_MIN_IGNORE)){
+				sleep(INTERVAL_LONG);
+				d = MSDISTreadDist(sDistA2, address);
+				i =0;
+			}
+			i++;
+		}
+		i =0;
+		while(i <= IR_COUNT){
+			while ((d  <= DIST_SHORT)  && (d >= DIST_MIN_IGNORE)){
+				sleep(INTERVAL_LONG);
+				d = MSDISTreadDist(sDistA2, address);
+				i=0;
+			}
+			i++;
+		}
 		qA--;
+		i=0;
 	}
 }
 
 task counterB1()
 {
 	int d = 0 ;
+	int i = 0 ;
 	ubyte address = 0x02;
 	string type = MSDISTreadModuleType(sDistB1, address);
 	while(true)
 	{
-		do
-		{
-			sleep(INTERVAL_LONG);
-			d = MSDISTreadDist(sDistB1, address);
-		} while (d  >= DIST_SHORT  | d == -1);
-
-		do
-		{
-			sleep(INTERVAL_LONG);
-			d = MSDISTreadDist(sDistB1, address);
-		} while (d  < DIST_SHORT  | d == -1);
-
+		while(i <=IR_COUNT){
+			while ((d  > DIST_SHORT) || (d < DIST_MIN_IGNORE)){
+				sleep(INTERVAL_LONG);
+				d = MSDISTreadDist(sDistB1, address);
+				i =0;
+			}
+			i++;
+		}
+		i =0;
+		while(i <= IR_COUNT){
+			while ((d  <= DIST_SHORT)  || (d >= DIST_MIN_IGNORE)){
+				sleep(INTERVAL_LONG);
+				d = MSDISTreadDist(sDistB1, address);
+				i=0;
+			}
+			i++;
+		}
 		qB++;
+		i=0;
 	}
 }
 
 task counterB2()
 {
+	int i =0;
 	int d = 0 ;
 	ubyte address = 0x02;
 	string type = MSDISTreadModuleType(sDistB2, address);
 	while(true)
 	{
-		do
-		{
-			sleep(INTERVAL_LONG);
-			d = MSDISTreadDist(sDistB2, address);
-		} while (d  >= DIST_SHORT  | d == -1);
-
-		do
-		{
-			sleep(INTERVAL_LONG);
-			d = MSDISTreadDist(sDistB2, address);
-		} while (d  < DIST_SHORT  | d == -1);
+		while(i <= IR_COUNT){
+			while ((d  > DIST_SHORT) || (d < DIST_MIN_IGNORE)){
+				sleep(INTERVAL_LONG);
+				d = MSDISTreadDist(sDistB2, address);
+				i =0;
+			}
+			i++;
+		}
+		i =0;
+		while(i <= IR_COUNT){
+			while ((d  <= DIST_SHORT) && (d >= DIST_MIN_IGNORE)){
+				sleep(INTERVAL_LONG);
+				d = MSDISTreadDist(sDistB2, address);
+				i=0;
+			}
+			i++;
+		}
 		qB--;
+		i=0;
 	}
 }
-
 task displayInfo()
 {
 	while(true)

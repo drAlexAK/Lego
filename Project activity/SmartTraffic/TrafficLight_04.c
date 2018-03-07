@@ -18,9 +18,9 @@
 #define ZONE_B 1
 //
 #define DIST_SHORT     150    // calculates minimum distance for short distance sensor
-#define DIST_MIN_IGNORE 100   // minimum of distance
-#define INTERVAL_SMALL 15     // sleep interval for release car
-#define INTERVAL_LONG  15     // sleep interval for new car
+#define DIST_MIN_IGNORE 50   // minimum of distance
+#define INTERVAL_SMALL 40     // sleep interval for release car
+#define INTERVAL_LONG  40     // sleep interval for new car
 #define IR_COUNT			 3      // repeats quantity
 //
 // light
@@ -34,7 +34,9 @@ task counterA1();
 task counterA2();
 task counterB1();
 task counterB2();
+
 void Switch(int direction);
+int selectZone(int startZone);
 
 #ifdef DEBUG
 task displayInfo();
@@ -49,24 +51,20 @@ bool stopLineB = false; // car stops near stop line zone B
 
 task main()
 {
-	int z = -1;
-	while(nNxtButtonPressed != 3)
-	{
-		if((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2))
-		{
-			while((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2)) sleep(1);
 
-			z *= -1;
-			if(z == 1) displayBigTextLine(4,"B",);
-			else displayBigTextLine(4,"A",);
-		}
-	}
-	int activeZone = z;
+	int activeZone = selectZone(ZONE_A);
+	eraseDisplay();
+	displayBigTextLine(4,"initializing",);
 
 	startTask(counterA1);
+	sleep(500);
 	startTask(counterA2);
+	sleep(500);
 	startTask(counterB1);
+	sleep(500);
 	startTask(counterB2);
+	sleep(500);
+	eraseDisplay();
 
 #ifdef DEBUG
 	startTask(displayInfo);
@@ -196,7 +194,7 @@ task counterB1()
 		}
 		i =0;
 		while(i <= IR_COUNT){
-			while ((d  <= DIST_SHORT)  || (d >= DIST_MIN_IGNORE)){
+			while ((d  <= DIST_SHORT)  && (d >= DIST_MIN_IGNORE)){
 				sleep(INTERVAL_LONG);
 				d = MSDISTreadDist(sDistB1, address);
 				i=0;
@@ -247,4 +245,19 @@ task displayInfo()
 		displayTextLine(3,"stopB %d   ",stopLineB);
 		sleep(100);
 	}
+}
+int selectZone(int startZone){
+	int z = startZone;
+	while(nNxtButtonPressed != 3)
+	{
+		if((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2))
+		{
+			while((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2)) sleep(10);
+
+			z *= -1;
+			if(z == ZONE_B) displayBigTextLine(4,"    B",);
+			else displayBigTextLine(4,"    A",);
+		}
+	}
+	return z;
 }

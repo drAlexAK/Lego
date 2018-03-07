@@ -17,6 +17,7 @@ int vRight 			= 0;
 //---------------------
 int getSpeedByDistance ();
 void waitGRcolor();
+void findLine();
 //---------------------
 
 long redValue;
@@ -38,34 +39,7 @@ task manageMotors()
 }
 task main()
 {
-	int es 					= SensorValue(sLightLeft) - SensorValue(sLightRight);
-	sleep(2500);
-	startTask (manageMotors);
 
-	vLeft = vMax;
-	vRight = vMax;
-
-	while((SensorValue(sLightLeft) > BLACK_LINE) && (SensorValue(sLightRight) > BLACK_LINE)){
-		sleep(10);
-	}
-	while((SensorValue(sLightLeft) < BLACK_LINE) && (SensorValue(sLightRight) < BLACK_LINE)){
-		vLeft = vMax /2;
-		vRight = vMax / 2;
-		sleep(10);
-	}
-	vLeft = 40;
-	vRight = 40;
-	sleep(50);
-	while(SensorValue(sLightRight) > BLACK_LINE){
-	vLeft =  0;
-	vRight = 80;
-	sleep(10);
-	}
-
-	vLeft =80;
-	vRight =80;
-
-		playSound(soundException);
 	//	SensorType[sColor] = sensorEV3_Color;
 	//SensorMode[sColor] = modeEV3Color_Color;
 	//wait1Msec(2000);
@@ -76,14 +50,19 @@ task main()
 	//wait1Msec(2000);
 	//SensorType[sColor] = sensorNone ;
 	//sleep(2000);
-
 	//----------------------------------
+
 	int e     			= 0;
 	int eOld  			= 0;
 	int u     			= 0;
 	int v 					= vMax;
 	int i     			= 0;
 	int k						= 0;
+	int es 					= SensorValue(sLightLeft) - SensorValue(sLightRight);
+
+	startTask (manageMotors);
+	sleep(2500);
+	findLine();
 	//----------------------------------
 	//----------------------------------
 	while(true)
@@ -174,4 +153,26 @@ void waitGRcolor()
 		}
 		sleep(10);
 	}
+}
+
+void findLine(){
+	while((SensorValue(sLightLeft) > BLACK_LINE) || (SensorValue(sLightRight) > BLACK_LINE)){
+		vRight = vLeft = getSpeedByDistance();
+		sleep(10);
+	}
+
+	while(SensorValue(sLightRight) < BLACK_LINE){
+		vRight = vLeft = getSpeedByDistance() /3;
+		sleep(10);
+	}
+
+	sleep(10);
+	while(SensorValue(sLightRight) > BLACK_LINE){
+		vLeft =  0;
+		vRight = 80;
+		sleep(10);
+	}
+
+	vRight = vLeft = getSpeedByDistance();
+
 }

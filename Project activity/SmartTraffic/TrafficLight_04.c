@@ -22,6 +22,8 @@
 #define INTERVAL_SMALL 40     // sleep interval for release car
 #define INTERVAL_LONG  40     // sleep interval for new car
 #define IR_COUNT			 3      // repeats quantity
+#define SMART_MODE		 1
+#define ORD_MODE			 -1
 //
 // light
 const int vMaxLight = 40;
@@ -34,6 +36,7 @@ task counterA1();
 task counterA2();
 task counterB1();
 task counterB2();
+task Time();
 
 void Switch(int direction);
 int selectZone(int startZone);
@@ -48,13 +51,16 @@ int  qA        = 0;     // queue in the zone A
 bool stopLineA = false; // car stops near stop line zone A
 int  qB        = 0;     // queue in the zone B
 bool stopLineB = false; // car stops near stop line zone B
+int countCar   = 0;
+int time 			 = 0;
+int lightMode  = SMART_MODE;
 
 task main()
 {
 
 	int activeZone = selectZone(ZONE_A);
 	eraseDisplay();
-	displayBigTextLine(4,"initializing",);
+	displayTextLine(4,"initializing",);
 
 	startTask(counterA1);
 	sleep(500);
@@ -64,6 +70,7 @@ task main()
 	sleep(500);
 	startTask(counterB2);
 	sleep(500);
+	startTask(Time);
 	eraseDisplay();
 
 #ifdef DEBUG
@@ -76,21 +83,39 @@ task main()
 		if (nNxtButtonPressed == 3) // reset counters
 		{
 			qA        = 0;     // queue in the zone A
-			stopLineA = false; // car stops near stop line zone A7
+			stopLineA = false; // car stops near stop line zone A
 			qB        = 0;     // queue in the zone B
 			stopLineB = false; // car stops near stop line zone B
+			countCar  = 0;
+			time    = 0;
 		}
-		int lightDirection = qA - qB ;
+		if((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2))
+		{
+			while((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2)) sleep(10);
+			lightMode *= -1;
+			countCar  = 0;
+			time    = 0;
+		}
+		if(lightMode == SMART_MODE){
+			int lightDirection = qA - qB ;
 
-		if ((lightDirection > 0) && (activeZone != ZONE_A))
-		{
-			activeZone = ZONE_A;
-			Switch(ZONE_A);
+			if ((lightDirection > 0) && (activeZone != ZONE_A))
+			{
+				activeZone = ZONE_A;
+				Switch(activeZone);
+			}
+			else if ((lightDirection < 0) && (activeZone != ZONE_B))
+			{
+				activeZone = ZONE_B;
+				Switch(activeZone);
+			}
 		}
-		else if ((lightDirection < 0) && (activeZone != ZONE_B))
-		{
-			activeZone = ZONE_B;
-			Switch(ZONE_B);
+		else{
+			if(time % 10 == 0) {
+				activeZone = activeZone * -1;
+				Switch(activeZone);
+				while(time % 10 == 0) sleep(1);
+			}
 		}
 	}
 }
@@ -172,6 +197,7 @@ task counterA2()
 			i++;
 		}
 		qA--;
+		countCar++;
 		i=0;
 	}
 }
@@ -232,22 +258,57 @@ task counterB2()
 			i++;
 		}
 		qB--;
+		countCar++;
 		i=0;
 	}
 }
+
 task displayInfo()
 {
+	float cpm = 0;
+	int lightModeOld = lightMode;
 	while(true)
 	{
-		displayTextLine(0,"A %d        ",qA);
-		displayTextLine(1,"stopA %d   ",stopLineA);
-		displayTextLine(2,"B1 %d        ",qB);
-		displayTextLine(3,"stopB %d   ",stopLineB);
+		cpm = ((float)countCar / (float)(time+1));
+		if(lightMode != lightModeOld) {
+			playSound(soundBeepBeep);
+			lightModeOld = lightMode;
+			eraseDisplay();
+		}
+		if(lightMode == SMART_MODE){
+			displayTextLine(0,"   SMART_MODE   ");
+			displayTextLine(1,"A %d        ",qA);
+			displayTextLine(2,"stopA %d   ",stopLineA);
+			displayTextLine(3,"B1 %d        ",qB);
+			displayTextLine(4,"stopB %d   ",stopLineB);
+			displayTextLine(5,"carCount %d", countCar);
+			displayTextLine(6,"car/min %.2f", cpm * 60);
+			displayTextLine(7,"time %d, sec", time);
+		}
+		else {
+			displayTextLine(0,"   ORD_MODE   ");
+			displayTextLine(1,"A %d        ",qA);
+			displayTextLine(2,"stopA %d   ",stopLineA);
+			displayTextLine(3,"B1 %d        ",qB);
+			displayTextLine(4,"stopB %d   ",stopLineB);
+			displayTextLine(5,"carCount %d", countCar);
+			displayTextLine(6,"car/min %.2f", cpm * 60);
+			displayTextLine(7,"time %d, sec", time);
+		}
 		sleep(100);
+
 	}
 }
+task Time(){
+	while(true){
+		time ++;
+		sleep(1000);
+	}
+}
+
 int selectZone(int startZone){
 	int z = startZone;
+	displayTextLine(4,"select the zone",);
 	while(nNxtButtonPressed != 3)
 	{
 		if((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2))
@@ -255,8 +316,8 @@ int selectZone(int startZone){
 			while((nNxtButtonPressed == 1) || (nNxtButtonPressed == 2)) sleep(10);
 
 			z *= -1;
-			if(z == ZONE_B) displayBigTextLine(4,"    B",);
-			else displayBigTextLine(4,"    A",);
+			if(z == ZONE_B) displayBigTextLine(4,"zone  B",);
+			else displayBigTextLine(4,"zone  A",);
 		}
 	}
 	return z;

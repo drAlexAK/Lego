@@ -14,6 +14,7 @@ int const vMax  = 80;
 int const vMin  = 0;
 int vLeft 			= 0;
 int vRight 			= 0;
+
 //---------------------
 int getSpeedByDistance ();
 void waitGRcolor();
@@ -68,7 +69,14 @@ task main()
 	while(true)
 	{
 		v = getSpeedByDistance();
+		if(v ==0){
+			vLeft = 0;
+			vRight =0;
+			sleep(400);
+			continue;
+		}
 		k = 0;
+
 		while((SensorValue(sLightLeft) < BLACK_LINE) && (SensorValue(sLightRight) < BLACK_LINE))
 		{
 			k++;
@@ -93,7 +101,7 @@ task main()
 		{
 			//-------------------------
 			e = SensorValue(sLightLeft) - SensorValue(sLightRight) - es;
-			u = (e  + (e - eOld) * 10) * 0.9;
+			u = (e * 1.5  + (e - eOld) * 10) * 0.7;
 			v = v - abs(u) * 0.8;
 			eOld = e;
 			vLeft = v - u;
@@ -132,15 +140,17 @@ void waitGRcolor()
 
 		getColorRGB(sLightLeft, redValue, greenValue, blueValue);
 		//if(getColorName(sColor) == colorGreen) break; // HERE IS A PROBLEM. IF WE CATCHE THE GREEN COLOR ROBOT SHOOLD GO AHEAD BUT FRONT HIM HERE IS UNATHERA ROBOT.
-		if ((greenValue >= 14) && (redValue <= 10) && (blueValue <= 10)) //&& (redValue < 5))
+		if ((greenValue >= 12) && (redValue <= 10) && (blueValue <= 10)) //&& (redValue < 5))
 		{
 			iGreen++;
 			if(iGreen >= 6)
 			{
 				playSound(soundBeepBeep);
 				setSensorMode(sLightLeft, modeEV3Color_Reflected );
-				vLeft  =  100;
-				vRight =  100;
+				do{
+				vRight = vLeft  =  getSpeedByDistance();
+				sleep(10);
+				}while(vRight == 0); //protects traffic incident on the intersection
 				sleep(400);
 				break;
 			}

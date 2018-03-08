@@ -15,15 +15,15 @@
 #define DEBUG
 
 #define ZONE_A -1
-#define ZONE_B 1
+#define ZONE_B  1
 //
-#define DIST_SHORT     150    // calculates minimum distance for short distance sensor
-#define DIST_MIN_IGNORE 50   // minimum of distance
-#define INTERVAL_SMALL 40     // sleep interval for release car
-#define INTERVAL_LONG  40     // sleep interval for new car
-#define IR_COUNT			 3      // repeats quantity
-#define SMART_MODE		 1
-#define ORD_MODE			 -1
+#define DIST_SHORT      150    // calculates minimum distance for short distance sensor
+#define DIST_MIN_IGNORE 80   // minimum of distance
+#define INTERVAL_SMALL  40     // sleep interval for release car
+#define INTERVAL_LONG   40     // sleep interval for new car
+#define IR_COUNT			  3      // repeats quantity
+#define SMART_MODE		  1
+#define ORD_MODE			  -1
 //
 // light
 const int vMaxLight = 40;
@@ -37,6 +37,7 @@ task counterA2();
 task counterB1();
 task counterB2();
 task Time();
+void distRelease(tSensors sensorName);
 
 void Switch(int direction);
 int selectZone(int startZone);
@@ -141,125 +142,80 @@ void Switch(int direction)
 	motor[mLightB] =0;
 }
 
+
+void distRelease(tSensors sensorName)
+{
+	const ubyte address = 0x02;
+	int d = MSDISTreadDist(sensorName, address);
+	int i = 0;
+
+	while(i < IR_COUNT)
+	{
+		while ((d > DIST_SHORT) || (d < DIST_MIN_IGNORE))
+		{
+			sleep(INTERVAL_LONG);
+			d = MSDISTreadDist(sensorName, address);
+			i = 0;
+		}
+		i++;
+	}
+	i = 0;
+	while(i < IR_COUNT)
+	{
+		while (((d <= DIST_SHORT) && (d >= DIST_MIN_IGNORE)) || (d == -1))
+		{
+			sleep(INTERVAL_LONG);
+			d = MSDISTreadDist(sensorName, address);
+			i = 0;
+		}
+		i++;
+	}
+}
+
+
 task counterA1()
 {
-	int d = 0 ;
-	int i =0;
-	ubyte address = 0x02;
+	const ubyte address = 0x02;
 	string type = MSDISTreadModuleType(sDistA1, address);
 	while(true)
 	{
-		while(i <=IR_COUNT){
-			while ((d  > DIST_SHORT)  || (d < DIST_MIN_IGNORE)){
-				sleep(INTERVAL_LONG);
-				d = MSDISTreadDist(sDistA1, address);
-				i =0;
-			}
-			i++;
-		}
-		i =0;
-		while(i <= IR_COUNT){
-			while ((d  <= DIST_SHORT)  && (d >= DIST_MIN_IGNORE)){
-				sleep(INTERVAL_LONG);
-				d = MSDISTreadDist(sDistA1, address);
-				i=0;
-			}
-			i++;
-		}
+		distRelease(sDistA1);
 		qA++;
-		i=0;
 	}
 }
 
 task counterA2()
 {
-	int d = 0 ;
-	int i =0;
-	ubyte address = 0x02;
+	const ubyte address = 0x02;
 	string type = MSDISTreadModuleType(sDistA2, address);
 	while(true)
 	{
-		while(i <=IR_COUNT){
-			while ((d  > DIST_SHORT)  || (d < DIST_MIN_IGNORE)){
-				sleep(INTERVAL_LONG);
-				d = MSDISTreadDist(sDistA2, address);
-				i =0;
-			}
-			i++;
-		}
-		i =0;
-		while(i <= IR_COUNT){
-			while ((d  <= DIST_SHORT)  && (d >= DIST_MIN_IGNORE)){
-				sleep(INTERVAL_LONG);
-				d = MSDISTreadDist(sDistA2, address);
-				i=0;
-			}
-			i++;
-		}
+		distRelease(sDistA2);
 		qA--;
 		countCar++;
-		i=0;
 	}
 }
 
 task counterB1()
 {
-	int d = 0 ;
-	int i = 0 ;
-	ubyte address = 0x02;
+	const ubyte address = 0x02;
 	string type = MSDISTreadModuleType(sDistB1, address);
 	while(true)
 	{
-		while(i <=IR_COUNT){
-			while ((d  > DIST_SHORT) || (d < DIST_MIN_IGNORE)){
-				sleep(INTERVAL_LONG);
-				d = MSDISTreadDist(sDistB1, address);
-				i =0;
-			}
-			i++;
-		}
-		i =0;
-		while(i <= IR_COUNT){
-			while ((d  <= DIST_SHORT)  && (d >= DIST_MIN_IGNORE)){
-				sleep(INTERVAL_LONG);
-				d = MSDISTreadDist(sDistB1, address);
-				i=0;
-			}
-			i++;
-		}
+		distRelease(sDistB1);
 		qB++;
-		i=0;
 	}
 }
 
 task counterB2()
 {
-	int i =0;
-	int d = 0 ;
-	ubyte address = 0x02;
+	const ubyte address = 0x02;
 	string type = MSDISTreadModuleType(sDistB2, address);
 	while(true)
 	{
-		while(i <= IR_COUNT){
-			while ((d  > DIST_SHORT) || (d < DIST_MIN_IGNORE)){
-				sleep(INTERVAL_LONG);
-				d = MSDISTreadDist(sDistB2, address);
-				i =0;
-			}
-			i++;
-		}
-		i =0;
-		while(i <= IR_COUNT){
-			while ((d  <= DIST_SHORT) && (d >= DIST_MIN_IGNORE)){
-				sleep(INTERVAL_LONG);
-				d = MSDISTreadDist(sDistB2, address);
-				i=0;
-			}
-			i++;
-		}
+		distRelease(sDistB2);
 		qB--;
 		countCar++;
-		i=0;
 	}
 }
 

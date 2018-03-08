@@ -41,7 +41,7 @@ task manageMotors()
 task main()
 {
 
-	//	SensorType[sColor] = sensorEV3_Color;
+	//SensorType[sColor] = sensorEV3_Color;
 	//SensorMode[sColor] = modeEV3Color_Color;
 	//wait1Msec(2000);
 	//SensorType[sColor] = sensorNone ;
@@ -53,9 +53,9 @@ task main()
 	//sleep(2000);
 	//----------------------------------
 
-	int e     			= 0;
-	int eOld  			= 0;
-	int u     			= 0;
+	float e     			= 0;
+	float eOld  			= 0;
+	float u     			= 0;
 	int v 					= vMax;
 	int i     			= 0;
 	int k						= 0;
@@ -70,8 +70,7 @@ task main()
 	{
 		v = getSpeedByDistance();
 		if(v ==0){
-			vLeft = 0;
-			vRight =0;
+			vRight = vLeft  = 0;
 			sleep(400);
 			continue;
 		}
@@ -80,9 +79,8 @@ task main()
 		while((SensorValue(sLightLeft) < BLACK_LINE) && (SensorValue(sLightRight) < BLACK_LINE))
 		{
 			k++;
-			vLeft  = v / 2;
-			vRight = v / 2;
-			sleep(1);
+			if( i % 2 == 0) vLeft = vRight  = v / 3 ;
+			sleep(5);
 		}
 
 		if (k >= 2)
@@ -90,8 +88,7 @@ task main()
 			i++;
 			if( i % 2 != 0)
 			{
-				vLeft  = 0; //vLeft / 2;
-				vRight = 0; //vRight / 2;
+				vLeft = vRight = 0;
 				waitGRcolor();
 			}
 			else
@@ -101,13 +98,13 @@ task main()
 		{
 			//-------------------------
 			e = SensorValue(sLightLeft) - SensorValue(sLightRight) - es;
-			u = (e * 1.5  + (e - eOld) * 10) * 0.7;
-			v = v - abs(u) * 0.8;
+			u = (e * 1.0  + (e - eOld) * 12.0) * 0.5;
+			v = v - abs(u) * 0.75;
 			eOld = e;
 			vLeft = v - u;
 			vRight = v + u;
-			displayBigTextLine(3,"e:%d u:%d v:%d",e,u,v);
-			displayBigTextLine(5,"%d %d",SensorValue[sLightLeft],SensorValue[sLightRight]);
+			//displayBigTextLine(3,"e:%d u:%d v:%d",e,u,v);
+			//displayBigTextLine(5,"%d %d",SensorValue[sLightLeft],SensorValue[sLightRight]);
 			//-------------------------
 		}
 		sleep(1);
@@ -147,11 +144,12 @@ void waitGRcolor()
 			{
 				playSound(soundBeepBeep);
 				setSensorMode(sLightLeft, modeEV3Color_Reflected );
+				int k = 0;
 				do{
 				vRight = vLeft  =  getSpeedByDistance();
-				sleep(10);
-				}while(vRight == 0); //protects traffic incident on the intersection
-				sleep(400);
+				if (vRight != 0) k++;
+				sleep(100);
+				}while ((vRight == 0) || (k < 4)); //protects traffic incident on the intersection
 				break;
 			}
 		}
@@ -167,19 +165,19 @@ void waitGRcolor()
 
 void findLine(){
 	while((SensorValue(sLightLeft) > BLACK_LINE) || (SensorValue(sLightRight) > BLACK_LINE)){
-		vRight = vLeft = getSpeedByDistance();
+		vRight = vLeft = getSpeedByDistance() / 1.5;
 		sleep(10);
 	}
 
 	while(SensorValue(sLightRight) < BLACK_LINE){
-		vRight = vLeft = getSpeedByDistance() /3;
+		vRight = vLeft = getSpeedByDistance() / 2;
 		sleep(10);
 	}
 
 	sleep(10);
 	while(SensorValue(sLightRight) > BLACK_LINE){
-		vLeft =  0;
-		vRight = 80;
+		vLeft  =  0;
+		vRight = 60;
 		sleep(10);
 	}
 

@@ -182,6 +182,7 @@ void distRelease(tSensors sensorName)
 
 	while(i < IR_COUNT)
 	{
+		d = MSDISTreadDist(sensorName, address);
 		while ((d > DIST_SHORT) || (d < DIST_MIN_IGNORE))
 		{
 			sleep(INTERVAL_LONG);
@@ -189,10 +190,12 @@ void distRelease(tSensors sensorName)
 			i = 0;
 		}
 		i++;
+		sleep(INTERVAL_LONG);
 	}
 	i = 0;
 	while(i < IR_COUNT)
 	{
+		d = MSDISTreadDist(sensorName, address);
 		while (((d <= DIST_SHORT) && (d >= DIST_MIN_IGNORE)) || (d == -1))
 		{
 			sleep(INTERVAL_LONG);
@@ -200,6 +203,7 @@ void distRelease(tSensors sensorName)
 			i = 0;
 		}
 		i++;
+		sleep(INTERVAL_LONG);
 	}
 }
 

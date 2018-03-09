@@ -9,7 +9,7 @@
 // includes
 //
 #include "mindsensors-irdist.h"
-
+#include "mindsensors-ev3lights.h"
 // defines
 //
 #define DEBUG
@@ -41,6 +41,8 @@ void distRelease(tSensors sensorName);
 
 void Switch(int direction);
 int selectZone(int startZone);
+void initLight(tSensors sensorName);
+void switchLights(int direction);
 
 #ifdef DEBUG
 task displayInfo();
@@ -56,10 +58,20 @@ int countCar   = 0;
 int time 			 = 0;
 int lightMode  = SMART_MODE;
 
+void initLight(tSensors sensorName)
+{
+	EV3Lights(sensorName, colorBlue, 0);
+	EV3Lights(sensorName, colorRed, 0);
+	EV3Lights(sensorName, colorGreen, 0);
+}
+
 task main()
 {
+	initLight(S1);
+	initLight(S4);
 
 	int activeZone = selectZone(ZONE_A);
+	switchLights(activeZone);
 	eraseDisplay();
 	displayTextLine(4,"initializing",);
 
@@ -121,10 +133,28 @@ task main()
 	}
 }
 
+void switchLights(int direction)
+{
+	if (direction == ZONE_B)  	{
+		EV3Lights(S4, colorRed, 254);
+		EV3Lights(S1, colorGreen, 254);
+		EV3Lights(S1, colorRed, 0);
+		} else {
+		EV3Lights(S1, colorRed, 254);
+		EV3Lights(S4, colorGreen, 254);
+		EV3Lights(S4, colorRed, 0);
+	}
+}
+
 void Switch(int direction)
 {
 	nMotorEncoder[mLightA] = 0;
 	nMotorEncoder[mLightB] = 0;
+
+	EV3Lights(S1, colorRed, 254);
+	EV3Lights(S1, colorGreen, 0);
+	EV3Lights(S4, colorRed, 254);
+	EV3Lights(S4, colorGreen, 0);
 
 	while( (abs(nMotorEncoder[mLightA]) < degreeA ) || ( abs(nMotorEncoder[mLightB]) < degreeB ) ){
 
@@ -140,6 +170,7 @@ void Switch(int direction)
 	}
 	motor[mLightA] =0;
 	motor[mLightB] =0;
+	switchLights(direction);
 }
 
 

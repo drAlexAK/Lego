@@ -10,7 +10,6 @@
 
 int BLACK_LINE_LEFT  = 0;
 int BLACK_LINE_RIGHT = 0;
-int esM[5] = {0,0,0,0,0};
 
 int const vMax  = 80;
 int vMin        = 0;
@@ -21,8 +20,8 @@ int vRight 			= 0;
 int getSpeedByDistance ();
 void waitGRcolor();
 void findLine();
-void celebrate();
-int f();
+void calibration();
+int getES();
 //---------------------
 
 long redValue;
@@ -36,8 +35,6 @@ int blueColor1 =0;
 int greenValue2 =0;
 int blueValue2 =0;
 int redValue2 =0;
-
-int es 					  = 0;
 
 task manageMotors()
 {
@@ -55,15 +52,13 @@ task manageMotors()
 }
 task main()
 {
-	sleep(2000);
+	sleep(3000);
 	startTask (manageMotors);
 	sleep(500);
-	celebrate();
+	calibration();
 	sleep(500);
 
 	//----------------------------------
-	int tmp = SensorValue(sLightRight) - SensorValue(sLightLeft);
-	sleep(500);
 
 	float e     			= 0;
 	float eOld  			= 0;
@@ -72,7 +67,7 @@ task main()
 	float in          = 0;
 	int iCross     	  = 0;
 	int k						  = 0;
-	es = f();
+	int es 						= getES();
 
 	findLine();
 	//----------------------------------
@@ -113,13 +108,11 @@ task main()
 			e = SensorValue(sLightRight) - SensorValue(sLightLeft) - es;
 			in = in + e /2500.0;
 			if ( fabs(in) > 10 ) in = sgn(in) * 10;
-			u = (e * 1  + (e - eOld) * 8.0) * 1.0 ;//+ in;
+			u = (e * 1  + (e - eOld) * 10.0) * 0.9 + in;
 			v = v - fabs(u) * 0.4;
 			eOld = e;
 			vLeft = v - u;
 			vRight = v + u;
-			//displayBigTextLine(3,"e:%d u:%d v:%d",e,u,v);
-			//displayBigTextLine(5,"%d %d",SensorValue[sLightRight],SensorValue[sLightLeft]);
 			//-------------------------
 		}
 		sleep(1);
@@ -150,20 +143,19 @@ void waitGRcolor()
 	sleep(10);
 	while(true){
 		getColorRGB(sLightRight, redValue, greenValue, blueValue);
-		//if(getColorName(sColor) == colorGreen) break; // HERE IS A PROBLEM. IF WE CATCHE THE GREEN COLOR ROBOT SHOOLD GO AHEAD BUT FRONT HIM HERE IS UNATHERA ROBOT.
-		if ((greenValue >= greenValue2) && (redValue <= redValue2) && (blueValue <= blueValue2)) //&& (redValue < 5))
+		if ((greenValue >= greenValue2) && (redValue <= redValue2) && (blueValue <= blueValue2))
 		{																																 //  R | 57 |  9 |  5
 			iGreen++;																											 //  G | 45 | 34 | 15
-			if(iGreen >= 3)																								 //  B | 43 | 17 | 10
+			if (iGreen >= 3)																							 //  B | 43 | 17 | 10
 			{																															 //      wh | up | down
 				playSound(soundBeepBeep);
 				setSensorMode(sLightRight, modeEV3Color_Reflected );
 				int k = 0;
 				do{
-					vRight = vLeft  =  getSpeedByDistance();
+					vRight = vLeft = getSpeedByDistance();
 					if (vRight != 0) k++;
 					sleep(100);
-				}while ((vRight == 0) || (k < 4)); //protects traffic incident on the intersection
+				} while ((vRight == 0) || (k < 4)); //protects traffic incident on the intersection
 					break;
 			}
 		}
@@ -199,7 +191,7 @@ void findLine(){
 
 }
 
-void celebrate(){
+void calibration(){
 
 	getColorRGB(sLightRight, redValue, greenValue, blueValue);
 	sleep(500);
@@ -216,7 +208,7 @@ void celebrate(){
 	nMotorEncoder[mLeft] = 0;
 	nMotorEncoder[mRight] = 0;
 
-	while((nMotorEncoder[mLeft] <= 80) && (nMotorEncoder[mRight] <= 80)) vLeft = vRight = 20;
+	while((nMotorEncoder[mLeft] <= 90) && (nMotorEncoder[mRight] <= 90)) vLeft = vRight = 20;
 	//sleep(3000);
 	vLeft = vRight =0;
 	int tmp = SensorValue(sLightLeft) - SensorValue(sLightRight);
@@ -225,20 +217,25 @@ void celebrate(){
 	BLACK_LINE_RIGHT = SensorValue(sLightRight) + 10;
 	playSound(soundBeepBeep);
 
-	greenValue2 = greenColor1 - 13;
+	greenValue2 = greenColor1 - 15;
 	redValue2 = redColor1 + 2;
 	blueValue2 = blueColor1 + 2;
 
-	while((nMotorEncoder[mLeft] <= 160) && (nMotorEncoder[mRight] <= 160)) vLeft = vRight = 20;
+	while((nMotorEncoder[mLeft] <= 180) && (nMotorEncoder[mRight] <= 180)) vLeft = vRight = 20;
 
 	playSound(soundBeepBeep);
 	vLeft = vRight =0;
 }
 
-int f(){
+int getES(){
+	int tmp = SensorValue(sLightRight) - SensorValue(sLightLeft);
+	sleep(500);
+
+	int es =0;
+
 	for(int i =0; i< 5; i++ ){
-		esM[i] = SensorValue(sLightRight) - SensorValue(sLightLeft);
+		es += SensorValue(sLightRight) - SensorValue(sLightLeft);
 		sleep(100);
 	}
-	return (esM[0] + esM[1] +esM[2] +esM[3] +esM[4]) /5;
+	return es/5;
 }

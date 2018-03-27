@@ -226,7 +226,7 @@ task counterA2()
 	while(true)
 	{
 		distRelease(sDistA2);
-		qA--;
+		if (qA > 0) qA--;
 		countCar++;
 	}
 }
@@ -249,7 +249,7 @@ task counterB2()
 	while(true)
 	{
 		distRelease(sDistB2);
-		qB--;
+		if (qB > 0) qB--;
 		countCar++;
 	}
 }

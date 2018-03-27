@@ -18,10 +18,10 @@
 #define ZONE_B  1
 //
 #define DIST_SHORT      150    // calculates minimum distance for short distance sensor
-#define DIST_MIN_IGNORE 80   // minimum of distance
+#define DIST_MIN_IGNORE 80     // minimum of distance
 #define INTERVAL_SMALL  40     // sleep interval for release car
-#define INTERVAL_LONG   40     // sleep interval for new car
-#define IR_COUNT			  3      // repeats quantity
+#define INTERVAL_LONG   20     // sleep interval for new car
+#define IR_COUNT			  2      // repeats quantity
 #define SMART_MODE		  1
 #define ORD_MODE			  -1
 //
@@ -124,7 +124,7 @@ task main()
 			}
 		}
 		else{
-			if(time % 10 == 0) {
+			if(time % 15 == 0) {
 				activeZone = activeZone * -1;
 				Switch(activeZone);
 				while(time % 10 == 0) sleep(1);
@@ -177,7 +177,7 @@ void Switch(int direction)
 void distRelease(tSensors sensorName)
 {
 	const ubyte address = 0x02;
-	int d = MSDISTreadDist(sensorName, address);
+	int d = 0;
 	int i = 0;
 
 	while(i < IR_COUNT)

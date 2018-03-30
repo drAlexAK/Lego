@@ -127,7 +127,7 @@ task main()
 			if(time % 15 == 0) {
 				activeZone = activeZone * -1;
 				Switch(activeZone);
-				while(time % 10 == 0) sleep(1);
+				while(time % 15 == 0) sleep(1);
 			}
 		}
 	}

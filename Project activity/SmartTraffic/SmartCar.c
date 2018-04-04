@@ -21,7 +21,8 @@ int vRight 			= 0;
 //---------------------
 int getSpeedByDistance ();
 void waitGRcolor();
-void findLine();
+void findLineLeft();
+void findLineRight();
 void calibration();
 int getES();
 //---------------------
@@ -54,7 +55,7 @@ task manageMotors()
 }
 task main()
 {
-	sleep(3000);
+	sleep(30000);
 	startTask (manageMotors);
 	sleep(500);
 	calibration();
@@ -71,7 +72,7 @@ task main()
 	int k						  = 0;
 	int es 						= getES();
 
-	findLine();
+	findLineRight();
 	//----------------------------------
 	//----------------------------------
 	while(true)
@@ -177,7 +178,7 @@ void waitGRcolor()
 	setSensorMode(sLightRight, modeEV3Color_Reflected );
 }
 
-void findLine(){
+void findLineLeft(){
 	while((SensorValue(sLightRight) > BLACK_LINE_RIGHT) || (SensorValue(sLightLeft) > BLACK_LINE_LEFT)){
 		vRight = vLeft = getSpeedByDistance() / 1.5;
 		sleep(10);
@@ -192,6 +193,28 @@ void findLine(){
 	while(SensorValue(sLightRight) > BLACK_LINE_RIGHT){
 		vLeft  = -40;
 		vRight =  40;
+		sleep(10);
+	}
+	vMin = 0;
+	vRight = vLeft = getSpeedByDistance();
+
+}
+
+void findLineRight(){
+	while((SensorValue(sLightRight) > BLACK_LINE_RIGHT) || (SensorValue(sLightLeft) > BLACK_LINE_LEFT)){
+		vRight = vLeft = getSpeedByDistance() / 1.5;
+		sleep(10);
+	}
+
+	while(SensorValue(sLightLeft) < BLACK_LINE_RIGHT){
+		vRight = vLeft = getSpeedByDistance() / 2;
+		sleep(10);
+	}
+	vMin = -40;
+	sleep(10);
+	while(SensorValue(sLightLeft) > BLACK_LINE_RIGHT){
+		vLeft  = 40;
+		vRight = -40;
 		sleep(10);
 	}
 	vMin = 0;

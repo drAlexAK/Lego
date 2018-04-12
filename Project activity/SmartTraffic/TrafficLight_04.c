@@ -9,7 +9,7 @@
 // includes
 //
 #include "mindsensors-irdist.h"
-#include "mindsensors-ev3lights.h"
+#include "mindsensors-ev3lights.h"]
 // defines
 //
 #define DEBUG

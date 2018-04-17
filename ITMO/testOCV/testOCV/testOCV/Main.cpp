@@ -1,7 +1,4 @@
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
-#include <conio.h>
+
 #include "opencv2/video/tracking.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/videoio.hpp"
@@ -116,7 +113,7 @@ void BFS(Mat& imge, point& start_point, vector<vector<int>>& comp, int comp_now,
 				queue.push(new_point);
 			}
 		}
-		if (comp[last_point.y + 1][last_point.x] == 0)
+		if (comp[last_point.y + 1][last_point.x] == 0)// here is a problem <<<<---------------------------------------------------
 		{
 			new_point.x = last_point.x;
 			new_point.y = last_point.y + 1;
@@ -165,7 +162,7 @@ void comp_init(vector<vector<int>>& comp, int x, int y)
 	comp.push_back(new_line1);
 }
 
-color point_to_color(Mat& img, point& point)
+color getColorByPoint(Mat& img, point& point)
 {
 	color color;
 	color.R = img.at<cv::Vec3b>(point.y - 1, point.x - 1)[2];

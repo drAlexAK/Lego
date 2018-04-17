@@ -177,13 +177,13 @@ int main()
 	colorPattern cPattern = colorPattern(color(0,0,0), color(50,70,100));
 	color newColor = color(100,0,0);
 
-	vector<vector<int>> used;
-
     Mat_<Vec3b> image;
 
-	comp_init(used,image.cols,image.rows);
-
 	VideoCapture cap(0);
+	
+	vector<vector<int>> used;
+
+	comp_init(used,image.cols,image.rows);	
 	
 	char c = cvWaitKey(20);
 

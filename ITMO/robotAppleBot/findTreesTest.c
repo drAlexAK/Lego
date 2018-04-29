@@ -9,13 +9,14 @@
 #include "alex-common.h"
 //varieblas
 //int vMax = 60;
-int vBase = 50;
+int vBase = 40;
 //int vMin = 0;
 int vLeft  = 50;
 int vRight = 50;
 //
+#define DIST_START_ROBOT    360
 #define DIST_TREE_NORM  		280
-#define DIST_HOPE_TREE_MIN  100
+#define DIST_BETWEEN_FENCE_TREE  100
 #define DIST_FRONT_MIN 			20
 #define DEGREES_360_ENC 		4250
 #define CM40_ENC 						1950
@@ -27,14 +28,15 @@ int vRight = 50;
 //function
 //int getSpeedByFrontDistance();
 void findTrees();
-int initDistRight();
+int getDistRight();
 void goAheadMM(int dist);
-void startInit();
+void startRobotPos();
 void turnRobotDegree(int deg);
 int getAngelDeviationDegree(int errorDist, int testLenght);
 void robotAngelCalibration(int lenght);
 void goToTree(int dist);
 int getLimitSpeed(int speedMin, int speedMax, int currentEnc, int targetEnc);
+void goAheadEncoder(int enc);
 //tasks
 task controlMotors();
 //
@@ -43,19 +45,18 @@ task main()
 {
 	sleep(7000);
 	startTask(controlMotors);
-	//turnRobotDegree(90);
-	//sleep(3000);
-	//turnRobotDegree(360);
-	//sleep(3000);
-	//turnRobotDegree(180);
-	//startInit();
-	for(int i =0; i< 5 ; i++){
-		robotAngelCalibration(50);
-	sleep(1000);
-	}
+	/* test go back
+	goAheadEncoder(-1500);
+	vRight = vLeft = 0;
+	stopAllTasks();
+	*/
+	startRobotPos();
+	sleep(300);
+	robotAngelCalibration(100);
+	sleep(300);
+	findTrees();
+	sleep(300);
 
-	sleep(1000);
-	//findTrees();
 	vRight = vLeft = 0;
 	stopAllTasks();
 }
@@ -76,7 +77,7 @@ task controlMotors()
 
 void findTrees()
 {
-	int eNorm = initDistRight();
+	int eNorm = getDistRight();
 	if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
 	int e =0;
 	int u =0;
@@ -84,29 +85,45 @@ void findTrees()
 	int v =0;
 	int dist =0;
 	int i =0;
+	bool treeIsFind = false;
+	int encPos =0;
 
 	while(true){
 		e = eNorm - MSDISTreadDist(sFrontRight);
-		while(abs(e) > DIST_HOPE_TREE_MIN){
+		// error must be great then different distance between fence and tree
+		while(((e >= DIST_BETWEEN_FENCE_TREE) && (!treeIsFind)) ||
+			((e <= -1 * DIST_BETWEEN_FENCE_TREE) && (treeIsFind))){
 			i++;
 			if(i > 3 ){
 				vLeft = vRight = 0;
 				playSound(soundBeepBeep);
-				sleep(1000);
+				sleep(300);
 				dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
-				goToTree(dist);
-				return;
+				if( !treeIsFind ){
+					goToTree(dist);
+					nMotorEncoder[mLeft] =0;
+					nMotorEncoder[mRight] =0;
+					i =0;
+					eNorm = MSDISTreadDist(sFrontRight);
+					treeIsFind = true;
+					break;
+					}else{
+					goAheadEncoder(-1* encPos / 2);
+					return;
+				}
 			}
-			sleep(20);
+
+			sleep(30);
 			e = eNorm - MSDISTreadDist(sFrontRight);
 		}
+		if( treeIsFind) encPos = nMotorEncoder[mLeft];
 		i = 0;
 		u = (e  + ((e - eOld) * 8)) / 4;
 		v = vBase - (u * 0.5);
 		vLeft = v ;//- u;
 		vRight = v ;//+ u;
 		eOld = e;
-		sleep(20);
+		sleep(30);
 	}
 }
 
@@ -128,7 +145,7 @@ int initDistRightOld(){
 	return sum / attempt;
 }
 
-int initDistRight(){
+int getDistRight(){
 	int d = MSDISTreadDist(sFrontRight);
 	const int attempt = 5;
 	int a[attempt];
@@ -164,37 +181,37 @@ void turnRobotDegree(int deg){
 	vLeft = 0;
 	vRight = 0;
 }
-
 void goAheadMM(int dist){ //MM
-	int enc = (CM40_ENC * dist) / 400;
+	goAheadEncoder((CM40_ENC * dist) / 400);
+}
+
+void goAheadEncoder(int enc){ //encoder
 	nMotorEncoder[mLeft] =0;
 	int currentEnc = nMotorEncoder[mLeft];
 	int speed = 0 ;
-	while(currentEnc < enc){
-		vLeft = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
-		vRight = vLeft;
-		currentEnc = nMotorEncoder[mLeft];
+	if (enc > 0) {
+		while(currentEnc < enc){
+			vLeft = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
+			vRight = vLeft;
+			currentEnc = nMotorEncoder[mLeft];
+		}
+		}else{
+		while(currentEnc > enc){
+			vLeft = -1 * getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
+			vRight = vLeft;
+			currentEnc = nMotorEncoder[mLeft];
+		}
 	}
 	vLeft = 0;
 	vRight = 0;
 }
 
-void startInit(){
-	int d = MSDISTreadDist(sFrontRight);
-	int i =0;
-
-	for(int k =0; k < 3; k++ ){
-		sleep(100);
-		d =  MSDISTreadDist(sFrontRight);
-		if(d < DIST_TREE_NORM){
-			i++;
-		}
-	}
-
-	if(i == 3){
+void startRobotPos(){
+	int d = getDistRight();
+	if( d < DIST_START_ROBOT ){
 		turnRobotDegree(-90);
 		sleep(1000);
-		goAheadMM(DIST_TREE_NORM - abs(d));
+		goAheadMM(DIST_START_ROBOT - abs(d));
 		sleep(1000);
 		turnRobotDegree(90);
 	}
@@ -205,24 +222,27 @@ int getAngelDeviationDegree(int errorDist, int testLenght){
 }
 
 void robotAngelCalibration(int lenght){
-	int d1 = initDistRight();
+	int d1 = getDistRight();
 	goAheadMM(lenght);
-	int d2 = initDistRight();
+	int d2 = getDistRight();
 	int deg = sgn(d2 - d1) * getAngelDeviationDegree(abs(d2 - d1), lenght);//mm
 	if (abs(deg) > 3 ) 	turnRobotDegree(deg);
 }
 
 void goToTree(int dist){
 	turnRobotDegree(sgn(dist) * 90);
-	sleep(1000);
+	sleep(300);
 	goAheadMM(abs(dist));
-	sleep(1000);
+	sleep(300);
 	turnRobotDegree(-1 * sgn(dist) * 90);
 }
 
 // speed limiter
 int getLimitSpeed(const int speedMin, const int speedMax, const int currentEnc, const int targetEnc){
-	const int maxEnc = 540;
+	const int maxEnc = 360; //540
+	//int direction = sgn(targetEnc);
+	currentEnc = abs(currentEnc);
+	targetEnc = abs (targetEnc);
 
 	if(targetEnc < currentEnc) currentEnc = targetEnc;
 	if((currentEnc >= maxEnc) && (currentEnc <= targetEnc - maxEnc)) return speedMax;
@@ -230,7 +250,7 @@ int getLimitSpeed(const int speedMin, const int speedMax, const int currentEnc, 
 	if(targetEnc < (maxEnc * 2)){
 		int accel = (speedMax - speedMin) / maxEnc;
 		speedMax = ((targetEnc / 2) * accel) + speedMin;
-	} else {
+		} else {
 		if (currentEnc > maxEnc) currentEnc -= (targetEnc - (maxEnc*2));
 		targetEnc = (maxEnc * 2);
 	}

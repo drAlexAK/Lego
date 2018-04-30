@@ -9,12 +9,14 @@
 #include "alex-common.h"
 //varieblas
 //int vMax = 60;
-int vBase = 40;
+int vBase = 50;
 //int vMin = 0;
 int vLeft  = 50;
 int vRight = 50;
 //
-#define DIST_START_ROBOT    360
+//#define DEBUG
+//
+#define DIST_START_ROBOT    400
 #define DIST_TREE_NORM  		280
 #define DIST_BETWEEN_FENCE_TREE  100
 #define DIST_FRONT_MIN 			20
@@ -28,7 +30,8 @@ int vRight = 50;
 //function
 //int getSpeedByFrontDistance();
 void findTrees();
-int getDistRight();
+int getDistRightMedian();
+int getDistRightAverage();
 void goAheadMM(int dist);
 void startRobotPos();
 void turnRobotDegree(int deg);
@@ -37,6 +40,7 @@ void robotAngelCalibration(int lenght);
 void goToTree(int dist);
 int getLimitSpeed(int speedMin, int speedMax, int currentEnc, int targetEnc);
 void goAheadEncoder(int enc);
+int convertEncoderAheadToMM(int encoder);
 //tasks
 task controlMotors();
 //
@@ -51,11 +55,17 @@ task main()
 	stopAllTasks();
 	*/
 	startRobotPos();
+#ifdef DEBUG
 	sleep(300);
+#endif
 	robotAngelCalibration(100);
+#ifdef DEBUG
 	sleep(300);
+#endif
 	findTrees();
+#ifdef DEBUG
 	sleep(300);
+#endif
 
 	vRight = vLeft = 0;
 	stopAllTasks();
@@ -75,59 +85,105 @@ task controlMotors()
 	}
 }
 
-void findTrees()
+void findTreesOld()
 {
-	int eNorm = getDistRight();
+	int eNorm = getDistRightMedian();
 	if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
 	int e =0;
 	int u =0;
 	int eOld =e;
 	int v =0;
-	int dist =0;
 	int i =0;
 	bool treeIsFind = false;
-	int encPos =0;
+	int encPos = 0;
+	int distBeginTree = 0;
+	int distEndTree = 0;
 
 	while(true){
 		e = eNorm - MSDISTreadDist(sFrontRight);
 		// error must be great then different distance between fence and tree
 		while(((e >= DIST_BETWEEN_FENCE_TREE) && (!treeIsFind)) ||
-			((e <= -1 * DIST_BETWEEN_FENCE_TREE) && (treeIsFind))){
+			((abs(e) >= DIST_BETWEEN_FENCE_TREE) && (treeIsFind))){
 			i++;
-			if(i > 3 ){
+			if(i > 2 ){
 				vLeft = vRight = 0;
 				playSound(soundBeepBeep);
 				sleep(300);
-				dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
 				if( !treeIsFind ){
+					int dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
 					goToTree(dist);
 					nMotorEncoder[mLeft] =0;
 					nMotorEncoder[mRight] =0;
-					i =0;
+					i = 0;
 					eNorm = MSDISTreadDist(sFrontRight);
+					distBeginTree = eNorm;
 					treeIsFind = true;
 					break;
 					}else{
-					goAheadEncoder(-1* encPos / 2);
+					encPos = nMotorEncoder[mLeft];
+					goAheadMM(-100);
+					int lenght = convertEncoderAheadToMM(encPos) - 100;
+					distEndTree = getDistRightMedian();
+					int errPosition = distEndTree - distBeginTree;
+					int deg = sgn(errPosition) * getAngelDeviationDegree(abs(errPosition), lenght);//mm
+					if (abs(deg) > 3 ) 	turnRobotDegree(deg);
 					return;
 				}
 			}
-
 			sleep(30);
 			e = eNorm - MSDISTreadDist(sFrontRight);
 		}
-		if( treeIsFind) encPos = nMotorEncoder[mLeft];
+		if( treeIsFind ){
+			encPos = nMotorEncoder[mLeft];
+			distEndTree = eNorm - e;
+		}
 		i = 0;
-		u = (e  + ((e - eOld) * 8)) / 4;
+		u = (e  + ((e - eOld) / 4 )) / 3;
 		v = vBase - (u * 0.5);
-		vLeft = v ;//- u;
-		vRight = v ;//+ u;
+		vLeft =  v ;// - u;
+		vRight = v ;// + u;
 		eOld = e;
 		sleep(30);
 	}
 }
 
-int initDistRightOld(){
+void findTrees()
+{
+	int eNorm = getDistRightMedian();
+	//if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
+	int e =0;
+	int i =0;
+
+	vLeft =  vRight = vBase ;
+
+	while(true){
+		e = eNorm - MSDISTreadDist(sFrontRight);
+		// error must be great then different distance between fence and tree
+		while(e >= DIST_BETWEEN_FENCE_TREE){
+			vLeft =  vRight = vBase / 2;
+			i++;
+			if(i > 2 ){
+				vLeft = vRight = 0;
+#ifdef DEBUG
+				playSound(soundBeepBeep);
+				sleep(300);
+#endif
+				//goAheadMM(50);
+				robotAngelCalibration(100);
+				int dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
+				goToTree(dist);
+				return;
+			}
+			sleep(30);
+			e = eNorm - MSDISTreadDist(sFrontRight);
+		}
+		i = 0;
+		sleep(30);
+	}
+}
+
+
+int getDistRightAverage(){
 	int d = MSDISTreadDist(sFrontRight);
 	int sum =0;
 	int attempt = 5;
@@ -145,7 +201,7 @@ int initDistRightOld(){
 	return sum / attempt;
 }
 
-int getDistRight(){
+int getDistRightMedian(){
 	int d = MSDISTreadDist(sFrontRight);
 	const int attempt = 5;
 	int a[attempt];
@@ -181,6 +237,11 @@ void turnRobotDegree(int deg){
 	vLeft = 0;
 	vRight = 0;
 }
+
+int convertEncoderAheadToMM(int encoder) {
+	return (400 * CM40_ENC) / encoder;
+}
+
 void goAheadMM(int dist){ //MM
 	goAheadEncoder((CM40_ENC * dist) / 400);
 }
@@ -207,12 +268,16 @@ void goAheadEncoder(int enc){ //encoder
 }
 
 void startRobotPos(){
-	int d = getDistRight();
+	int d = getDistRightMedian();
 	if( d < DIST_START_ROBOT ){
 		turnRobotDegree(-90);
-		sleep(1000);
+#ifdef DEBUG
+		sleep(300);
+#endif
 		goAheadMM(DIST_START_ROBOT - abs(d));
-		sleep(1000);
+#ifdef DEBUG
+		sleep(300);
+#endif
 		turnRobotDegree(90);
 	}
 }
@@ -222,18 +287,23 @@ int getAngelDeviationDegree(int errorDist, int testLenght){
 }
 
 void robotAngelCalibration(int lenght){
-	int d1 = getDistRight();
+	int d1 = getDistRightMedian();
 	goAheadMM(lenght);
-	int d2 = getDistRight();
+	int d2 = getDistRightMedian();
 	int deg = sgn(d2 - d1) * getAngelDeviationDegree(abs(d2 - d1), lenght);//mm
 	if (abs(deg) > 3 ) 	turnRobotDegree(deg);
 }
 
+
 void goToTree(int dist){
 	turnRobotDegree(sgn(dist) * 90);
+#ifdef DEBUG
 	sleep(300);
+#endif
 	goAheadMM(abs(dist));
+#ifdef DEBUG
 	sleep(300);
+#endif
 	turnRobotDegree(-1 * sgn(dist) * 90);
 }
 
@@ -262,5 +332,4 @@ int getLimitSpeed(const int speedMin, const int speedMax, const int currentEnc, 
 		}else{
 		return (speedMin + (speedMax - speedMin) * (100 - percentComplete) / 100);
 	}
-
 }

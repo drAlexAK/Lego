@@ -23,7 +23,7 @@ int vRight = 50;
 #define DEGREES_360_ENC 		4250
 #define CM40_ENC 						1950
 // the lowest body speed limit
-#define M_BODY_SPEED_MIN 15
+#define M_BODY_SPEED_MIN 17
 // the highest body speed limit
 #define M_BODY_SPEED_MAX 50
 
@@ -74,7 +74,7 @@ task main()
 task controlMotors()
 {
 	while(1){
-		int s =SensorValue(sFront);
+		int s =SensorValue(sFront) * 10 ;
 		if((s< DIST_FRONT_MIN) && ((vLeft > 0) && (vRight > 0))){
 			motor[mLeft] = 0;
 			motor[mRight] = 0;
@@ -160,7 +160,7 @@ void findTrees()
 		e = eNorm - MSDISTreadDist(sFrontRight);
 		// error must be great then different distance between fence and tree
 		while(e >= DIST_BETWEEN_FENCE_TREE){
-			vLeft =  vRight = vBase / 2;
+			vLeft =  vRight = M_BODY_SPEED_MIN;
 			i++;
 			if(i > 2 ){
 				vLeft = vRight = 0;
@@ -168,10 +168,14 @@ void findTrees()
 				playSound(soundBeepBeep);
 				sleep(300);
 #endif
-				//goAheadMM(50);
-				robotAngelCalibration(100);
 				int dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
-				goToTree(dist);
+				if (abs(dist) > 10)
+				{
+					goAheadMM(-50);
+					goToTree(dist);
+					goAheadMM(50);
+				}
+				robotAngelCalibration(80);
 				return;
 			}
 			sleep(30);

@@ -40,7 +40,6 @@ void turnRobotDegree(int deg);
 int getAngelDeviationDegree(int errorDist, int testLenght);
 void robotAngelCalibration(int lenght);
 void goToTree(int dist);
-
 void goAheadEncoder(int enc);
 int convertEncoderAheadToMM(int encoder);
 void goAheadEncoderArm(int enc, int m);
@@ -311,33 +310,10 @@ void goToTree(int dist){
 	turnRobotDegree(-1 * sgn(dist) * 90);
 }
 //----------------------------------------------------------------------------------
-void rotatePlatform(int deg){
 
-	nMotorEncoder[mLeft] =0;
-	int	enc = (DEGREES_360_ENC * deg) / 360;
-	int currentEnc = nMotorEncoder[mLeft];
-	int speed = 0 ;
-	if(enc > 0){
-		while(currentEnc < enc){
-			speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
-			vLeft = speed;
-			vRight = -1 * speed;
-			currentEnc = nMotorEncoder[mLeft];
-		}
-		} else {
-		while(currentEnc > enc){
-			speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
-			vLeft = -1 * speed;
-			vRight = speed;
-			currentEnc = nMotorEncoder[mLeft];
-		}
-	}
-	vLeft = 0;
-	vRight = 0;
-}
 
 //----------------------------------------------------------------------------------
-void goAheadEncoderArm(int enc,int m){ //encoder
+/*void goAheadEncoderArm(int enc,int m){ //encoder
 	nMotorEncoder[mLeft] =0;
 	int currentEnc = nMotorEncoder[mLeft];
 	int speed = 0 ;
@@ -358,4 +334,4 @@ void goAheadEncoderArm(int enc,int m){ //encoder
 	}
 	vLeft = 0;
 	vRight = 0;
-}
+}*/

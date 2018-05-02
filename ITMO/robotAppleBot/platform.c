@@ -8,6 +8,7 @@
 #include "mindsensors-irdist.h"
 #include "alex-common.h"
 #include "shared.h"
+#include "nxtPipe.h"
 //varieblas
 //int vMax = 60;
 int vBase = 50;
@@ -56,14 +57,21 @@ task ParkingPL();
 
 task main()
 {
-	sleep(7000);
-//startTask(controlMotors);
-movePL(-110);
-movePL(100);
-sleep(3000);
-
-Parking();
-/*startRobotPos();
+	sleep(3000);
+	/*//startTask(controlMotors);
+	movePL(-110);
+	movePL(100);
+	sleep(3000);
+	*/
+	InitialyzePipe();
+	while(true){
+		sendCommand(CMD_UP_ARM, 40);
+		sendCommand(CMD_ROTATE_PLATFORM, 90);
+		sendCommand(CMD_PARK_ALL, 0);
+		sleep(1000);
+	}
+	//Parking();
+	/*startRobotPos();
 #ifdef DEBUG
 	sleep(300);
 #endif

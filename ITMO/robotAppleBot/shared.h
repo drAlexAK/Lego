@@ -1,10 +1,23 @@
 
+#include "nxtPipe.h"
+
+#define COMMAND_MSG_SIZE 5
+
 typedef enum COMMAND {
 	CMD_ROTATE_PLATFORM = 1,
 	CMD_UP_ARM					= 2,
-	CMD_UP_LANDLE				= 3
+	CMD_UP_LANDLE				= 3,
+	CMD_PARK_ALL				= 4
 } COMMAND;
 
+typedef char commandMsg[5];
+
+bool sendCommand(COMMAND cmd, int value){
+	commandMsg msg;
+	msg[0] = cmd;
+	memcpy(&msg[1], &value, sizeof(int) * 1);
+	return SendMsg(&msg[0], COMMAND_MSG_SIZE, true, 3, 15000);
+}
 
 int getLimitSpeed(const int speedMin, int speedMax, int currentEnc, int targetEnc);
 

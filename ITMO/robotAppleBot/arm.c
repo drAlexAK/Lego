@@ -31,6 +31,7 @@ void Parking();
 task ParkingArm();
 task ParkingRotation();
 task ParkingLandle();
+void executeCMD(COMMAND cmd,int value);
 //----------------------------
 int  CurrentPositionArmEnc 			= 0;
 int  CurrentPositionRotationEnc = 0;
@@ -39,7 +40,30 @@ bool CurrentPositionLandle 			= true;
 
 task main()
 {
+	int id =0;
+	COMMAND cmd ;
+	int value =0;
 
+	InitialyzePipe();
+
+
+	while(true){
+		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
+			id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
+			if(inDelivery.Size == COMMAND_MSG_SIZE + MSG_HEADER_SIZE){
+				cmd =(COMMAND)inDelivery.Msg[MSG_HEADER_SIZE];
+				memcpy(&value, inDelivery.Msg[MSG_HEADER_SIZE + 1], sizeof(int) * 1);
+				executeCMD(cmd, value);
+				if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
+					inDelivery.Status = (MSG_STATUS) MSG_STATUS_COMPLETED;
+				}
+				SendCompleteReplayMsg(id);
+			}
+		}
+		sleep(200);
+	}
+
+	/*
 	sleep(3000);
 
 	//rotatePlatform(-180);
@@ -66,10 +90,29 @@ task main()
 	sleep(300);
 #endif
 	//rotatePlatform(180);
-
+	*/
 	Parking();
 
 	stopAllTasks();
+}
+
+void executeCMD(COMMAND cmd,int value){
+	switch (cmd)
+	{
+	case CMD_UP_ARM:
+		upArmMM(value);
+		break;
+	case CMD_ROTATE_PLATFORM:
+		rotatePlatform(value);
+		break;
+	case CMD_UP_LANDLE:
+		upLandle((bool) value);
+		break;
+	case CMD_PARK_ALL:
+	default:
+		Parking();
+		break;
+	}
 }
 
 void Parking(){

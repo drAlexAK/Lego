@@ -56,6 +56,7 @@ typedef struct {
 	char Msg[36];
 	MSG_STATUS Status;
 } Delivery;
+
 //---------------------------------------
 ubyte msgLastID = 0;
 /**
@@ -68,15 +69,12 @@ ubyte GetCheckSumm(ubyte *a, int size);
 /**
 * configure S4 port for communiction
 */
-void Initialyze();
+void InitialyzePipe();
 /**
 * send completed replay message
 * @id incomming message id
 */
-void SendCompleteReplayMsg(ubyte msgId)
-{
-	SendReplayMsg(id, MSG_STATUS_COMPLETED);
-}
+void SendCompleteReplayMsg(ubyte msgId);
 /**
 * send replay message
 * @id incomming message id
@@ -91,8 +89,8 @@ void SendReplayMsg(ubyte id, MSG_STATUS status);
 void SendSafe(char *msg, ubyte size);
 task ReadMsg();
 //-------------------
-Delivery outgoingDelivery;
-Delivery incommingDelivery;
+Delivery outDelivery;
+Delivery inDelivery;
 int UnknowMessageCounter = 0; /* contains numbers of incomming messages unknow type */
 bool lockSend = false; 				/* multithreading synchronization */
 //---------------------------------------
@@ -111,7 +109,9 @@ ubyte GetCheckSumm(ubyte *a, int size){
 }
 
 bool SendMsg(ubyte *body, int size, bool waitComplete, int attempts, int timeOut){
+
 	Delivery d;
+	msgLastID++;
 	d.Status = MSG_STATUS_SENT;
 	d.Attempts = 1;
 	msgHeader header;
@@ -127,16 +127,16 @@ bool SendMsg(ubyte *body, int size, bool waitComplete, int attempts, int timeOut
 	if (timeOut !=0) clearTimer(T1); // start timer
 
 	SendSafe(d.Msg, d.Size);
-	memcpy(outgoingDelivery , d, sizeof(d) );
+	memcpy(outDelivery, d, sizeof(d) );
 
-	while (((d.Status != MSG_STATUS_COMPLETED) && (waitComplete)) ||
-		((d.Status != MSG_STATUS_DELIVERED) && (waitComplete == false)))
+	while (((outDelivery.Status != MSG_STATUS_COMPLETED) && (waitComplete)) ||
+		((outDelivery.Status != MSG_STATUS_DELIVERED) && (waitComplete == false)))
 	{
 		if ((timeOut !=0) && (time1[T1] >= timeOut)) return false; // timeout is exceeded
-			if (d.Status == MSG_STATUS_ERROR) {
-			if ((attempts != 0) && (d.Attempts >= attempts)) return false; // attempts are exceeded
-				d.Attempts++;
-			d.Status = MSG_STATUS_SENT;
+			if (outDelivery.Status == MSG_STATUS_ERROR) {
+			if ((attempts != 0) && (outDelivery.Attempts >= attempts)) return false; // attempts are exceeded
+				outDelivery.Attempts++;
+			outDelivery.Status = MSG_STATUS_SENT;
 			SendSafe(d.Msg, d.Size);
 		}
 		sleep(100);
@@ -168,35 +168,29 @@ task ReadMsg(){
 			sleep(100); /* waiting messages */
 		nxtReadRawHS(header, MSG_HEADER_SIZE);
 		if(header[MSG_HEAD_INDEX_TYPE] == RPL_TYPE){ /* analyze reply message */
-			if (outgoingDelivery.Msg[MSG_HEAD_INDEX_ID] == header[RPL_HEAD_INDEX_ID])
-				outgoingDelivery.Status = (MSG_STATUS) header[RPL_HEAD_INDEX_STATUS]; /* sets outgoing message status */
+			if (outDelivery.Msg[MSG_HEAD_INDEX_ID] == header[RPL_HEAD_INDEX_ID])
+				outDelivery.Status = (MSG_STATUS) header[RPL_HEAD_INDEX_STATUS]; /* sets outgoing message status */
 		}
 		else if (header[MSG_HEAD_INDEX_TYPE] == MSG_TYPE){ /* analyze incomming message */
 			memcpy(d.Msg, header, sizeof(ubyte) * MSG_HEADER_SIZE);
+			cs = 0; /* set 0 check summ for body less messages */
 			d.Attempts = 0;
 			d.Status = MSG_STATUS_DELIVERED;
-			if (header[MSG_HEAD_INDEX_BODY_SIZE] == 0) {
-				d.Size = MSG_HEADER_SIZE;
-				} else {
-				while (nxtGetAvailHSBytes() < (byte)header[MSG_HEAD_INDEX_BODY_SIZE])
+			d.Size = MSG_HEADER_SIZE + header[MSG_HEAD_INDEX_BODY_SIZE];
+			if (header[MSG_HEAD_INDEX_BODY_SIZE] > 0) {
+				while (nxtGetAvailHSBytes() < (byte) header[MSG_HEAD_INDEX_BODY_SIZE])
 					sleep(100); /* waiting messages */
-				{
-					nxtReadRawHS(d.Msg[MSG_HEADER_SIZE], header[MSG_HEAD_INDEX_BODY_SIZE]);
-					cs = GetCheckSumm(d.Msg[MSG_HEADER_SIZE], header[MSG_HEAD_INDEX_BODY_SIZE]);
-					if (cs != header[MSG_HEAD_INDEX_CS])
-						SendReplayMsg(header[MSG_HEAD_INDEX_ID], MSG_STATUS_ERROR);
-					else
-					{
-						SendReplayMsg(header[MSG_HEAD_INDEX_ID], MSG_STATUS_DELIVERED);
-						memcpy(incommingDelivery , d, sizeof(d) );
-					}
-				}
+				nxtReadRawHS(d.Msg[MSG_HEADER_SIZE], header[MSG_HEAD_INDEX_BODY_SIZE]);
+				cs = GetCheckSumm(d.Msg[MSG_HEADER_SIZE], header[MSG_HEAD_INDEX_BODY_SIZE]);
 			}
-
+			memcpy(inDelivery , d, sizeof(d) );
+			if (cs != header[MSG_HEAD_INDEX_CS])
+				SendReplayMsg(header[MSG_HEAD_INDEX_ID], MSG_STATUS_ERROR);
+			else
+				SendReplayMsg(header[MSG_HEAD_INDEX_ID], MSG_STATUS_DELIVERED);
 			} else {
 			UnknowMessageCounter++; /* increase unknow incomming messages */
 		}
-
 	}
 }
 /**
@@ -205,7 +199,7 @@ task ReadMsg(){
 */
 void SendCompleteReplayMsg(ubyte msgId)
 {
-	SendReplayMsg(id, MSG_STATUS_COMPLETED);
+	SendReplayMsg(msgId, MSG_STATUS_COMPLETED);
 }
 
 /**
@@ -225,7 +219,7 @@ void SendReplayMsg(ubyte id, MSG_STATUS status){
 /**
 * configure S4 port for communiction
 */
-void Initialyze(){
+void InitialyzePipe(){
 	nxtEnableHSPort();			/* configure S4 as a high-speed port */
 	nxtHS_Mode = hsRawMode; /* Set port mode. This can be one of hsRawMode, hsMsgModeMaster, hsMsgModeSlave.
 	RS485 is a half duplex protocol,
@@ -235,11 +229,12 @@ void Initialyze(){
 	startTask(ReadMsg);
 }
 
-
+/*
 task main()
 {
-	char a[5] = {'h', 'e', 'l', 'l', 'o'};
-	Initialyze();
-	bool res  = SendMsg(a, 5, true, 0, 5000);
-	while (true) sleep(100);
+char a[5] = {'h', 'e', 'l', 'l', 'o'};
+Initialyze();
+bool res  = SendMsg(a, 5, true, 0, 5000);
+while (true) sleep(100);
 }
+*/

@@ -1,3 +1,11 @@
+
+typedef enum COMMAND {
+	CMD_ROTATE_PLATFORM = 1,
+	CMD_UP_ARM					= 2,
+	CMD_UP_LANDLE				= 3
+} COMMAND;
+
+
 int getLimitSpeed(const int speedMin, int speedMax, int currentEnc, int targetEnc);
 
 // speed limiter

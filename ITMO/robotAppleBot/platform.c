@@ -15,6 +15,7 @@ int vBase = 50;
 int vLeft  = 50;
 int vRight = 50;
 //
+int CurrentPositionPLEnc = 0;
 //#define DEBUG
 //
 #define DIST_START_ROBOT    400
@@ -28,7 +29,11 @@ int vRight = 50;
 #define M_BODY_SPEED_MIN 17
 // the highest body speed limit
 #define M_BODY_SPEED_MAX 50
-
+//
+#define MAX_CENTER_MM 125
+#define MAX_CENTER_ENC 1450
+#define M_PL_SPEED_MIN 15
+#define M_PL_SPEED_MAX 60
 //function
 //int getSpeedByFrontDistance();
 void findTrees();
@@ -42,18 +47,22 @@ void robotAngelCalibration(int lenght);
 void goToTree(int dist);
 void goAheadEncoder(int enc);
 int convertEncoderAheadToMM(int encoder);
-void goAheadEncoderArm(int enc, int m);
+void movePL(int posit);
+void Parking();
 //tasks
 task controlMotors();
+task ParkingPL();
 //
 
 task main()
 {
 	sleep(7000);
-startTask(controlMotors);
-goAheadEncoderArm(-ENC_360_TURN,1);
+//startTask(controlMotors);
+movePL(-110);
+movePL(100);
 sleep(3000);
-goAheadEncoderArm(500,2);
+
+Parking();
 /*startRobotPos();
 #ifdef DEBUG
 	sleep(300);
@@ -309,29 +318,41 @@ void goToTree(int dist){
 #endif
 	turnRobotDegree(-1 * sgn(dist) * 90);
 }
-//----------------------------------------------------------------------------------
+//----------------------------------------------------------------------------- - -|
+//----------------------------------------------------------------------------- - -|
+//----------------------------------------------------------------------------- - -|
+void movePL(int posit){
+	//if (posit < 0) posit = 0;
+	if (abs(posit) > MAX_CENTER_MM) posit = sgn(posit) * MAX_CENTER_MM;
+	nMotorEncoder[mPl] =0;
+	int	enc = (MAX_CENTER_ENC * posit) / MAX_CENTER_MM - CurrentPositionPLEnc;
 
-
-//----------------------------------------------------------------------------------
-/*void goAheadEncoderArm(int enc,int m){ //encoder
-	nMotorEncoder[mLeft] =0;
-	int currentEnc = nMotorEncoder[mLeft];
-	int speed = 0 ;
-	if (enc > 0) {
+	int currentEnc = nMotorEncoder[mPl];
+	int speed = 0;
+	if(enc > 0){
 		while(currentEnc < enc){
-			if(m == 1)vLeft = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
-			else vRight = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
-			//vRight = vLeft;
-			currentEnc = nMotorEncoder[mLeft];
+			speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, currentEnc, enc);
+			motor[mPl] = speed;
+			currentEnc = nMotorEncoder[mPl];
 		}
-		}else{
+		} else {
 		while(currentEnc > enc){
-			if(m == 2)vRight = -1 * getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
-			else vLeft = -1 * getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
-			//vRight = vLeft;
-			currentEnc = nMotorEncoder[mLeft];
+			speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, currentEnc, enc);
+			motor[mPl]= -1 * speed;
+			currentEnc = nMotorEncoder[mPl];
 		}
 	}
-	vLeft = 0;
-	vRight = 0;
-}*/
+	motor[mPl]=0;
+	CurrentPositionPLEnc +=  nMotorEncoder[mPl];
+}
+
+task ParkingPL(){
+	movePL(0);
+}
+
+void Parking(){
+	startTask(ParkingPL);
+	while(CurrentPositionPLEnc != 0){
+		sleep(100);
+	}
+}

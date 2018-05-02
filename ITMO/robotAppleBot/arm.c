@@ -5,6 +5,7 @@
 
 #include "alex-common.h"
 #include "shared.h"
+#include "nxtPipe.h"
 //----------------------------
 //
 //#define DEBUG
@@ -38,7 +39,6 @@ bool CurrentPositionLandle 			= true;
 
 task main()
 {
-
 
 	sleep(3000);
 

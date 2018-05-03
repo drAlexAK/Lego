@@ -23,13 +23,13 @@ ______ _________________ ______     ____ ___ ___ ___
 #define MSG_HEAD_INDEX_BODY_SIZE 3
 //-------------------------------------
 /* replay header
-______ _________________ ______
-|0     |1           |2   |3     |
-| 0x0c | message id |  0 |  0   |
-|______|____________|____|______|
-|          |       |     |
-|          |       |     |___status 0 - error, 1 - recived, 2 - completed
-|          |       |___ must be 0, reserved
+ ______ _________________ ____
+|0     |1           |2   |3   |
+| 0x0c | message id |  0 |  0 |
+|______|____________|____|____|
+|          |          |     |
+|          |          |     |___status 0 - error, 1 - recived, 2 - completed
+|          |          |___ must be 0, reserved
 |          |____ message number
 |____ message type, must be 0x0c
 */
@@ -41,7 +41,7 @@ ______ _________________ ______
 //-------------------------------------
 
 typedef char msgHeader[MSG_HEADER_SIZE]; /*!< 4 bytes array for message header */
-typedef char msgBody[32]; 							 /*!< 32 bytes array for message body */
+//typedef char msgBody[32]; 							 /*!< 32 bytes array for message body */
 //---------------------------------------
 typedef enum MSG_STATUS {
 	MSG_STATUS_SENT 				= 1,

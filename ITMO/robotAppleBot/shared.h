@@ -1,7 +1,7 @@
 
 #include "nxtPipe.h"
 
-#define COMMAND_MSG_SIZE 5
+#define COMMAND_MSG_SIZE 8
 
 typedef enum COMMAND {
 	CMD_ROTATE_PLATFORM = 1,
@@ -10,17 +10,26 @@ typedef enum COMMAND {
 	CMD_PARK_ALL				= 4
 } COMMAND;
 
-typedef char commandMsg[5];
+typedef char commandMsg[COMMAND_MSG_SIZE];
+//----------------------------------------
+bool sendCommand(COMMAND cmd, int value);
+void getCommand(char *msg, COMMAND &cmd, int &value);
+int getLimitSpeed(const int speedMin, int speedMax, int currentEnc, int targetEnc);
 
+
+//-----------------------------------------
 bool sendCommand(COMMAND cmd, int value){
 	commandMsg msg;
-	msg[0] = cmd;
-	memcpy(&msg[1], &value, sizeof(int) * 1);
+	memcpy(&msg[0], &cmd, sizeof(int));
+	memcpy(&msg[sizeof(int)], &value, sizeof(int));
 	return SendMsg(&msg[0], COMMAND_MSG_SIZE, true, 3, 15000);
 }
 
-int getLimitSpeed(const int speedMin, int speedMax, int currentEnc, int targetEnc);
+void getCommand(char *msg, COMMAND &cmd, int &value){
 
+		memcpy(&cmd, &msg[MSG_HEADER_SIZE], sizeof(int));
+		memcpy(&value, &msg[MSG_HEADER_SIZE + sizeof(int)], sizeof(int));
+}
 // speed limiter
 int getLimitSpeed(const int speedMin,const int speedMax, const int currentEnc, const int targetEnc){
 	const int maxEnc = 360; //540

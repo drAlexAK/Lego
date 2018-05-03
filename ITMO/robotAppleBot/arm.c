@@ -40,7 +40,7 @@ bool CurrentPositionLandle 			= true;
 
 task main()
 {
-	int id =0;
+	ubyte id =0;
 	COMMAND cmd ;
 	int value =0;
 
@@ -51,8 +51,7 @@ task main()
 		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
 			id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
 			if(inDelivery.Size == COMMAND_MSG_SIZE + MSG_HEADER_SIZE){
-				cmd =(COMMAND)inDelivery.Msg[MSG_HEADER_SIZE];
-				memcpy(&value, inDelivery.Msg[MSG_HEADER_SIZE + 1], sizeof(int) * 1);
+				getCommand(inDelivery.Msg, cmd, value);
 				executeCMD(cmd, value);
 				if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
 					inDelivery.Status = (MSG_STATUS) MSG_STATUS_COMPLETED;
@@ -63,147 +62,148 @@ task main()
 		sleep(200);
 	}
 
-	/*
-	sleep(3000);
 
-	//rotatePlatform(-180);
-	//rotatePlatform(0);
-	//rotatePlatform(180);
+/*
+sleep(3000);
 
-	upLandle(false);
-	sleep(3000);
-	//upArmMM(70);
-#ifdef DEBUG
-	sleep(300);
-#endif
-	//upArmMM(180);
-#ifdef DEBUG
-	sleep(300);
-#endif
-	//upArmMM(0);
-#ifdef DEBUG
-	sleep(300);
-#endif
-	//upArmMM(120);
-	//upLandle(true);
-#ifdef DEBUG
-	sleep(300);
-#endif
-	//rotatePlatform(180);
-	*/
-	Parking();
+//rotatePlatform(-180);
+//rotatePlatform(0);
+//rotatePlatform(180);
 
-	stopAllTasks();
+upLandle(false);
+sleep(3000);
+//upArmMM(70);
+#ifdef DEBUG
+sleep(300);
+#endif
+//upArmMM(180);
+#ifdef DEBUG
+sleep(300);
+#endif
+//upArmMM(0);
+#ifdef DEBUG
+sleep(300);
+#endif
+//upArmMM(120);
+//upLandle(true);
+#ifdef DEBUG
+sleep(300);
+#endif
+//rotatePlatform(180);
+*/
+Parking();
+
+stopAllTasks();
 }
 
 void executeCMD(COMMAND cmd,int value){
-	switch (cmd)
-	{
-	case CMD_UP_ARM:
-		upArmMM(value);
-		break;
-	case CMD_ROTATE_PLATFORM:
-		rotatePlatform(value);
-		break;
-	case CMD_UP_LANDLE:
-		upLandle((bool) value);
-		break;
-	case CMD_PARK_ALL:
-	default:
-		Parking();
-		break;
-	}
+switch (cmd)
+{
+case CMD_UP_ARM:
+	upArmMM(value);
+	break;
+case CMD_ROTATE_PLATFORM:
+	rotatePlatform(value);
+	break;
+case CMD_UP_LANDLE:
+	upLandle((bool) value);
+	break;
+case CMD_PARK_ALL:
+default:
+	Parking();
+	break;
+}
 }
 
 void Parking(){
-	startTask(ParkingArm);
-	startTask(ParkingRotation);
-	startTask(ParkingLandle);
-	while((CurrentPositionArmEnc != 0) ||
-		(CurrentPositionRotationEnc != 0) ||
-	(CurrentPositionLandle != true)){
-		sleep(100);
-	}
+startTask(ParkingArm);
+startTask(ParkingRotation);
+startTask(ParkingLandle);
+while((CurrentPositionArmEnc != 0) ||
+	(CurrentPositionRotationEnc != 0) ||
+(CurrentPositionLandle != true)){
+	sleep(100);
+}
 }
 
 task ParkingArm(){
-	upArmMM(0);
+upArmMM(0);
 }
 task ParkingRotation(){
-	rotatePlatform(0);
+rotatePlatform(0);
 }
 task ParkingLandle(){
-	upLandle(true);
+upLandle(true);
 }
 
 void upLandle(bool up)
 {
-	if (CurrentPositionLandle == up) return;
-	nMotorEncoder[mLandle] =0;
-	int	enc = up ? (LANDLE_11000_ENCODER) : (-1 * LANDLE_11000_ENCODER) ;
-	int currentEnc = nMotorEncoder[mLandle];
-	int speed = 0 ;
-	if(up){
-		while(currentEnc < enc){
-			speed = getLimitSpeed(M_LANDLE_SPEED_MIN, M_LANDLE_SPEED_MAX, currentEnc, enc);
-			motor[mLandle] = speed;
-			currentEnc = nMotorEncoder[mLandle];
-		}
-		} else {
-		while(currentEnc > enc){
-			speed = getLimitSpeed(M_LANDLE_SPEED_MIN, M_LANDLE_SPEED_MAX, currentEnc, enc);
-			motor[mLandle]= -1 * speed;
-			currentEnc = nMotorEncoder[mLandle];
-		}
+if (CurrentPositionLandle == up) return;
+nMotorEncoder[mLandle] =0;
+int	enc = up ? (LANDLE_11000_ENCODER) : (-1 * LANDLE_11000_ENCODER) ;
+int currentEnc = nMotorEncoder[mLandle];
+int speed = 0 ;
+if(up){
+	while(currentEnc < enc){
+		speed = getLimitSpeed(M_LANDLE_SPEED_MIN, M_LANDLE_SPEED_MAX, currentEnc, enc);
+		motor[mLandle] = speed;
+		currentEnc = nMotorEncoder[mLandle];
 	}
-	motor[mLandle]=0;
-	CurrentPositionLandle = up;
+	} else {
+	while(currentEnc > enc){
+		speed = getLimitSpeed(M_LANDLE_SPEED_MIN, M_LANDLE_SPEED_MAX, currentEnc, enc);
+		motor[mLandle]= -1 * speed;
+		currentEnc = nMotorEncoder[mLandle];
+	}
+}
+motor[mLandle]=0;
+CurrentPositionLandle = up;
 }
 
 void upArmMM(int posit){
-	if (posit<0) posit = 0;
-	if (posit>ARM_MAX_POSITION_270MM) posit = ARM_MAX_POSITION_270MM;
-	nMotorEncoder[mArm] =0;
-	int	enc = (ARM_270MM_ENCODER * posit) / ARM_MAX_POSITION_270MM - CurrentPositionArmEnc;
+if (posit<0) posit = 0;
+if (posit>ARM_MAX_POSITION_270MM) posit = ARM_MAX_POSITION_270MM;
+nMotorEncoder[mArm] =0;
+int	enc = (ARM_270MM_ENCODER * posit) / ARM_MAX_POSITION_270MM - CurrentPositionArmEnc;
 
-	int currentEnc = nMotorEncoder[mArm];
-	int speed = 0 ;
-	if(enc > 0){
-		while(currentEnc < enc){
-			speed = getLimitSpeed(M_ARM_SPEED_MIN, M_ARM_SPEED_MAX, currentEnc, enc);
-			motor[mArm] = speed;
-			currentEnc = nMotorEncoder[mArm];
-		}
-		} else {
-		while(currentEnc > enc){
-			speed = getLimitSpeed(M_ARM_SPEED_MIN, M_ARM_SPEED_MAX, currentEnc, enc);
-			motor[mArm]= -1 * speed;
-			currentEnc = nMotorEncoder[mArm];
-		}
+int currentEnc = nMotorEncoder[mArm];
+int speed = 0 ;
+if(enc > 0){
+	while(currentEnc < enc){
+		speed = getLimitSpeed(M_ARM_SPEED_MIN, M_ARM_SPEED_MAX, currentEnc, enc);
+		motor[mArm] = speed;
+		currentEnc = nMotorEncoder[mArm];
 	}
-	motor[mArm]=0;
-	CurrentPositionArmEnc +=  nMotorEncoder[mArm];
+	} else {
+	while(currentEnc > enc){
+		speed = getLimitSpeed(M_ARM_SPEED_MIN, M_ARM_SPEED_MAX, currentEnc, enc);
+		motor[mArm]= -1 * speed;
+		currentEnc = nMotorEncoder[mArm];
+	}
+}
+motor[mArm]=0;
+CurrentPositionArmEnc +=  nMotorEncoder[mArm];
 }
 
 void rotatePlatform(int deg){
-	if (abs(deg) > ROTATION_MAX_360_DEGREE) deg = sgn(deg) * ROTATION_MAX_360_DEGREE;
-	nMotorEncoder[mRotation] =0;
-	int	enc = (DEGREES_360_ROTATION_ENC * deg) / ROTATION_MAX_360_DEGREE - CurrentPositionRotationEnc;
-	int currentEnc = nMotorEncoder[mRotation];
-	int speed = 0 ;
-	if(enc > 0){
-		while(currentEnc < enc){
-			speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, currentEnc, enc);
-			motor[mRotation] = speed;
-			currentEnc = nMotorEncoder[mRotation];
-		}
-		} else {
-		while(currentEnc > enc){
-			speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, currentEnc, enc);
-			motor[mRotation]= -1 * speed;
-			currentEnc = nMotorEncoder[mRotation];
-		}
+if (abs(deg) > ROTATION_MAX_360_DEGREE) deg = sgn(deg) * ROTATION_MAX_360_DEGREE;
+nMotorEncoder[mRotation] =0;
+int	enc = (DEGREES_360_ROTATION_ENC * deg) / ROTATION_MAX_360_DEGREE - CurrentPositionRotationEnc;
+int currentEnc = nMotorEncoder[mRotation];
+int speed = 0 ;
+if(enc > 0){
+	while(currentEnc < enc){
+		speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, currentEnc, enc);
+		motor[mRotation] = speed;
+		currentEnc = nMotorEncoder[mRotation];
 	}
-	motor[mRotation]=0;
-	CurrentPositionRotationEnc += nMotorEncoder[mRotation];
+	} else {
+	while(currentEnc > enc){
+		speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, currentEnc, enc);
+		motor[mRotation]= -1 * speed;
+		currentEnc = nMotorEncoder[mRotation];
+	}
+}
+motor[mRotation]=0;
+CurrentPositionRotationEnc += nMotorEncoder[mRotation];
 }

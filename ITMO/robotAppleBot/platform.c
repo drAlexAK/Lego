@@ -65,10 +65,14 @@ task main()
 	*/
 	InitialyzePipe();
 	while(true){
+		sendCommand(CMD_ROTATE_PLATFORM, -180);
 		sendCommand(CMD_UP_ARM, 40);
+		sendCommand(CMD_UP_ARM, 20);
+		sendCommand(CMD_UP_ARM, 100);
 		sendCommand(CMD_ROTATE_PLATFORM, 90);
+		sendCommand(CMD_UP_LANDLE, 0);
 		sendCommand(CMD_PARK_ALL, 0);
-		sleep(1000);
+		sleep(5000);
 	}
 	//Parking();
 	/*startRobotPos();

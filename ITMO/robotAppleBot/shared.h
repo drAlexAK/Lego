@@ -4,7 +4,7 @@
 #define COMMAND_MSG_SIZE 8
 
 typedef enum COMMAND {
-	CMD_ROTATE_PLATFORM = 1,
+	CMD_MOVE_PL					= 1,
 	CMD_UP_ARM					= 2,
 	CMD_UP_LANDLE				= 3,
 	CMD_PARK_ALL				= 4

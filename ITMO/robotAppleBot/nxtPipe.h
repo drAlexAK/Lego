@@ -92,7 +92,7 @@ task ReadMsg();
 Delivery outDelivery;
 Delivery inDelivery;
 int UnknowMessageCounter = 0; /* contains numbers of incomming messages unknow type */
-bool lockSend = false; 				/* multithreading synchronization */
+TSemaphore lockSend; 				/* multithreading synchronization */
 //---------------------------------------
 /**
 * returns check summ
@@ -149,12 +149,9 @@ bool SendMsg(ubyte *body, int size, bool waitComplete, int attempts, int timeOut
 * @param size message size, bytes
 */
 void SendSafe(char *msg, ubyte size){
-
-	while (lockSend) { sleep (10); }
-	lockSend = true;
+	semaphoreLock( lockSend );
 	nxtWriteRawHS(msg, size, 0);
-	lockSend = false;
-
+	if (bDoesTaskOwnSemaphore(lockSend)) semaphoreUnlock(lockSend);
 }
 
 task ReadMsg(){
@@ -220,6 +217,7 @@ void SendReplayMsg(ubyte id, MSG_STATUS status){
 * configure S4 port for communiction
 */
 void InitialyzePipe(){
+	semaphoreInitialize(lockSend);
 	nxtEnableHSPort();			/* configure S4 as a high-speed port */
 	nxtHS_Mode = hsRawMode; /* Set port mode. This can be one of hsRawMode, hsMsgModeMaster, hsMsgModeSlave.
 	RS485 is a half duplex protocol,

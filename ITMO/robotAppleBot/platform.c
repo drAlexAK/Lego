@@ -52,7 +52,7 @@ int convertEncoderAheadToMM(int encoder);
 void Parking();
 //tasks
 task controlMotors();
-task ParkingPL();
+
 //
 int  CurrentPositionRotationEnc = 0;
 //
@@ -353,7 +353,7 @@ void rotatePlatform(int deg){
 }
 //----------------------------------------------------------------------------- - -|
 void Parking(){
-	while(CurrentPositionPLEnc != 0){
+	while(CurrentPositionRotationEnc != 0){
 		sleep(100);
 	}
 }

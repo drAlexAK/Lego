@@ -46,10 +46,7 @@ int getPlPositionByArmEnc(int enc);
 int getPlPositionByArmMM(int posit);
 int getPlCurrentPositionMM();
 //----------------------------
-//int  CurrentPositionArmEnc 			= 0;
 bool CurrentPositionLandle 			  = true;
-//int  CurrentPositionPlEnc 			= 0;
-//int  HoldPositionPlEnc 					= 0;
 //----------------------------
 
 byte armDiffMM[28] ;
@@ -60,10 +57,16 @@ task main()
 	resetMotorsEncoder();
 
 	startTask(holdPlPositionByArm);
-	for (int i = 0 ; i <= 270; i+=10) {
-		upArmMM(i);
-		sleep(5000);
-	}
+	upArmMM(100);
+	sleep(1000);
+	upArmMM(200);
+	sleep(1000);
+	upArmMM(50);
+	sleep(1000);
+	upArmMM(270);
+	sleep(1000);
+	upArmMM(0);
+	sleep(3000);
 	stopTask(holdPlPositionByArm);
 	Parking();
 	stopAllTasks();
@@ -178,7 +181,7 @@ void Parking(){
 }
 
 task ParkingArm(){
- 	semaphoreLock( semParkingArm );
+	semaphoreLock( semParkingArm );
 	upArmMM(0);
 	if (bDoesTaskOwnSemaphore(semParkingArm)) semaphoreUnlock(semParkingArm);
 }
@@ -265,27 +268,27 @@ void InitArmDiffMM()
 	armDiffMM[4] = 9;
 	armDiffMM[5] = 10;
 	armDiffMM[6] = 10;
-	armDiffMM[7] = 10;
-	armDiffMM[8] = 10;
+	armDiffMM[7] = 11;
+	armDiffMM[8] = 11;
 	armDiffMM[9] = 10;
-	armDiffMM[10] = 10;
-	armDiffMM[11] = 10;
-	armDiffMM[12] = 10;
-	armDiffMM[13] = 11;
-	armDiffMM[14] = 10;
-	armDiffMM[15] = 9;
-	armDiffMM[16] = 5;
-	armDiffMM[17] = 3;
-	armDiffMM[18] = 0;
-	armDiffMM[19] = -2;
-	armDiffMM[20] = -3;
-	armDiffMM[21] = -10;
-	armDiffMM[22] = -12;
-	armDiffMM[23] = -17;
-	armDiffMM[24] = -21;
-	armDiffMM[25] = -30;
-	armDiffMM[26] = -40;
-	armDiffMM[27] = -40;
+	armDiffMM[10] = 7;
+	armDiffMM[11] = 6;
+	armDiffMM[12] = 3;
+	armDiffMM[13] = 2;
+	armDiffMM[14] = 3;
+	armDiffMM[15] = 0;
+	armDiffMM[16] = -2;
+	armDiffMM[17] = -3;
+	armDiffMM[18] = -6;
+	armDiffMM[19] = -9;
+	armDiffMM[20] = -10;
+	armDiffMM[21] = -15;
+	armDiffMM[22] = -18;
+	armDiffMM[23] = -24;
+	armDiffMM[24] = -31;
+	armDiffMM[25] = -40;
+	armDiffMM[26] = -47;
+	armDiffMM[27] = -58;
 }
 
 void movePl(int posit){
@@ -310,30 +313,24 @@ void movePl(int posit){
 
 task holdPlPositionByArm()
 {
+	const int accuracy = 3;
 	int HoldPositionPlEnc = nMotorEncoder[mPl];
 	int targetEnc = 0;
 	int startEnc = 0;
 	int speed = 0;
-eraseDisplay();
+
 	while(true){
 		targetEnc = HoldPositionPlEnc - (MAX_CENTER_ENC * getPlPositionByArmEnc(nMotorEncoder[mArm])) / MAX_CENTER_MM;
 		if (abs(targetEnc) > MAX_CENTER_ENC) targetEnc = sgn(targetEnc) * MAX_CENTER_ENC;
 		startEnc = nMotorEncoder[mPl];
-				displayTextLine(0, "mArmEnc: %d", nMotorEncoder[mArm]);
-				displayTextLine(1, "mPlEnc:  %d", nMotorEncoder[mPl] );
-				displayTextLine(2, "Target:  %d", targetEnc);
-				displayTextLine(3, "Speed:   %d", speed);
-				displayTextLine(4, "Start:   %d", startEnc);
-				displayTextLine(5, "Hold:    %d", HoldPositionPlEnc);
-
 		if((targetEnc - startEnc) > 0){
-			while(nMotorEncoder[mPl] < targetEnc){
+			while(((nMotorEncoder[mPl] - accuracy) < targetEnc) && ((nMotorEncoder[mPl] + accuracy) < targetEnc)){
 				speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, startEnc, nMotorEncoder[mPl], targetEnc);
 				motor[mPl] = speed;
 
 			}
 			} else {
-			while(nMotorEncoder[mPl] > targetEnc){
+			while(((nMotorEncoder[mPl] - accuracy) > targetEnc) && ((nMotorEncoder[mPl] + accuracy) > targetEnc)) {
 				speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, startEnc, nMotorEncoder[mPl], targetEnc);
 				motor[mPl]= speed;
 			}

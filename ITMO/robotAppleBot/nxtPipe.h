@@ -155,7 +155,6 @@ void SendSafe(char *msg, ubyte size){
 }
 
 task ReadMsg(){
-	int size = 0;
 	ubyte cs = 0;
 	Delivery d;
 

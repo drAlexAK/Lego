@@ -16,7 +16,6 @@ int vBase = 50;
 int vLeft  = 50;
 int vRight = 50;
 //
-int CurrentPositionPLEnc = 0;
 //#define DEBUG
 //
 #define DEGREES_360_ROTATION_ENC 2100
@@ -42,6 +41,7 @@ TSemaphore  semParkingRotation;
 //
 //function
 //int getSpeedByFrontDistance();
+void resetMotorsEncoder();
 void findTrees();
 int getDistRightMedian();
 int getDistRightAverage();
@@ -64,6 +64,8 @@ task parkingRotation();
 task main()
 {
 	sleep(3000);
+	resetMotorsEncoder();
+
 	InitialyzePipe();
 	/*while(true){
 	sendCommand(CMD_ROTATE_PLATFORM, -180);
@@ -92,6 +94,12 @@ task main()
 
 	vRight = vLeft = 0;
 	stopAllTasks();
+}
+
+void resetMotorsEncoder() {
+	nMotorEncoder[mLeft]  		= 0;
+	nMotorEncoder[mRight] 		= 0;
+	nMotorEncoder[mRotation] 	= 0;
 }
 
 task controlMotors()
@@ -247,14 +255,14 @@ void turnRobotDegree(int deg){
 	int speed = 0 ;
 	if(enc > 0){
 		while(currentEnc < enc){
-			speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
+			speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
 			vLeft = speed;
 			vRight = -1 * speed;
 			currentEnc = nMotorEncoder[mLeft];
 		}
 		} else {
 		while(currentEnc > enc){
-			speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
+			speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
 			vLeft = -1 * speed;
 			vRight = speed;
 			currentEnc = nMotorEncoder[mLeft];
@@ -275,16 +283,15 @@ void goAheadMM(int dist){ //MM
 void goAheadEncoder(int enc){ //encoder
 	nMotorEncoder[mLeft] =0;
 	int currentEnc = nMotorEncoder[mLeft];
-	int speed = 0 ;
 	if (enc > 0) {
 		while(currentEnc < enc){
-			vLeft = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
+			vLeft = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
 			vRight = vLeft;
 			currentEnc = nMotorEncoder[mLeft];
 		}
 		}else{
 		while(currentEnc > enc){
-			vLeft = -1 * getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, currentEnc, enc);
+			vLeft =  getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
 			vRight = vLeft;
 			currentEnc = nMotorEncoder[mLeft];
 		}

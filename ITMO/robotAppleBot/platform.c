@@ -35,6 +35,10 @@ int CurrentPositionPLEnc = 0;
 #define M_BODY_SPEED_MIN 17
 // the highest body speed limit
 #define M_BODY_SPEED_MAX 50
+//----------------------------
+// semaphore variables
+TSemaphore  semParkingRotation;
+//----------------------------
 //
 //function
 //int getSpeedByFrontDistance();
@@ -52,26 +56,27 @@ int convertEncoderAheadToMM(int encoder);
 void Parking();
 //tasks
 task controlMotors();
+task parkingRotation();
 
 //
-int  CurrentPositionRotationEnc = 0;
+
 //
 task main()
 {
 	sleep(3000);
 	InitialyzePipe();
 	/*while(true){
-		sendCommand(CMD_ROTATE_PLATFORM, -180);
-		sendCommand(CMD_UP_ARM, 40);
-		sendCommand(CMD_UP_ARM, 20);
-		sendCommand(CMD_UP_ARM, 100);
-		sendCommand(CMD_ROTATE_PLATFORM, 90);
-		sendCommand(CMD_UP_LANDLE, 0);
-		sendCommand(CMD_PARK_ALL, 0);
-		sleep(5000);
+	sendCommand(CMD_ROTATE_PLATFORM, -180);
+	sendCommand(CMD_UP_ARM, 40);
+	sendCommand(CMD_UP_ARM, 20);
+	sendCommand(CMD_UP_ARM, 100);
+	sendCommand(CMD_ROTATE_PLATFORM, 90);
+	sendCommand(CMD_UP_LANDLE, 0);
+	sendCommand(CMD_PARK_ALL, 0);
+	sleep(5000);
 	}*/
 	//Parking();
-/*	startRobotPos();
+	/*	startRobotPos();
 #ifdef DEBUG
 	sleep(300);
 #endif
@@ -331,29 +336,33 @@ void goToTree(int dist){
 //----------------------------------------------------------------------------- - -|
 void rotatePlatform(int deg){
 	if (abs(deg) > ROTATION_MAX_360_DEGREE) deg = sgn(deg) * ROTATION_MAX_360_DEGREE;
-	nMotorEncoder[mRotation] =0;
-	int	enc = (DEGREES_360_ROTATION_ENC * deg) / ROTATION_MAX_360_DEGREE - CurrentPositionRotationEnc;
-	int currentEnc = nMotorEncoder[mRotation];
+	int	enc = (DEGREES_360_ROTATION_ENC * deg) / ROTATION_MAX_360_DEGREE;
+	int startEnc = nMotorEncoder[mRotation];
 	int speed = 0 ;
 	if(enc > 0){
-		while(currentEnc < enc){
-			speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, currentEnc, enc);
+		while(nMotorEncoder[mRotation] < enc){
+			speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, startEnc, nMotorEncoder[mRotation], enc);
 			motor[mRotation] = speed;
-			currentEnc = nMotorEncoder[mRotation];
 		}
 		} else {
-		while(currentEnc > enc){
-			speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, currentEnc, enc);
-			motor[mRotation]= -1 * speed;
-			currentEnc = nMotorEncoder[mRotation];
+		while(nMotorEncoder[mRotation] > enc){
+			speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, startEnc, nMotorEncoder[mRotation], enc);
+			motor[mRotation]= speed;
 		}
 	}
 	motor[mRotation]=0;
-	CurrentPositionRotationEnc += nMotorEncoder[mRotation];
 }
 //----------------------------------------------------------------------------- - -|
 void Parking(){
-	while(CurrentPositionRotationEnc != 0){
-		sleep(100);
-	}
+	semaphoreInitialize(semParkingRotation);
+	startTask(parkingRotation);
+	sleep(100);
+	semaphoreLock( semParkingRotation);
+	if (bDoesTaskOwnSemaphore(semParkingRotation)) semaphoreUnlock(semParkingRotation);
+}
+
+task parkingRotation(){
+	semaphoreLock( semParkingRotation );
+	rotatePlatform(0);
+	if (bDoesTaskOwnSemaphore(semParkingRotation)) semaphoreUnlock(semParkingRotation);
 }

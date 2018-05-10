@@ -31,9 +31,9 @@ TSemaphore  semParkingPl;
 TSemaphore  semParkingLandle;
 //----------------------------
 void upArmMM(int posit);
-//void upArmMMStrongVert(int posit);
+void upArmMMStrongVert(int posit);
 void resetMotorsEncoder();
-void upLandle(bool up);
+void upLandle(int posit);
 void Parking();
 task ParkingArm();
 task ParkingPl();
@@ -53,7 +53,8 @@ byte armDiffMM[28] ;
 
 task main()
 {
-	InitArmDiffMM();
+	upLandle(20);
+	/*InitArmDiffMM();
 	resetMotorsEncoder();
 
 	startTask(holdPlPositionByArm);
@@ -90,7 +91,7 @@ task main()
 	stopAllTasks();
 	return;
 
-
+*/
 	/*
 	upArmMMStrongVert(270);
 	sleep(3000);
@@ -145,7 +146,7 @@ void executeCMD(COMMAND cmd, int value){
 		upArmMM(value);
 		break;
 	case CMD_UP_ARM_STR_VERT:
-		//upArmMMStrongVert(value);
+		upArmMMStrongVert(value);
 		break;
 	case CMD_MOVE_PL:
 		movePl(value);
@@ -196,14 +197,14 @@ task ParkingPl(){
 	if (bDoesTaskOwnSemaphore(semParkingPl)) semaphoreUnlock(semParkingPl);
 }
 
-void upLandle(bool up)
+void upLandle(int posit)
 {
-	if (CurrentPositionLandle == up) return;
+	//if (CurrentPositionLandle == up) return;
 
-	int	targetEnc = (up ? 0 : -1 * LANDLE_11000_ENCODER) ;
+	int	targetEnc = LANDLE_11000_ENCODER / 90 * posit;
 	int startEnc = nMotorEncoder[mLandle];
 	int speed = 0 ;
-	if( up ){
+	if( posit > 0){
 		while(nMotorEncoder[mLandle] < targetEnc){
 			speed = getLimitSpeed(M_LANDLE_SPEED_MIN, M_LANDLE_SPEED_MAX, startEnc, nMotorEncoder[mLandle], targetEnc);
 			motor[mLandle] = speed;
@@ -215,7 +216,7 @@ void upLandle(bool up)
 		}
 	}
 	motor[mLandle] = 0;
-	CurrentPositionLandle = up;
+	CurrentPositionLandle = nMotorEncoder[mLandle];
 }
 
 void upArmMM(int posit){
@@ -339,8 +340,9 @@ task holdPlPositionByArm()
 		sleep(10);
 	}
 }
-/*
+
 void upArmMMStrongVert(int posit){
+	int startPos = nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER;
 if (posit<0) posit = 0;
 if (posit>ARM_MAX_POSITION_270MM) posit = ARM_MAX_POSITION_270MM;
 nMotorEncoder[mArm] =0;
@@ -353,7 +355,7 @@ if(enc > 0){
 while(currentEnc < enc){
 pp = getPlPositionByArmEnc(abs(currentEnc)) - getPlCurrentPositionMM();
 movePl(pp+10);
-speed = getLimitSpeed(M_ARM_SPEED_MIN, M_ARM_SPEED_MAX, currentEnc, enc);
+speed = getLimitSpeed(M_ARM_SPEED_MIN, M_ARM_SPEED_MAX,startPos, currentEnc, enc);
 motor[mArm] = speed;
 currentEnc = nMotorEncoder[mArm];
 }
@@ -361,14 +363,14 @@ currentEnc = nMotorEncoder[mArm];
 while(currentEnc > enc){
 pp = getPlPositionByArmEnc(abs(currentEnc)) - getPlCurrentPositionMM();
 movePl(pp-10);
-speed = getLimitSpeed(M_ARM_SPEED_MIN, M_ARM_SPEED_MAX, currentEnc, enc);
+speed = getLimitSpeed(M_ARM_SPEED_MIN, M_ARM_SPEED_MAX,startPos, currentEnc, enc);
 motor[mArm]= -1 * speed;
 currentEnc = nMotorEncoder[mArm];
 }
 }
 motor[mArm]=0;
 }
-*/
+
 /*
 void getArrayDistFromLadleDependsOnArm(){
 
@@ -397,5 +399,4 @@ WriteText(hFileHandle, nIOResult, result);         // write 'sMessageToWrite' to
 //WriteByte(hFileHandle, nIOResult, LF);                      // write 'LF' to the file (line feed)
 }
 Close(hFileHandle, nIOResult);                              // close our file (DON'T FORGET THIS STEP!)
-}
-*/
+}*/

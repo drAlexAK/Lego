@@ -13,9 +13,10 @@
 //int vMax = 60;
 int vBase = 50;
 //int vMin = 0;
-int vLeft  = 50;
-int vRight = 50;
+int vLeft  = 0;
+int vRight = 0;
 //
+int calcEnc = 0;
 //#define DEBUG
 //
 #define DEGREES_360_ROTATION_ENC 2100
@@ -54,10 +55,12 @@ void goToTree(int dist);
 void goAheadEncoder(int enc);
 int convertEncoderAheadToMM(int encoder);
 void Parking();
+void goBackEncCalc();
+void goAheadEncCalc();
 //tasks
 task controlMotors();
 task parkingRotation();
-
+task BlueToothListener();
 //
 
 //
@@ -65,8 +68,13 @@ task main()
 {
 	sleep(3000);
 	resetMotorsEncoder();
-
+	startTask (BlueToothListener);
+	startTask(controlMotors);
 	InitialyzePipe();
+	while (true){
+		sleep(1000);
+	}
+
 	/*while(true){
 	sendCommand(CMD_ROTATE_PLATFORM, -180);
 	sendCommand(CMD_UP_ARM, 40);
@@ -76,7 +84,8 @@ task main()
 	sendCommand(CMD_UP_LANDLE, 0);
 	sendCommand(CMD_PARK_ALL, 0);
 	sleep(5000);
-	}*/
+	}
+	*/
 	//Parking();
 	/*	startRobotPos();
 #ifdef DEBUG
@@ -89,11 +98,61 @@ task main()
 	findTrees();
 #ifdef DEBUG
 	sleep(300);
-#endif*/
-
-
+#endif
+	goBackEncCalc();
+	sleep(3000);
+	goAheadEncCalc();
+	sleep(3000);
+	*/
 	vRight = vLeft = 0;
 	stopAllTasks();
+}
+
+task BlueToothListener()
+{
+	while(true) {
+		if (bQueuedMsgAvailable()) {
+			displayBigTextLine( 1, "%d %d", messageParm[0], messageParm[1]);
+			ClearMessage();
+		}
+		sleep(100);
+	}
+}
+
+void goAheadEncCalc(){
+	int encNorm = getDistRightMedian();
+	int i=0;
+	int e=0;
+	while(i < 5){
+		i++;
+		e = encNorm - getDistRightMedian();
+		while(abs(e) < 100){
+			e = encNorm - getDistRightMedian();
+			vLeft = 20;
+			vRight = 20;
+			i = 0;
+		}
+	}
+	vLeft = vRight =0;
+	calcEnc = nMotorEncoder[mLeft];
+}
+
+void goBackEncCalc(){
+	int encNorm = getDistRightMedian();
+	int i=0;
+	int e=0;
+	while(i < 5){
+		i++;
+		e = encNorm - getDistRightMedian();
+		while(abs(e) < 100){
+			e = encNorm - getDistRightMedian();
+			vLeft = -20;
+			vRight = -20;
+			i = 0;
+		}
+	}
+	vLeft = vRight =0;
+	nMotorEncoder[mLeft] =0;
 }
 
 void resetMotorsEncoder() {
@@ -105,7 +164,7 @@ void resetMotorsEncoder() {
 task controlMotors()
 {
 	while(1){
-		int s =SensorValue(sFront) * 10 ;
+		int s = SensorValue(sFront) * 10 ;
 		if((s< DIST_FRONT_MIN) && ((vLeft > 0) && (vRight > 0))){
 			motor[mLeft] = 0;
 			motor[mRight] = 0;

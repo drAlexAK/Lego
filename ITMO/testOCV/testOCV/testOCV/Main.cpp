@@ -290,17 +290,25 @@ int TestTracker()
   // cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
  
   Mat imgThresholded;
+  Mat imgWhite;
+  
+  inRange(imgOriginal, Scalar(0, 0, 0), Scalar(0, 60, 0), imgWhite);
 
+  Mat imgBlack(imgOriginal.size(), CV_8UC3, Scalar(0)); 
+  imgBlack.copyTo(imgOriginal, imgWhite);
   //inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
-   inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
+   
+  
+  inRange(imgOriginal, Scalar(8, 0, 0), Scalar(90, 24, 255), imgThresholded); //Threshold the image color red
+  //inRange(imgOriginal, Scalar(0, 0, 0), Scalar(50, 10, 50), imgThresholded); //Threshold the image color red
       
   //morphological opening (removes small objects from the foreground)
-  erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(3, 3)) );
-  dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(3, 3)) ); 
+  erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+  dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
 
    //morphological closing (removes small holes from the foreground)
-  dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(3, 3)) ); 
-  erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(3, 3)) );
+  dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
+  erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
    //Calculate the moments of the thresholded image
   Moments oMoments = moments(imgThresholded);
@@ -310,7 +318,7 @@ int TestTracker()
   double dArea = oMoments.m00;
 
    // if the area <= 10000, I consider that the there are no object in the image and it's because of the noise, the area is not zero 
-  if (dArea > 10000)
+  if (dArea > 100000)
   {
    //calculate the position of the ball
    int posX = dM10 / dArea;
@@ -328,7 +336,7 @@ int TestTracker()
 
    imshow("Thresholded Image", imgThresholded); //show the thresholded image
 
-   imgOriginal = imgOriginal + imgLines;
+   //imgOriginal = imgOriginal + imgLines;
   imshow("Original", imgOriginal); //show the original image
 
         if (waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop

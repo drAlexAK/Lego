@@ -29,16 +29,16 @@ vector<string> GetListOfCOMPorts()
 	return lCom;
 }
 
-vector<bt_out> GetListOfBricks()
+vector<btSender> GetListOfBricks()
 {
-	vector<bt_out> lBricks;
+	vector<btSender> lBricks;
 
 	vector<string>  lCom =  GetListOfCOMPorts();
 	for (uint i = 0; i < lCom.size(); i++)
 	{
 		while(true){		
 			cout << "Connecting to '" << lCom.at(i) << "'" << endl;
-			bt_out *brick = new bt_out(lCom.at(i));
+			btSender *brick = new btSender(lCom.at(i));
 			if (brick->IsItConnected())
 			{
 				cout << "Has been connected to '" << lCom.at(i) << "'" << endl; 
@@ -55,7 +55,7 @@ vector<bt_out> GetListOfBricks()
 int Capture()
 {
 	short * dataToSend = new short[2];
-	vector<bt_out> lBricks = GetListOfBricks();
+	vector<btSender> lBricks = GetListOfBricks();
 
 	VideoCapture cap(0); //capture the video from webcam
 
@@ -149,6 +149,5 @@ int Capture()
 			break; 
 		}
 	}
-
 	return 0;
 }

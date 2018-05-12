@@ -17,7 +17,6 @@ int Capture();
 
 int main()
 {
-
 	Capture();
 	return 0;
 }
@@ -54,7 +53,7 @@ vector<bt_out> GetListOfBricks()
 
 int Capture()
 {
-	short * dataToSend = new short[2];
+	short * dataToSend = new short[3];
 	vector<bt_out> lBricks = GetListOfBricks();
 
 	VideoCapture cap(0); //capture the video from webcam
@@ -68,6 +67,8 @@ int Capture()
 	//Capture a temporary image from the camera
 	Mat imgTmp;
 	cap.read(imgTmp); 
+	int rowCenter = imgTmp.rows / 2;
+	int colCenter = imgTmp.cols / 2;
 
 	//Create a black image with the size as the camera output
 	//Mat imgLines = Mat::zeros( imgTmp.size(), CV_8UC3 );;
@@ -124,18 +125,20 @@ int Capture()
 
 			if (posX >= 0 && posY >= 0)
 			{
-				dataToSend[0] = posX;
-				dataToSend[1] = posY;
+				dataToSend[1] = posX - colCenter;
+				dataToSend[2] = posY - rowCenter;
+				dataToSend[0] = 1;
 			}
 			else
 			{
 				dataToSend[0] = 0;
 				dataToSend[1] = 0;
+
 			}
 		}
 
 		for (uint i = 0; i < lBricks.size(); i++)	{
-			if (lBricks.at(i).Send(dataToSend, 2) == false) {
+			if (lBricks.at(i).Send(dataToSend, 3) == false) {
 				cout << "Error: " << lBricks.at(i).GetErrorID() << " Cannot send to port '" << lBricks.at(i).GetComPortName() << "' " << lBricks.at(i).GetErrorMessage() ;
 			}
 		}
@@ -148,6 +151,7 @@ int Capture()
 			cout << "esc key is pressed by user" << endl;
 			break; 
 		}
+		Sleep(100);
 	}
 
 	return 0;

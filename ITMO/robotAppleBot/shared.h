@@ -8,7 +8,8 @@ typedef enum COMMAND {
 	CMD_UP_ARM					= 2,
 	CMD_UP_ARM_STR_VERT	= 3,
 	CMD_DOWN_LANDLE		  = 4,
-	CMD_PARK_ALL				= 5
+	CMD_PARK_ALL				= 5,
+	CMD_LOOK_FOR_APPLE_BY_ARM = 6
 } COMMAND;
 
 typedef char commandMsg[COMMAND_MSG_SIZE];

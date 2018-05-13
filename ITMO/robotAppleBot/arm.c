@@ -67,17 +67,20 @@ task main()
 	InitArmDiffMM();
 	InitLandleDiffEnc();
 	resetMotorsEncoder();
-	//////////////////////////
-	downLandle(70);
 	sleep(500);
-	lookForAppleByArm();
-	if ( msgCam[2] == 1) {
-		movePl(100);
-		downLandle(0);
-  }
-	sleep(5000);
+	//////////////////////////
+	startTask(holdPlPositionByArm);
+	startTask(verticalLandlePositionByArm);
+	sleep(3000);
+	for (int k = 0 ; k <=270; k+=10)
+	{
+		upArmMM(k);
+		sleep(7000);
+	}
+	stopTask(holdPlPositionByArm);
+	stopTask(verticalLandlePositionByArm);
+	sleep(1000);
 	Parking();
-	stopAllTasks();
 	return;
 	//////////////////////////
 	//startTask(holdPlPositionByArm);
@@ -135,6 +138,9 @@ void executeCMD(COMMAND cmd, int value){
 		break;
 	case CMD_DOWN_LANDLE:
 		downLandle(value);
+		break;
+	case CMD_LOOK_FOR_APPLE_BY_ARM:
+		lookForAppleByArm();
 		break;
 	case CMD_PARK_ALL:
 	default:
@@ -205,7 +211,7 @@ void lookForAppleByArm() {
 
 	startTask(holdPlPositionByArm);
 	startTask(verticalLandlePositionByArm);
-	sleep(500);
+	sleep(250);
 
 	int posit = ARM_MAX_POSITION_270MM;
 	int speedMax = 0;
@@ -214,21 +220,21 @@ void lookForAppleByArm() {
 	int speed = 0 ;
 	if ((targetEnc - startEnc) > 0){
 		while(nMotorEncoder[mArm] < targetEnc){
-			speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 3 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
+			speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
 			speed = getLimitSpeed(M_ARM_SPEED_MIN, speedMax, startEnc, nMotorEncoder[mArm], targetEnc);
 			if (isAppleHere()) break;
 			motor[mArm] = speed;
 		}
 		} else {
 		while(nMotorEncoder[mArm] > targetEnc){
-			speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 3 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
+			speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
 			speed = getLimitSpeed(M_ARM_SPEED_MIN, speedMax, startEnc, nMotorEncoder[mArm], targetEnc);
 			if (isAppleHere()) break;
 			motor[mArm] = speed;
 		}
 	}
 	motor[mArm] = 0;
-	sleep(1000);
+	sleep(500);
 	motor[mPl]=0;
 	motor[mLandle]=0;
 	stopTask(holdPlPositionByArm);
@@ -434,6 +440,7 @@ void InitLandleDiffEnc() {
 }
 
 void InitArmDiffMM() {
+	/*
 	armDiffMM[0] = 0; //5;
 	armDiffMM[1] = 3; //8;
 	armDiffMM[2] = 5; //13;
@@ -462,6 +469,35 @@ void InitArmDiffMM() {
 	armDiffMM[25] = -10; //-40;
 	armDiffMM[26] = -10; //-47;
 	armDiffMM[27] = -10; //-58;
+	*/
+	armDiffMM[0] = 0; //5;
+	armDiffMM[1] = 7; //8;
+	armDiffMM[2] = 12; //13;
+	armDiffMM[3] = 17;
+	armDiffMM[4] = 21;
+	armDiffMM[5] = 24;
+	armDiffMM[6] = 27;
+	armDiffMM[7] = 31;
+	armDiffMM[8] = 34;
+	armDiffMM[9] = 38;
+	armDiffMM[10] = 40;
+	armDiffMM[11] = 43;
+	armDiffMM[12] = 45;
+	armDiffMM[13] = 47;
+	armDiffMM[14] = 49;
+	armDiffMM[15] = 50;
+	armDiffMM[16] = 50;
+	armDiffMM[17] = 52;
+	armDiffMM[18] = 51;
+	armDiffMM[19] = 52;
+	armDiffMM[20] = 48;
+	armDiffMM[21] = 45; //-15;
+	armDiffMM[22] = 44; //-18;
+	armDiffMM[23] = 41; //-24;
+	armDiffMM[24] = 37; //-31;
+	armDiffMM[25] = 31; //-40;
+	armDiffMM[26] = 27; //-47;
+	armDiffMM[27] = 20; //-58;
 }
 
 

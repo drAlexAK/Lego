@@ -13,6 +13,7 @@
 //int vMax = 60;
 int vBase = 50;
 //int vMin = 0;
+short msgCam[3] = {0,0,0};
 int vLeft  = 0;
 int vRight = 0;
 //
@@ -66,44 +67,46 @@ task BlueToothListener();
 //
 task main()
 {
+	InitialyzePipe();
 	sleep(3000);
+
 	resetMotorsEncoder();
 	startTask (BlueToothListener);
 	startTask(controlMotors);
-	InitialyzePipe();
-	while (true){
-		sleep(1000);
-	}
 
-	/*while(true){
-	sendCommand(CMD_ROTATE_PLATFORM, -180);
-	sendCommand(CMD_UP_ARM, 40);
-	sendCommand(CMD_UP_ARM, 20);
-	sendCommand(CMD_UP_ARM, 100);
-	sendCommand(CMD_ROTATE_PLATFORM, 90);
-	sendCommand(CMD_UP_LANDLE, 0);
-	sendCommand(CMD_PARK_ALL, 0);
-	sleep(5000);
+
+	//----------------------
+
+	sendCommand(CMD_MOVE_PL, -100);
+	sendCommand(CMD_DOWN_LANDLE, 90);
+
+	sleep(1000);
+	int i    =0;
+	const int step = 20;
+	while (true){
+		while(msgCam[2] == 0){
+			if (i * step >= 270) break;
+			sendCommand(CMD_UP_ARM, i * step);
+			i++;
+		}
+		while((msgCam[2] == 1) && ((msgCam[1] < 250) || (msgCam[1] > 200))){ // vert
+			//int vertError = (msgCam[1] / 20;
+		//if (
+		//	sendCommand(CMD_UP_ARM , (i * step) + ));
+		}
+		sleep(10000);
+
+		while((msgCam[2] == 1) && ((msgCam[0] < -25) || (msgCam[0] > 25))){ // hor
+			goAheadMM(-1 * msgCam[0] / 100);
+		}
+		sleep(10000);
+		break;
 	}
-	*/
-	//Parking();
-	/*	startRobotPos();
-#ifdef DEBUG
-	sleep(300);
-#endif
-	robotAngelCalibration(100);
-#ifdef DEBUG
-	sleep(300);
-#endif
-	findTrees();
-#ifdef DEBUG
-	sleep(300);
-#endif
-	goBackEncCalc();
-	sleep(3000);
-	goAheadEncCalc();
-	sleep(3000);
-	*/
+	playSound(soundBeepBeep);
+
+	sendCommand(CMD_PARK_ALL,0);
+	Parking();
+
 	vRight = vLeft = 0;
 	stopAllTasks();
 }
@@ -112,10 +115,12 @@ task BlueToothListener()
 {
 	while(true) {
 		if (bQueuedMsgAvailable()) {
-			displayBigTextLine( 1, "%d %d", messageParm[0], messageParm[1]);
+			msgCam[0] = messageParm[0];
+			msgCam[1] = messageParm[1];
+			msgCam[2] = messageParm[2];
 			ClearMessage();
 		}
-		sleep(100);
+		sleep(200);
 	}
 }
 

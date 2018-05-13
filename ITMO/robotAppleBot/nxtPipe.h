@@ -224,6 +224,7 @@ void InitialyzePipe(){
 	nxtSetHSBaudRate(9600);	/* configure S4 as a high-speed port and select a BAUD rate */
 	sleep(100);
 	startTask(ReadMsg);
+	sleep(1000);
 }
 
 /*

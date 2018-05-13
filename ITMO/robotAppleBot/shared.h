@@ -7,7 +7,7 @@ typedef enum COMMAND {
 	CMD_MOVE_PL					= 1,
 	CMD_UP_ARM					= 2,
 	CMD_UP_ARM_STR_VERT	= 3,
-	CMD_UP_LANDLE				= 4,
+	CMD_DOWN_LANDLE		  = 4,
 	CMD_PARK_ALL				= 5
 } COMMAND;
 

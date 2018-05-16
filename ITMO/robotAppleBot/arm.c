@@ -69,32 +69,23 @@ task main()
 	resetMotorsEncoder();
 	sleep(500);
 	//////////////////////////
-	startTask(holdPlPositionByArm);
-	startTask(verticalLandlePositionByArm);
-	sleep(3000);
-	for (int k = 0 ; k <=270; k+=10)
-	{
-		upArmMM(k);
-		sleep(7000);
-	}
-	stopTask(holdPlPositionByArm);
-	stopTask(verticalLandlePositionByArm);
-	sleep(1000);
-	Parking();
-	return;
+
 	//////////////////////////
 	//startTask(holdPlPositionByArm);
 
 	while(true){
 		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
 			id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
-			if(inDelivery.Size == COMMAND_MSG_SIZE + MSG_HEADER_SIZE){
-				getCommand(inDelivery.Msg, cmd, value);
-				executeCMD(cmd, value);
-				if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
-					inDelivery.Status = (MSG_STATUS) MSG_STATUS_COMPLETED;
+			if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE ){
+				getCommand(inDelivery.Msg, cmd);
+				if ( cmd != CMD_CORD) {
+					getValue(inDelivery.Msg, value);
+					executeCMD(cmd, value);
+					if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
+						inDelivery.Status = (MSG_STATUS) MSG_STATUS_COMPLETED;
+					}
+					SendCompleteReplayMsg(id);
 				}
-				SendCompleteReplayMsg(id);
 			}
 		}
 		sleep(200);
@@ -113,6 +104,7 @@ task BlueToothListener()
 			msgCam[1] = messageParm[1];
 			msgCam[2] = messageParm[2];
 			ClearMessage();
+			sendCoord(msgCam[0], msgCam[1], msgCam[2]);
 		}
 		sleep(100);
 	}
@@ -242,10 +234,10 @@ void lookForAppleByArm() {
 }
 
 bool isAppleHere() {
-	const int accuracy = 5;
-	const int position = -120;
+	const int accuracy = -50;
+	const int shiftPosition = -120;
 	if (msgCam[2] == 1) { //apple here
-		if (((msgCam[0] - position) < 0) && ((msgCam[0] - position) > -10)) return true;
+		if (((msgCam[0] - shiftPosition) < 0) && ((msgCam[0] - shiftPosition) > accuracy)) return true;
 	}
 	return false;
 }

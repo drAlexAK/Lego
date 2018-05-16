@@ -58,10 +58,13 @@ int convertEncoderAheadToMM(int encoder);
 void Parking();
 void goBackEncCalc();
 void goAheadEncCalc();
+void unloading();
+void rotatePlatform(int deg);
 //tasks
 task controlMotors();
 task parkingRotation();
 task BlueToothListener();
+task armListerner();
 //
 
 //
@@ -71,38 +74,28 @@ task main()
 	sleep(3000);
 
 	resetMotorsEncoder();
-	startTask (BlueToothListener);
-	startTask(controlMotors);
+	//startTask (BlueToothListener);
+  startTask (armListerner);
+	startTask (controlMotors);
 
 
 	//----------------------
 
-	sendCommand(CMD_MOVE_PL, -100);
-	sendCommand(CMD_DOWN_LANDLE, 90);
+	//sendCommand(CMD_MOVE_PL, -100);
+	sendCommand(CMD_DOWN_LANDLE, 45);
+	sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM,0);
 
 	sleep(1000);
-	int i    =0;
-	const int step = 20;
-	while (true){
-		while(msgCam[2] == 0){
-			if (i * step >= 270) break;
-			sendCommand(CMD_UP_ARM, i * step);
-			i++;
-		}
-		while((msgCam[2] == 1) && ((msgCam[1] < 250) || (msgCam[1] > 200))){ // vert
-			//int vertError = (msgCam[1] / 20;
-		//if (
-		//	sendCommand(CMD_UP_ARM , (i * step) + ));
-		}
-		sleep(10000);
-
-		while((msgCam[2] == 1) && ((msgCam[0] < -25) || (msgCam[0] > 25))){ // hor
-			goAheadMM(-1 * msgCam[0] / 100);
-		}
-		sleep(10000);
-		break;
+	int accuracy = 25;
+	int shiftMM = 0;
+	while((msgCam[2] == 1) && ((msgCam[1] < -1 * accuracy ) || (msgCam[1] > accuracy ))){ // hor
+		shiftMM = msgCam[1] / 100;
+		if (abs(shiftMM) > 10) goAheadMM(shiftMM);
 	}
-	playSound(soundBeepBeep);
+	if (msgCam[2] == 1) {
+		unloading();
+	}
+
 
 	sendCommand(CMD_PARK_ALL,0);
 	Parking();
@@ -110,6 +103,35 @@ task main()
 	vRight = vLeft = 0;
 	stopAllTasks();
 }
+
+void unloading(){
+	sendCommand(CMD_MOVE_PL, -100);
+	sendCommand(CMD_DOWN_LANDLE, 0);
+	rotatePlatform(-90);
+	sendCommand(CMD_UP_ARM, 0);
+	sendCommand(CMD_DOWN_LANDLE, 70);
+	rotatePlatform(0);
+	//sendCommand(CMD_DOWN_LANDLE, 45);
+}
+
+task armListerner() {
+	ubyte idOld = 255;
+	COMMAND cmd ;
+
+	while(true){
+		if ((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
+			if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE){
+				getCommand(inDelivery.Msg, cmd);
+				if ((cmd == CMD_CORD) && (idOld != inDelivery.Msg[MSG_HEAD_INDEX_ID])) {
+					getValue(inDelivery.Msg, msgCam[0], msgCam[1], msgCam[2]);
+					idOld = inDelivery.Msg[MSG_HEAD_INDEX_ID];
+				}
+			}
+			sleep(200);
+		}
+	}
+}
+
 
 task BlueToothListener()
 {

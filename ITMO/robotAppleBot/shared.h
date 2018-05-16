@@ -1,36 +1,60 @@
 
 #include "nxtPipe.h"
 
-#define COMMAND_MSG_SIZE 8
+#define COMMAND_MSG_SIZE 4
 
 typedef enum COMMAND {
-	CMD_MOVE_PL					= 1,
-	CMD_UP_ARM					= 2,
-	CMD_UP_ARM_STR_VERT	= 3,
-	CMD_DOWN_LANDLE		  = 4,
-	CMD_PARK_ALL				= 5,
-	CMD_LOOK_FOR_APPLE_BY_ARM = 6
+	CMD_MOVE_PL								= 1,
+	CMD_UP_ARM								= 2,
+	CMD_UP_ARM_STR_VERT				= 3,
+	CMD_DOWN_LANDLE		  			= 4,
+	CMD_PARK_ALL							= 5,
+	CMD_LOOK_FOR_APPLE_BY_ARM = 6,
+	CMD_CORD						      = 7
 } COMMAND;
 
-typedef char commandMsg[COMMAND_MSG_SIZE];
+//typedef char commandMsg[COMMAND_MSG_SIZE];
 //----------------------------------------
 bool sendCommand(COMMAND cmd, int value);
-void getCommand(char *msg, COMMAND &cmd, int &value);
+bool sendCoord(short v1, short v2, short v3);
+void getCommand(char *msg, int &value);
+void getValue(char *msg, int &value);
+void getValue(char *msg, short &v1, short &v2, short &v3);
 int getLimitSpeed(const int speedMin, int speedMax, int startEnc, int currentEnc, int targetEnc);
 
 
 //-----------------------------------------
 bool sendCommand(COMMAND cmd, int value){
-	commandMsg msg;
+	const int messageSize = 8;
+	char msg[messageSize];
 	memcpy(&msg[0], &cmd, sizeof(int));
 	memcpy(&msg[sizeof(int)], &value, sizeof(int));
-	return SendMsg(&msg[0], COMMAND_MSG_SIZE, true, 3, 15000);
+	return SendMsg(&msg[0], messageSize, true, 3, 15000);
 }
 
-void getCommand(char *msg, COMMAND &cmd, int &value){
+bool sendCoord(short v1, short v2, short v3){
+	const int messageSize = 16;
+	char msg[messageSize];
+	COMMAND cmd = CMD_CORD;
+	memcpy(&msg[0], &cmd, sizeof(int));
+	memcpy(&msg[sizeof(int)], &v1, sizeof(short));
+	memcpy(&msg[sizeof(int)*2], &v2, sizeof(short));
+	memcpy(&msg[sizeof(int)*3], &v3, sizeof(byte));
+	return SendMsg(&msg[0], messageSize, false, 3, 3000);
+}
 
+void getCommand(char *msg, COMMAND &cmd){
 	memcpy(&cmd, &msg[MSG_HEADER_SIZE], sizeof(int));
+}
+
+void getValue(char *msg, int &value){
 	memcpy(&value, &msg[MSG_HEADER_SIZE + sizeof(int)], sizeof(int));
+}
+
+void getValue(char *msg, short &v1, short &v2, short &v3){
+	memcpy(&v1, &msg[MSG_HEADER_SIZE + sizeof(int)],     sizeof(short));
+	memcpy(&v2, &msg[MSG_HEADER_SIZE + sizeof(int) * 2], sizeof(short));
+	memcpy(&v3, &msg[MSG_HEADER_SIZE + sizeof(int) * 3], sizeof(short));
 }
 // speed limiter
 int getLimitSpeed(const int speedMin,

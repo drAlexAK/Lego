@@ -63,6 +63,11 @@ task main()
 	COMMAND cmd ;
 	int value =0;
 	InitialyzePipe();
+	sleep(1000);
+	while( !sendCommand(CMD_CONNECT,0, false) ){
+	sleep(500);
+	}
+
 	startTask(BlueToothListener);
 	InitArmDiffMM();
 	InitLandleDiffEnc();
@@ -104,7 +109,7 @@ task BlueToothListener()
 			msgCam[1] = messageParm[1];
 			msgCam[2] = messageParm[2];
 			ClearMessage();
-			sendCoord(msgCam[0], msgCam[1], msgCam[2]);
+			//sendCoord(msgCam[0], msgCam[1], msgCam[2]);
 		}
 		sleep(100);
 	}

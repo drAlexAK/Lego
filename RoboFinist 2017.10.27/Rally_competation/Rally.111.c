@@ -102,7 +102,6 @@ float kDistFront = 0.0;
 bool afterStopLine = false;
 bool beforeStopLine = false;
 
-
 task main()
 {
 	bool bBlack = false;
@@ -336,7 +335,7 @@ task dist()
 		kDistFront = (((FRONT_DIST_MAX - FRONT_DIST_MIN) * 100) / (distFront * 100)) * 1.5;
 
 		readSensor(&muxedSensor[0]);
-		dLeftFront = muxedSensor[0].distance / 10 ; // returns cm
+		dLeftFront = muxedSensor[0].distance / 10 ; // returns cm // THE MUX
 
 		readSensor(&muxedSensor[1]);
 		dRightFront = muxedSensor[1].distance / 10 ; // returns cm

@@ -63,7 +63,6 @@ task main()
 	COMMAND cmd ;
 	int value =0;
 	InitialyzePipe();
-	sleep(1000);
 	while( !sendCommand(CMD_CONNECT,0, false) ){
 	sleep(500);
 	}
@@ -77,6 +76,8 @@ task main()
 
 	//////////////////////////
 	//startTask(holdPlPositionByArm);
+
+	//int id =0;
 
 	while(true){
 		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
@@ -96,8 +97,18 @@ task main()
 		sleep(200);
 	}
 
-	Parking();
 
+
+	/*sleep(10000);
+	downLandle(0);
+	sleep(1000);
+	upArmMM(0);
+	downLandle(90);
+
+	sleep(10000);
+
+	Parking();
+*/
 	stopAllTasks();
 }
 
@@ -138,6 +149,10 @@ void executeCMD(COMMAND cmd, int value){
 		break;
 	case CMD_LOOK_FOR_APPLE_BY_ARM:
 		lookForAppleByArm();
+		break;
+		case CMD_MOVE_PL_10MM:
+		int mm = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
+	movePl(100+mm);
 		break;
 	case CMD_PARK_ALL:
 	default:

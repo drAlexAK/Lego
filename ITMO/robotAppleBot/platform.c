@@ -18,12 +18,14 @@ int vLeft  = 0;
 int vRight = 0;
 //
 int calcEnc = 0;
+//
+int enc =0;
 //#define DEBUG
 //
 #define DEGREES_360_ROTATION_ENC 2100
 #define ROTATION_MAX_360_DEGREE   360
 #define M_ROTATION_SPEED_MIN      20
-#define M_ROTATION_SPEED_MAX      100
+#define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
 #define DIST_TREE_NORM  		280
@@ -65,19 +67,20 @@ task controlMotors();
 task parkingRotation();
 task BlueToothListener();
 task armListerner();
-//
 
-//
 task main()
 {
 	InitialyzePipe();
-	sleep(3000);
+	sleep(1000);
 
 	resetMotorsEncoder();
 	//startTask (BlueToothListener);
-  startTask (armListerner);
-	startTask (controlMotors);
+  while ( !sendCommand(CMD_CONNECT, 0, false) ){
+  	sleep(500);
+	}
 
+	startTask (armListerner);
+	startTask (controlMotors);
 
 	//----------------------
 
@@ -88,14 +91,17 @@ task main()
 	sleep(1000);
 	int accuracy = 25;
 	int shiftMM = 0;
+	int sum =0;
 	while((msgCam[2] == 1) && ((msgCam[1] < -1 * accuracy ) || (msgCam[1] > accuracy ))){ // hor
 		shiftMM = msgCam[1] / 100;
+		sum += shiftMM;
 		if (abs(shiftMM) > 10) goAheadMM(shiftMM);
 	}
 	if (msgCam[2] == 1) {
 		unloading();
 	}
 
+	unloading();
 
 	sendCommand(CMD_PARK_ALL,0);
 	Parking();
@@ -105,11 +111,12 @@ task main()
 }
 
 void unloading(){
-	sendCommand(CMD_MOVE_PL, -100);
+	sendCommand(CMD_MOVE_PL_10MM, 100);
 	sendCommand(CMD_DOWN_LANDLE, 0);
+	sendCommand(CMD_MOVE_PL, 0);
 	rotatePlatform(-90);
 	sendCommand(CMD_UP_ARM, 0);
-	sendCommand(CMD_DOWN_LANDLE, 70);
+	sendCommand(CMD_DOWN_LANDLE, 90);
 	rotatePlatform(0);
 	//sendCommand(CMD_DOWN_LANDLE, 45);
 }

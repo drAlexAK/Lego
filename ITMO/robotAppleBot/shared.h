@@ -10,8 +10,11 @@ typedef enum COMMAND {
 	CMD_DOWN_LANDLE		  			= 4,
 	CMD_PARK_ALL							= 5,
 	CMD_LOOK_FOR_APPLE_BY_ARM = 6,
-	CMD_CORD						      = 7,
-	CMD_CONNECT						    = 8
+	CMD_CORD_START						= 7,
+	CMD_CORD_FINISH				    = 8,
+	CMD_MOVE_PL_10MM					= 9,
+	CMD_CORD 									= 10,
+	CMD_CONNECT								= 11
 } COMMAND;
 
 //typedef char commandMsg[COMMAND_MSG_SIZE];
@@ -19,7 +22,7 @@ typedef enum COMMAND {
 bool sendCommand(COMMAND cmd, int value);
 bool sendCommand(COMMAND cmd, int value, bool waitComplete);
 bool sendCoord(short v1, short v2, short v3);
-void getCommand(char *msg, int &value);
+void getCommand(char *msg, COMMAND &cmd);
 void getValue(char *msg, int &value);
 void getValue(char *msg, short &v1, short &v2, short &v3);
 int getLimitSpeed(const int speedMin, int speedMax, int startEnc, int currentEnc, int targetEnc);

@@ -439,7 +439,7 @@ void rotatePlatform(int deg){
 	int	enc = (DEGREES_360_ROTATION_ENC * deg) / ROTATION_MAX_360_DEGREE;
 	int startEnc = nMotorEncoder[mRotation];
 	int speed = 0 ;
-	if(enc > 0){
+	if((enc - startEnc ) >= 0){
 		while(nMotorEncoder[mRotation] < enc){
 			speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, startEnc, nMotorEncoder[mRotation], enc);
 			motor[mRotation] = speed;

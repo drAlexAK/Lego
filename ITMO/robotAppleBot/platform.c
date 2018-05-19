@@ -89,6 +89,11 @@ task main()
 	sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM,0);
 
 	sleep(1000);
+
+	sendCommand(CMD_CORD_START,0);
+	startTask(armListerner);
+	while(msgCam[2] == 0) sleep(100);
+	//sleep(1000);
 	int accuracy = 25;
 	int shiftMM = 0;
 	int sum =0;
@@ -100,6 +105,9 @@ task main()
 	if (msgCam[2] == 1) {
 		unloading();
 	}
+
+	stopTask(armListerner);
+	sendCommand(CMD_CORD_FINISH,0);
 
 	unloading();
 

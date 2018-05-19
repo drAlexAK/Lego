@@ -126,6 +126,12 @@ task BlueToothListener()
 	}
 }
 
+	task cordDel(){
+		while(true){
+		sendCoord(msgCam[0], msgCam[1], msgCam[2]);
+		}
+	}
+
 void resetMotorsEncoder() {
 	nMotorEncoder[mArm]    = 0;
 	nMotorEncoder[mLandle] = 0;
@@ -135,6 +141,12 @@ void resetMotorsEncoder() {
 void executeCMD(COMMAND cmd, int value){
 	switch (cmd)
 	{
+		case CMD_CORD_START:
+		startTask(cordDel);
+		break;
+		case CMD_CORD_FINISH:
+		stopTask(cordDel);
+		break;
 	case CMD_UP_ARM:
 		upArmMM(value);
 		break;

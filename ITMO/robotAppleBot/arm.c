@@ -29,7 +29,7 @@
 TSemaphore  semParkingArm;
 TSemaphore  semParkingPl;
 TSemaphore  semParkingLandle;
-//----------------------------
+//----------------------------a
 void upArmMM(int posit);
 void upArmMMStrongVert(int posit);
 void resetMotorsEncoder();
@@ -65,6 +65,7 @@ task main()
 	int value =0;
 	InitialyzePipe();
 	int iConnect = 0;
+
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
 		displayTextLine(2, "Connecting %d", iConnect);
     iConnect ++;
@@ -272,7 +273,7 @@ void lookForAppleByArm() {
 
 bool isAppleHere() {
 	const int accuracy = -50;
-	const int shiftPosition = -120;
+	const int shiftPosition = -40;
 	if (msgCam[2] == 1) { //apple here
 		if (((msgCam[0] - shiftPosition) < 0) && ((msgCam[0] - shiftPosition) > accuracy)) return true;
 	}

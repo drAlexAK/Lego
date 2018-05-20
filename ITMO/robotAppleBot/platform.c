@@ -23,18 +23,18 @@ int calcEnc = 0;
 int enc =0;
 //#define DEBUG
 //
-#define DEGREES_360_ROTATION_ENC 1950
+#define DEGREES_360_ROTATION_ENC 2100
 #define ROTATION_MAX_360_DEGREE   360
 #define M_ROTATION_SPEED_MIN      20
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
-#define DIST_TREE_NORM  		320
+#define DIST_TREE_NORM  		280
 #define DIST_BETWEEN_FENCE_TREE  100
 #define DIST_FRONT_MIN 			20
 #define DEGREES_360_ENC 		4250
 #define CM40_ENC 						1950
-#define ENC_360_TURN        2100
+#define ENC_360_TURN        2150
 // the lowest body speed limit
 #define M_BODY_SPEED_MIN 17
 // the highest body speed limit
@@ -79,7 +79,6 @@ task main()
 
 	resetMotorsEncoder();
 
-	sleep(7000);
 	int iConnect = 0;
 	//startTask (BlueToothListener);
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
@@ -88,17 +87,22 @@ task main()
 		sleep(500);
 	}
 	displayTextLine(2, "Connected");
+
+	sleep(7000);
+
+
 	//startTask (armListerner);
 
 
 	goToTheTree();
-	for (int h = 0; h < 100 ; h++)
+	for (int h = 0; h < 10 ; h++)
 		sleep(1000);
 	//----------------------
 	int i =0;
 	//sendCommand(CMD_MOVE_PL, -100);
 	//rotatePlatform(45);
 	sendCommand(CMD_DOWN_LANDLE, 45);
+
 	while(i < 4){
 		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM,0);
 		sleep(1000);
@@ -337,7 +341,8 @@ void findTrees()
 					goAheadMM(50);
 				}
 
-				robotAngelCalibration(80);
+				robotAngelCalibration(100);
+				goAheadMM(-60);
 				return;
 			}
 			sleep(30);
@@ -346,7 +351,6 @@ void findTrees()
 		i = 0;
 		sleep(30);
 	}
-	goAheadMM(-80);
 }
 
 int getDistRightAverage(){

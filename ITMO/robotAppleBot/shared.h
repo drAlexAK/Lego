@@ -66,33 +66,31 @@ void getValue(char *msg, short &v1, short &v2, short &v3){
 }
 // speed limiter
 int getLimitSpeed(const int speedMin,
-const int speedMax,
-const int startEnc,
-const int currentEnc,
-const int targetEnc){
+				  const int speedMax,
+				  const int startEnc,
+				  const int currentEnc,
+				  const int targetEnc){
 
-	const int maxEnc = 360; // 540
-	int dir = sgn(targetEnc - currentEnc); // direction
-	int complPercent = 0;
+					  const int maxEnc = 360; //540
+					  int dir = sgn(targetEnc - currentEnc); // direction
+					  int complPercent = 0;
 
-	if(dir * (targetEnc) < dir * (currentEnc)) return dir * speedMin; // current encoder longer than target
-		if ((dir * (currentEnc - startEnc  - dir * maxEnc) > 0) &&
-		(dir * (currentEnc - targetEnc + dir * maxEnc) < 0)) return dir * speedMax; // current enc longer than maxEncoder and shorter than target enc - maxEncoder
+					  if(dir * (targetEnc) < dir * (currentEnc)) return dir * speedMin; // current encoder longer than target
+					  if ((dir * (currentEnc - startEnc  - dir * maxEnc) > 0) &&
+						  (dir * (currentEnc - targetEnc + dir * maxEnc) < 0)) return dir * speedMax; // current enc longer than maxEncoder and shorter than target enc - maxEncoder
 
-	if (abs(targetEnc - startEnc) < maxEnc * 2){
-		if( currentEnc < abs((targetEnc - startEnc) / 2))
-			complPercent = abs((currentEnc - startEnc) * 100 / maxEnc);
-		else
-		{
-			complPercent = ((targetEnc - startEnc) - abs(currentEnc - startEnc)) * 100 / maxEnc;
-			complPercent = abs(complPercent);
-		}
-	}
-	else if (dir * (currentEnc - startEnc  - dir * maxEnc) <= 0)  {
-		complPercent = abs((currentEnc - startEnc) * 100 / (maxEnc));
-		} else {
-		complPercent = 100 - abs((currentEnc - (targetEnc - dir * maxEnc)) * 100 / maxEnc);
-	}
+					  if (abs(targetEnc - startEnc) < maxEnc * 2){
+						  if( abs(currentEnc - startEnc) < abs((targetEnc - startEnc) / 2))
+							  complPercent = abs ((currentEnc - startEnc) * 100 / maxEnc);
+						  else
+							  complPercent = (abs(targetEnc - startEnc) * 100 / maxEnc - (abs(currentEnc - startEnc) * 100 / maxEnc));
+								complPercent =  abs(complPercent);
+					  }
+					  else if (dir * (currentEnc - startEnc  - dir * maxEnc) <= 0)  {
+						  complPercent = abs((currentEnc - startEnc) * 100 / (maxEnc));
+					  } else {
+						  complPercent = 100 - abs((currentEnc - (targetEnc - dir * maxEnc)) * 100 / maxEnc);
+					  }
 
-	return (dir * (speedMin + (speedMax - speedMin) * complPercent / 100));
+					return (dir * (speedMin + (speedMax - speedMin) * complPercent / 100));
 }

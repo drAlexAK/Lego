@@ -14,6 +14,7 @@ using namespace std;
 ////
 int Capture();
 ////
+bool compar(short *dataToSend, short *dataToSendOld, int size);
 
 int main()
 {
@@ -24,6 +25,7 @@ int main()
 vector<string> GetListOfCOMPorts()
 {
 	vector<string> lCom;
+	//lCom.push_back("COM3");
 	lCom.push_back("COM11"); // COM3 - platform, COM11 - arm
 	return lCom;
 }
@@ -37,11 +39,11 @@ vector<btSender> GetListOfBricks()
 	{
 		while(true){		
 			cout << "Connecting to '" << lCom.at(i) << "'" << endl;
-			btSender *brick = new btSender(lCom.at(i));
+			btSender* brick = new btSender(lCom.at(i));
 			if (brick->IsItConnected())
 			{
 				cout << "Has been connected to '" << lCom.at(i) << "'" << endl; 
-				lBricks.push_back(*brick); // if you push back an object vector will call the object destructor and handle will be closed after that
+				lBricks.push_back(*(brick)); // if you push back an object vector will call the object destructor and handle will be closed after that
 				break;
 			}
 			cout << "Error: " << brick->GetErrorID() << " " << brick->GetErrorMessage() << endl;
@@ -54,6 +56,7 @@ vector<btSender> GetListOfBricks()
 int Capture()
 {
 	short * dataToSend = new short[2];
+	short * dataToSendOld = new short[2];
 	vector<btSender> lBricks = GetListOfBricks();
 
 	VideoCapture cap(0); //capture the video from webcam
@@ -115,7 +118,7 @@ int Capture()
 		double dM10 = oMoments.m10;
 		double dArea = oMoments.m00;
 
-		dataToSend[0] = 0;
+		dataToSend[2] = 0;
 		// if the area <= 10000, I consider that the there are no object in the image and it's because of the noise, the area is not zero 
 		if (dArea > 1000000)
 		{
@@ -125,25 +128,28 @@ int Capture()
 
 			if (posX >= 0 && posY >= 0)
 			{
+
 				dataToSend[0] = posY - rowCenter;
 				dataToSend[1] = posX - colCenter;
 				dataToSend[2] = 1;				
 			}
-			else
-			{
-				dataToSend[0] = 0;
-				dataToSend[1] = 0;
-				dataToSend[2] = 0;
-			}
 		}
-		cout << dataToSend[0] << " " << dataToSend[1] << "    " << dataToSend[2] << endl;  
-
-		for (uint i = 0; i < lBricks.size(); i++)	{
-			if (lBricks.at(i).Send(dataToSend, 3) == false) {
-				cout << "Error: " << lBricks.at(i).GetErrorID() << " Cannot send to port '" << lBricks.at(i).GetComPortName() << "' " << lBricks.at(i).GetErrorMessage() ;
-			}
+		else
+		{
+			dataToSend[0] = 0;
+			dataToSend[1] = 0;
+			dataToSend[2] = 0;
 		}
 
+		if (!compar(dataToSend, dataToSendOld, 3)) {
+			cout << dataToSend[0] << " " << dataToSend[1] << "    " << dataToSend[2] << endl;  
+			for (uint i = 0; i < lBricks.size(); i++)	{
+				if (lBricks.at(i).Send(dataToSend, 3) == false) {
+					cout << "Error: " << lBricks.at(i).GetErrorID() << " Cannot send to port '" << lBricks.at(i).GetComPortName() << "' " << lBricks.at(i).GetErrorMessage() ;
+				}
+			}
+			std::copy(dataToSend, dataToSend + 3, dataToSendOld);
+		}
 		imshow("Thresholded Image", imgThresholded); //show the thresholded image
 		imshow("Original", imgOriginal); //show the original image
 
@@ -152,9 +158,17 @@ int Capture()
 			cout << "esc key is pressed by user" << endl;
 			break; 
 		}
+
 		//Sleep(100);
 	}
 	for (uint i = 0; i < lBricks.size(); i++)	
-			lBricks.at(i).Disconnect(); 
+		lBricks.at(i).Disconnect(); 
 	return 0;
+}
+
+bool compar(short *dataToSend, short *dataToSendOld, int size){
+	for(int i =0; i < size;i++){
+		if(dataToSend[i] != dataToSendOld[i]) return false;
+	}
+	return true;
 }

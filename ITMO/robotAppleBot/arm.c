@@ -59,13 +59,18 @@ short msgCam[3] = {0,0,0};
 
 task main()
 {
+	sleep(5000);
 	ubyte id =0;
 	COMMAND cmd ;
 	int value =0;
 	InitialyzePipe();
-	while( !sendCommand(CMD_CONNECT,0, false) ){
-	sleep(500);
+	int iConnect = 0;
+	while ( !sendCommand(CMD_CONNECT, 0, false) ){
+		displayTextLine(2, "Connecting %d", iConnect);
+    iConnect ++;
+		sleep(500);
 	}
+	displayTextLine(2, "Connected");
 
 	startTask(BlueToothListener);
 	InitArmDiffMM();

@@ -216,6 +216,7 @@ void SendReplayMsg(ubyte id, MSG_STATUS status){
 * configure S4 port for communiction
 */
 void InitialyzePipe(){
+	displayTextLine(2, "Init pipe");
 	semaphoreInitialize(lockSend);
 	nxtEnableHSPort();			/* configure S4 as a high-speed port */
 	nxtHS_Mode = hsRawMode; /* Set port mode. This can be one of hsRawMode, hsMsgModeMaster, hsMsgModeSlave.

@@ -5,22 +5,22 @@ that are useful for communication two Lego brick across S4 port
 */
 
 /* message header                  and      body
-______ _________________ ______     ____ ___ ___ ___
+ ______ _________________ ______     ___ ___ ___ ____
 |0     |1           |2   |3     |   |4  |5  |6  |n   |
 | 0x07 | message id | cs | size | + | 1 | 2 | 3 | xx |
 |______|____________|____|______|   |___|___|___|____|
-|          |       |     |
-|          |       |     |___ body size, bytes
-|          |       |___ check summ
-|          |____ message number
-|____ message type, must be 0x7
+		|         |        |     |
+		|         |        |     |___ body size, bytes
+		|         |        |___ check summ
+		|         |____ message number
+		|____ message type, must be 0x7
 */
-#define MSG_HEADER_SIZE   4
-#define MSG_TYPE					0x7
-#define MSG_HEAD_INDEX_TYPE 0
-#define MSG_HEAD_INDEX_ID 1
-#define MSG_HEAD_INDEX_CS 2
-#define MSG_HEAD_INDEX_BODY_SIZE 3
+#define MSG_HEADER_SIZE   			 		4
+#define MSG_TYPE								 		0x7
+#define MSG_HEAD_INDEX_TYPE 		 		0
+#define MSG_HEAD_INDEX_ID 			 		1
+#define MSG_HEAD_INDEX_CS 			 		2
+#define MSG_HEAD_INDEX_BODY_SIZE 		3
 //-------------------------------------
 /* replay header
  ______ _________________ ____
@@ -33,11 +33,11 @@ ______ _________________ ______     ____ ___ ___ ___
 |          |____ message number
 |____ message type, must be 0x0c
 */
-#define RPL_TYPE									0x0c
-#define RPL_HEAD_INDEX_TYPE 			0
-#define RPL_HEAD_INDEX_ID 				1
-#define RPL_HEAD_INDEX_RESERVED 	2
-#define RPL_HEAD_INDEX_STATUS 		3
+#define RPL_TYPE											0x0c
+#define RPL_HEAD_INDEX_TYPE 					0
+#define RPL_HEAD_INDEX_ID 						1
+#define RPL_HEAD_INDEX_RESERVED 			2
+#define RPL_HEAD_INDEX_STATUS 				3
 //-------------------------------------
 
 typedef char msgHeader[MSG_HEADER_SIZE]; /*!< 4 bytes array for message header */
@@ -46,7 +46,7 @@ typedef char msgHeader[MSG_HEADER_SIZE]; /*!< 4 bytes array for message header *
 typedef enum MSG_STATUS {
 	MSG_STATUS_SENT 				= 1,
 	MSG_STATUS_DELIVERED		= 2,
-	MSG_STATUS_COMPLETED		= 3,
+	MSG_STATUS_COMPLETED    = 3,
 	MSG_STATUS_ERROR 				= 4
 } MSG_STATUS;
 
@@ -216,6 +216,7 @@ void SendReplayMsg(ubyte id, MSG_STATUS status){
 * configure S4 port for communiction
 */
 void InitialyzePipe(){
+	displayTextLine(2, "Init pipe");
 	semaphoreInitialize(lockSend);
 	nxtEnableHSPort();			/* configure S4 as a high-speed port */
 	nxtHS_Mode = hsRawMode; /* Set port mode. This can be one of hsRawMode, hsMsgModeMaster, hsMsgModeSlave.
@@ -224,6 +225,7 @@ void InitialyzePipe(){
 	nxtSetHSBaudRate(9600);	/* configure S4 as a high-speed port and select a BAUD rate */
 	sleep(100);
 	startTask(ReadMsg);
+	sleep(1000);
 }
 
 /*

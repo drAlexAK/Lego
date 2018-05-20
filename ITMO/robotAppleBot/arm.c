@@ -29,109 +29,123 @@
 TSemaphore  semParkingArm;
 TSemaphore  semParkingPl;
 TSemaphore  semParkingLandle;
-//----------------------------
+//----------------------------a
 void upArmMM(int posit);
 void upArmMMStrongVert(int posit);
 void resetMotorsEncoder();
-void upLandle(int angel);
+void downLandle(int angel);
 void Parking();
 task ParkingArm();
 task ParkingPl();
 task ParkingLandle();
 task holdPlPositionByArm();
+task BlueToothListener();
+task verticalLandlePositionByArm();
 void executeCMD(COMMAND cmd,int value);
 void InitArmDiffMM();
+void InitLandleDiffEnc();
 void movePl(int posit);
+void lookForAppleByArm();
+bool isAppleHere();
+int getLandlePositionByArmEnc(int enc);
 int getPlPositionByArmEnc(int enc);
 int getPlPositionByArmMM(int posit);
 int getPlCurrentPositionMM();
 //----------------------------
 
-byte armDiffMM[28] ;
+byte armDiffMM[28];
+short landleDiffEnc[28];
+short msgCam[3] = {0,0,0};
 
 task main()
 {
-	upLandle(20);
-	upLandle(45);
-	upLandle(90);
-	Parking();
-	/*InitArmDiffMM();
-	resetMotorsEncoder();
-
-	startTask(holdPlPositionByArm);
-	upArmMM(100);
-	sleep(1000);
-	upArmMM(200);
-	sleep(1000);
-	upArmMM(50);
-	sleep(1000);
-	upArmMM(270);
-	sleep(1000);
-	upArmMM(0);
-	sleep(3000);
-	stopTask(holdPlPositionByArm);
-	Parking();
-	stopAllTasks();
-	return;
-
-
-	startTask(holdPlPositionByArm);
-	upArmMM(270);
-	upLandle(true);
 	sleep(5000);
-	upArmMM(100);
-	upLandle(false);
-	sleep(5000);
-	upArmMM(200);
-	upLandle(true);
-	sleep(5000);
-	upArmMM(0);
-	sleep(5000);
-	stopTask(holdPlPositionByArm);
-	Parking();
-	stopAllTasks();
-	return;
-
-	*/
-	/*
-	upArmMMStrongVert(270);
-	sleep(3000);
-	upArmMMStrongVert(100);
-	sleep(3000);
-	upArmMMStrongVert(0);
-	sleep(3000);
-	upArmMMStrongVert(270);
-	sleep(3000);
-
-	Parking();
-	stopAllTasks();
-	return;
-
 	ubyte id =0;
 	COMMAND cmd ;
 	int value =0;
-
 	InitialyzePipe();
+	int iConnect = 0;
+
+	while ( !sendCommand(CMD_CONNECT, 0, false) ){
+		displayTextLine(2, "Connecting %d", iConnect);
+		iConnect ++;
+		sleep(500);
+	}
+	displayTextLine(2, "Connected");
+
+	startTask(BlueToothListener);
+	InitArmDiffMM();
+	InitLandleDiffEnc();
+	resetMotorsEncoder();
+	sleep(500);
+	//////////////////////////
+
+	//////////////////////////
+	//startTask(holdPlPositionByArm);
+
+	//int id =0;
 
 	while(true){
-	if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
-	id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
-	if(inDelivery.Size == COMMAND_MSG_SIZE + MSG_HEADER_SIZE){
-	getCommand(inDelivery.Msg, cmd, value);
-	executeCMD(cmd, value);
-	if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
-	inDelivery.Status = (MSG_STATUS) MSG_STATUS_COMPLETED;
-	}
-	SendCompleteReplayMsg(id);
-	}
-	}
-	sleep(200);
+		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
+			id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
+			if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE ){
+				getCommand(inDelivery.Msg, cmd);
+				if ( cmd != CMD_CORD) {
+					getValue(inDelivery.Msg, value);
+					executeCMD(cmd, value);
+					if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
+						inDelivery.Status = (MSG_STATUS) MSG_STATUS_COMPLETED;
+					}
+					SendCompleteReplayMsg(id);
+				}
+			}
+		}
+		sleep(200);
 	}
 
-	//Parking();
 
-	stopAllTasks();
+
+	/*sleep(10000);
+	downLandle(0);
+	sleep(1000);
+	upArmMM(0);
+	downLandle(90);
+
+	sleep(10000);
+
+	Parking();
 	*/
+	stopAllTasks();
+}
+
+task BlueToothListener()
+{
+	while(true) {
+		if (bQueuedMsgAvailable()) {
+			msgCam[0] = messageParm[0];
+			msgCam[1] = messageParm[1];
+			msgCam[2] = messageParm[2];
+			ClearMessage();
+			//sendCoord(msgCam[0], msgCam[1], msgCam[2]);
+		}
+		sleep(100);
+	}
+}
+
+task cordDel(){
+	short t[3] = {0, 0, 0};
+	bool first = true;
+	while(true){
+		if ((first) || (t[0] !=  msgCam[0]) || (t[1] !=  msgCam[1]) || (t[2] !=  msgCam[2]))
+		{
+			sendCoord(msgCam[0], msgCam[1], msgCam[2]);
+			t[0] =  msgCam[0];
+			t[1] =  msgCam[1];
+			t[2] =  msgCam[2];
+		}
+		sleep(200);
+		first = false;
+	}
 }
 
 void resetMotorsEncoder() {
@@ -143,6 +157,12 @@ void resetMotorsEncoder() {
 void executeCMD(COMMAND cmd, int value){
 	switch (cmd)
 	{
+	case CMD_CORD_START:
+		startTask(cordDel);
+		break;
+	case CMD_CORD_FINISH:
+		stopTask(cordDel);
+		break;
 	case CMD_UP_ARM:
 		upArmMM(value);
 		break;
@@ -151,8 +171,16 @@ void executeCMD(COMMAND cmd, int value){
 		break;
 	case CMD_MOVE_PL:
 		movePl(value);
-	case CMD_UP_LANDLE:
-		upLandle((bool) value);
+		break;
+	case CMD_DOWN_LANDLE:
+		downLandle(value);
+		break;
+	case CMD_LOOK_FOR_APPLE_BY_ARM:
+		lookForAppleByArm();
+		break;
+	case CMD_MOVE_PL_10MM:
+		int mm = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
+		movePl(100+mm);
 		break;
 	case CMD_PARK_ALL:
 	default:
@@ -189,7 +217,7 @@ task ParkingArm(){
 }
 task ParkingLandle(){
 	semaphoreLock( semParkingLandle );
-	upLandle(0);
+	downLandle(0);
 	if (bDoesTaskOwnSemaphore(semParkingLandle)) semaphoreUnlock(semParkingLandle);
 }
 task ParkingPl(){
@@ -198,9 +226,9 @@ task ParkingPl(){
 	if (bDoesTaskOwnSemaphore(semParkingPl)) semaphoreUnlock(semParkingPl);
 }
 
-void upLandle(int angel)
+void downLandle(int angel)
 {
-	if (angel < 0) angel  = 0;
+	if (angel < 0)  angel  = 0;
 	if (angel > 90) angel = 90;
 	int	targetEnc = LANDLE_11000_ENCODER / 90 * angel;
 	int startEnc = nMotorEncoder[mLandle];
@@ -217,6 +245,49 @@ void upLandle(int angel)
 		}
 	}
 	motor[mLandle] = 0;
+}
+
+void lookForAppleByArm() {
+
+	startTask(holdPlPositionByArm);
+	startTask(verticalLandlePositionByArm);
+	sleep(250);
+
+	int posit = ARM_MAX_POSITION_270MM;
+	int speedMax = 0;
+	int	targetEnc = (ARM_270MM_ENCODER * posit) / ARM_MAX_POSITION_270MM;
+	int startEnc  = nMotorEncoder[mArm];
+	int speed = 0 ;
+	if ((targetEnc - startEnc) > 0){
+		while(nMotorEncoder[mArm] < targetEnc){
+			speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
+			speed = getLimitSpeed(M_ARM_SPEED_MIN, speedMax, startEnc, nMotorEncoder[mArm], targetEnc);
+			if (isAppleHere()) break;
+			motor[mArm] = speed;
+		}
+		} else {
+		while(nMotorEncoder[mArm] > targetEnc){
+			speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
+			speed = getLimitSpeed(M_ARM_SPEED_MIN, speedMax, startEnc, nMotorEncoder[mArm], targetEnc);
+			if (isAppleHere()) break;
+			motor[mArm] = speed;
+		}
+	}
+	motor[mArm] = 0;
+	sleep(500);
+	motor[mPl]=0;
+	motor[mLandle]=0;
+	stopTask(holdPlPositionByArm);
+	stopTask(verticalLandlePositionByArm);
+}
+
+bool isAppleHere() {
+	const int accuracy = -50;
+	const int shiftPosition = -40;
+	if (msgCam[2] == 1) { //apple here
+		if (((msgCam[0] - shiftPosition) < 0) && ((msgCam[0] - shiftPosition) > accuracy)) return true;
+	}
+	return false;
 }
 
 void upArmMM(int posit){
@@ -266,6 +337,7 @@ void movePl(int posit){
 	int	targetEnc = (MAX_CENTER_ENC * posit) / MAX_CENTER_MM;
 	int startEnc = nMotorEncoder[mPl];
 	int speed = 0;
+	if (abs(targetEnc - startEnc) < 10) return;
 	if((targetEnc - startEnc) > 0){
 		while(nMotorEncoder[mPl] < targetEnc){
 			speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, startEnc, nMotorEncoder[mPl], targetEnc);
@@ -278,6 +350,32 @@ void movePl(int posit){
 		}
 	}
 	motor[mPl]=0;
+}
+
+task verticalLandlePositionByArm()
+{
+	const int accuracy = 3;
+	int targetEnc = 0;
+	int startEnc = 0;
+	int speed = 0;
+
+	while(true){
+		targetEnc = getLandlePositionByArmEnc(nMotorEncoder[mArm]);
+		startEnc = nMotorEncoder[mLandle];
+		if((targetEnc - startEnc) > 0){
+			while(((nMotorEncoder[mLandle] - accuracy) < targetEnc) && ((nMotorEncoder[mLandle] + accuracy) < targetEnc)){
+				speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, startEnc, nMotorEncoder[mLandle], targetEnc);
+				motor[mLandle] = speed;
+			}
+			} else {
+			while(((nMotorEncoder[mLandle] - accuracy) > targetEnc) && ((nMotorEncoder[mLandle] + accuracy) > targetEnc)) {
+				speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, startEnc, nMotorEncoder[mLandle], targetEnc);
+				motor[mLandle]= speed;
+			}
+		}
+		motor[mLandle]=0;
+		sleep(10);
+	}
 }
 
 
@@ -340,8 +438,49 @@ void upArmMMStrongVert(int posit){
 	motor[mArm]=0;
 }
 
-void InitArmDiffMM()
-{
+int getLandlePositionByArmEnc(int enc){
+	const int armMM2Enc = 325;
+	int index = abs(enc / armMM2Enc);
+	if (index > 27) index = 27;
+	if (index < 0) index = 0;
+	return landleDiffEnc[index];
+
+}
+
+void InitLandleDiffEnc() {
+	// arm encoder multiplication x345
+	landleDiffEnc[0] = 1208;
+	landleDiffEnc[1] = 1233;
+	landleDiffEnc[2] = 1259;
+	landleDiffEnc[3] = 1308;
+	landleDiffEnc[4] = 1383;
+	landleDiffEnc[5] = 1444;
+	landleDiffEnc[6] = 1494;
+	landleDiffEnc[7] = 1532;
+	landleDiffEnc[8] = 1603;
+	landleDiffEnc[9] = 1640;
+	landleDiffEnc[10] = 1638;
+	landleDiffEnc[11] = 1715;
+	landleDiffEnc[12] = 1750;
+	landleDiffEnc[13] = 1750;
+	landleDiffEnc[14] = 1792;
+	landleDiffEnc[15] = 1826;
+	landleDiffEnc[16] = 1832;
+	landleDiffEnc[17] = 1883;
+	landleDiffEnc[18] = 1910;
+	landleDiffEnc[19] = 1920;
+	landleDiffEnc[20] = 1920;
+	landleDiffEnc[21] = 1960;
+	landleDiffEnc[22] = 1960;
+	landleDiffEnc[23] = 1960;
+	landleDiffEnc[24] = 1960;
+	landleDiffEnc[25] = 1960;
+	landleDiffEnc[26] = 1960;
+	landleDiffEnc[27] = 1960;
+}
+
+void InitArmDiffMM() {
+	/*
 	armDiffMM[0] = 0; //5;
 	armDiffMM[1] = 3; //8;
 	armDiffMM[2] = 5; //13;
@@ -363,13 +502,42 @@ void InitArmDiffMM()
 	armDiffMM[18] = -6;
 	armDiffMM[19] = -9;
 	armDiffMM[20] = -10;
-	armDiffMM[21] = -15;
-	armDiffMM[22] = -18;
-	armDiffMM[23] = -24;
-	armDiffMM[24] = -31;
-	armDiffMM[25] = -40;
-	armDiffMM[26] = -47;
-	armDiffMM[27] = -58;
+	armDiffMM[21] = -10; //-15;
+	armDiffMM[22] = -10; //-18;
+	armDiffMM[23] = -10; //-24;
+	armDiffMM[24] = -10; //-31;
+	armDiffMM[25] = -10; //-40;
+	armDiffMM[26] = -10; //-47;
+	armDiffMM[27] = -10; //-58;
+	*/
+	armDiffMM[0] = 0; //5;
+	armDiffMM[1] = 7; //8;
+	armDiffMM[2] = 12; //13;
+	armDiffMM[3] = 17;
+	armDiffMM[4] = 21;
+	armDiffMM[5] = 24;
+	armDiffMM[6] = 27;
+	armDiffMM[7] = 31;
+	armDiffMM[8] = 34;
+	armDiffMM[9] = 38;
+	armDiffMM[10] = 40;
+	armDiffMM[11] = 43;
+	armDiffMM[12] = 45;
+	armDiffMM[13] = 47;
+	armDiffMM[14] = 49;
+	armDiffMM[15] = 50;
+	armDiffMM[16] = 50;
+	armDiffMM[17] = 52;
+	armDiffMM[18] = 51;
+	armDiffMM[19] = 52;
+	armDiffMM[20] = 48;
+	armDiffMM[21] = 45; //-15;
+	armDiffMM[22] = 44; //-18;
+	armDiffMM[23] = 41; //-24;
+	armDiffMM[24] = 37; //-31;
+	armDiffMM[25] = 31; //-40;
+	armDiffMM[26] = 27; //-47;
+	armDiffMM[27] = 20; //-58;
 }
 
 

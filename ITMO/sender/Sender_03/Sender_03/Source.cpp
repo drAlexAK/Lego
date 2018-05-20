@@ -16,10 +16,12 @@ int main()
 	cin >> comport1;
 	bt_out robot1(comport1);
 
-	cout << "Input COM for Robot 2: ";
-	string comport2;
-	cin >> comport2;
-	bt_out robot2(comport2);
+	Sleep(1000);
+
+	//cout << "Input COM for Robot 2: ";
+	//string comport2;
+	//cin >> comport2;
+	//bt_out robot2(comport2);
 
 	bytesToSend_1[0] = 5; //cond
 	bytesToSend_1[1] = 0; //finish
@@ -73,7 +75,7 @@ int main()
 		}
 
 		robot1.bt_send(bytesToSend_1, 2);
-		robot2.bt_send(bytesToSend_2, 2);
+		//robot2.bt_send(bytesToSend_2, 2);
 	}
 
 	return 0;

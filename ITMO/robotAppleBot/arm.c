@@ -68,7 +68,7 @@ task main()
 
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
 		displayTextLine(2, "Connecting %d", iConnect);
-    iConnect ++;
+		iConnect ++;
 		sleep(500);
 	}
 	displayTextLine(2, "Connected");
@@ -114,7 +114,7 @@ task main()
 	sleep(10000);
 
 	Parking();
-*/
+	*/
 	stopAllTasks();
 }
 
@@ -132,11 +132,21 @@ task BlueToothListener()
 	}
 }
 
-	task cordDel(){
-		while(true){
-		sendCoord(msgCam[0], msgCam[1], msgCam[2]);
+task cordDel(){
+	short t[3] = {0, 0, 0};
+	bool first = true;
+	while(true){
+		if ((first) || (t[0] !=  msgCam[0]) || (t[1] !=  msgCam[1]) || (t[2] !=  msgCam[2]))
+		{
+			sendCoord(msgCam[0], msgCam[1], msgCam[2]);
+			t[0] =  msgCam[0];
+			t[1] =  msgCam[1];
+			t[2] =  msgCam[2];
 		}
+		sleep(200);
+		first = false;
 	}
+}
 
 void resetMotorsEncoder() {
 	nMotorEncoder[mArm]    = 0;
@@ -147,10 +157,10 @@ void resetMotorsEncoder() {
 void executeCMD(COMMAND cmd, int value){
 	switch (cmd)
 	{
-		case CMD_CORD_START:
+	case CMD_CORD_START:
 		startTask(cordDel);
 		break;
-		case CMD_CORD_FINISH:
+	case CMD_CORD_FINISH:
 		stopTask(cordDel);
 		break;
 	case CMD_UP_ARM:
@@ -168,9 +178,9 @@ void executeCMD(COMMAND cmd, int value){
 	case CMD_LOOK_FOR_APPLE_BY_ARM:
 		lookForAppleByArm();
 		break;
-		case CMD_MOVE_PL_10MM:
+	case CMD_MOVE_PL_10MM:
 		int mm = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
-	movePl(100+mm);
+		movePl(100+mm);
 		break;
 	case CMD_PARK_ALL:
 	default:

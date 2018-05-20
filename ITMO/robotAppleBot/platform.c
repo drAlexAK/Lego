@@ -81,9 +81,10 @@ task main()
 
 	int iConnect = 0;
 	//startTask (BlueToothListener);
+	startTask(armListerner);
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
 		displayTextLine(2, "Connecting %d", iConnect);
-    iConnect ++;
+		iConnect ++;
 		sleep(500);
 	}
 	displayTextLine(2, "Connected");
@@ -101,37 +102,33 @@ task main()
 	int i =0;
 	//sendCommand(CMD_MOVE_PL, -100);
 	//rotatePlatform(45);
-	sendCommand(CMD_DOWN_LANDLE, 45);
+
 
 	while(i < 4){
-		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM,0);
+		sendCommand(CMD_DOWN_LANDLE, 45);
+		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM, 0);
 		sleep(1000);
-		unloading();
+		sendCommand(CMD_CORD_START, 0);
+		sleep(1000);
+		int accuracy = 25;
+		int shiftMM = 0;
+		int sum =0;
+		while((msgCam[2] == 1) && ((msgCam[1] < -1 * accuracy ) || (msgCam[1] > accuracy ))){ // hor
+			shiftMM = msgCam[1] / 100;
+			sum += shiftMM;
+			if (abs(shiftMM) > 10) goAheadMM(shiftMM);
+		}
+		if (msgCam[2] == 1) {
+			unloading();
+		}
+		sendCommand(CMD_CORD_FINISH,0);
 		if(i < 3)goAheadMM(120);
 		i++;
 	}
-	/*
-	sendCommand(CMD_CORD_START,0);
-	startTask(armListerner);
-	while(msgCam[2] == 0) sleep(100);
+
+	//while(msgCam[2] == 0) sleep(100);
 	//sleep(1000);
-	int accuracy = 25;
-	int shiftMM = 0;
-	int sum =0;
-	while((msgCam[2] == 1) && ((msgCam[1] < -1 * accuracy ) || (msgCam[1] > accuracy ))){ // hor
-	shiftMM = msgCam[1] / 100;
-	sum += shiftMM;
-	if (abs(shiftMM) > 10) goAheadMM(shiftMM);
-	}
-	if (msgCam[2] == 1) {
-	unloading();
-	}
 
-	stopTask(armListerner);
-	sendCommand(CMD_CORD_FINISH,0);
-
-	unloading();
-	*/
 	sendCommand(CMD_PARK_ALL,0);
 	Parking();
 
@@ -163,7 +160,7 @@ void unloading(){
 }
 
 task armListerner() {
-	ubyte idOld = 255;
+	ubyte idOld = 128;
 	COMMAND cmd ;
 
 	while(true){

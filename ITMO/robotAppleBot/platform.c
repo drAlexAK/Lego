@@ -113,12 +113,12 @@ task main()
 		int sum =0;
 		short x =0;
 		short y =0;
-		while((getCoord(&y, &x)) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
+		while((getCoord(y, x)) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
 			shiftMM = x / 100;
 			sum += shiftMM;
 			if (abs(shiftMM) > 10) goAheadMM(shiftMM);
 		}
-		if (getCoord(&y, &x){
+		if (getCoord(y, x)){
 			unloading();
 		}
 		if(i < 3)goAheadMM(120);

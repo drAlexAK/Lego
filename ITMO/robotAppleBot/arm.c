@@ -84,8 +84,8 @@ task main()
 	//startTask(holdPlPositionByArm);
 
 	//int id =0;
-	long const sizeCordReplayBody = sizeof(int)*3;
-	ubyte bodyCoord[sizeCordReplayBody];
+	ubyte const sizeCordReplayBody = sizeof(int)*3;
+	char bodyCoord[sizeCordReplayBody];
 
 	while(true){
 		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){

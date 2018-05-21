@@ -68,7 +68,7 @@ void goToTheTree();
 task controlMotors();
 task parkingRotation();
 task BlueToothListener();
-task armListerner();
+//task armListerner();
 
 task main()
 {
@@ -86,7 +86,7 @@ task main()
 
 	int iConnect = 0;
 	//startTask (BlueToothListener);
-	startTask(armListerner);
+	//startTask(armListerner);
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
 		displayTextLine(2, "Connecting %d", iConnect);
 		iConnect ++;

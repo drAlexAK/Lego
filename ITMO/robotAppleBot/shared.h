@@ -22,7 +22,7 @@ typedef enum COMMAND {
 //----------------------------------------
 bool sendCommand(COMMAND cmd, int value);
 bool sendCommand(COMMAND cmd, int value, bool waitComplete);
-void getMsgCoord(ubyte *body, short v1, short v2, short v3);
+void getMsgCoord(char *body, short v1, short v2, short v3);
 void getCommand(char *msg, COMMAND &cmd);
 void getValue(char *msg, int &value);
 void getValue(char *msg, short &v1, short &v2, short &v3);
@@ -41,7 +41,7 @@ bool sendCommand(COMMAND cmd, int value){
 	return sendCommand(cmd, value, true);
 }
 
-void getMsgCoord(ubyte *body, short v1, short v2, short v3){
+void getMsgCoord(char *body, short v1, short v2, short v3){
 	memcpy(&body[0], &v1, sizeof(short));
 	memcpy(&body[sizeof(int)*1], &v2, sizeof(short));
 	memcpy(&body[sizeof(int)*2], &v3, sizeof(short));

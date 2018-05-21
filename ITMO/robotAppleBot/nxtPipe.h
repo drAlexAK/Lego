@@ -176,10 +176,11 @@ task ReadMsg(){
 				while (nxtGetAvailHSBytes() < (byte) header[RPL_HEAD_INDEX_BODY_SIZE])
 					sleep(100); /* waiting messages */
 				nxtReadRawHS(d.Msg[0], header[RPL_HEAD_INDEX_BODY_SIZE]);
-				if (outDelivery.Msg[MSG_HEAD_INDEX_ID] == header[RPL_HEAD_INDEX_ID]) {
-					outDelivery.Status = (MSG_STATUS) header[RPL_HEAD_INDEX_STATUS]; /* sets outgoing message status */
+			}
+			if (outDelivery.Msg[MSG_HEAD_INDEX_ID] == header[RPL_HEAD_INDEX_ID]) {
+				if (header[RPL_HEAD_INDEX_BODY_SIZE] > 0)
 					memcpy(outDelivery.Msg[MSG_HEADER_SIZE], d.Msg[0], header[RPL_HEAD_INDEX_BODY_SIZE]);
-				}
+				outDelivery.Status = (MSG_STATUS) header[RPL_HEAD_INDEX_STATUS]; /* sets outgoing message status */
 			}
 		}
 		else if (header[MSG_HEAD_INDEX_TYPE] == MSG_TYPE){ /* analyze incomming message */

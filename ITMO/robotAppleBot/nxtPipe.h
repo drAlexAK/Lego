@@ -29,14 +29,14 @@ that are useful for communication two Lego brick across S4 port
 |______|____________|____|____|
 |          |          |     |
 |          |          |     |___status 0 - error, 1 - recived, 2 - completed
-|          |          |___ must be 0, reserved
+|          |          |___ size
 |          |____ message number
 |____ message type, must be 0x0c
 */
 #define RPL_TYPE											0x0c
 #define RPL_HEAD_INDEX_TYPE 					0
 #define RPL_HEAD_INDEX_ID 						1
-#define RPL_HEAD_INDEX_RESERVED 			2
+#define RPL_HEAD_INDEX_BODY_SIZE     			2
 #define RPL_HEAD_INDEX_STATUS 				3
 //-------------------------------------
 
@@ -81,6 +81,14 @@ void SendCompleteReplayMsg(ubyte msgId);
 * @status incomming message status
 */
 void SendReplayMsg(ubyte id, MSG_STATUS status);
+/**
+* send replay message
+* @id incomming message id
+* @status incomming message status
+* @body pointer to replay message
+* @size message size
+*/
+void SendReplayMsg(ubyte id, MSG_STATUS status, ubyte *body, int size);
 /**
 * send message safe with multithreading synchronization
 * @param msg pointer to message array
@@ -166,6 +174,11 @@ task ReadMsg(){
 		if(header[MSG_HEAD_INDEX_TYPE] == RPL_TYPE){ /* analyze reply message */
 			if (outDelivery.Msg[MSG_HEAD_INDEX_ID] == header[RPL_HEAD_INDEX_ID])
 				outDelivery.Status = (MSG_STATUS) header[RPL_HEAD_INDEX_STATUS]; /* sets outgoing message status */
+			if (header[RPL_HEAD_INDEX_BODY_SIZE] > 0) {
+				while (nxtGetAvailHSBytes() < (byte) header[RPL_HEAD_INDEX_BODY_SIZE])
+					sleep(100); /* waiting messages */
+				nxtReadRawHS(outDelivery.Msg[MSG_HEADER_SIZE], header[RPL_HEAD_INDEX_BODY_SIZE]);
+			}
 		}
 		else if (header[MSG_HEAD_INDEX_TYPE] == MSG_TYPE){ /* analyze incomming message */
 			memcpy(d.Msg, header, sizeof(ubyte) * MSG_HEADER_SIZE);
@@ -207,9 +220,30 @@ void SendReplayMsg(ubyte id, MSG_STATUS status){
 	msgHeader h;
 	h[RPL_HEAD_INDEX_TYPE]			= RPL_TYPE;
 	h[RPL_HEAD_INDEX_ID]				= id;
-	h[RPL_HEAD_INDEX_RESERVED]	= 0;
+	h[RPL_HEAD_INDEX_BODY_SIZE]			= 0;
 	h[RPL_HEAD_INDEX_STATUS]		= status;
 	SendSafe(&h[0], MSG_HEADER_SIZE);
+}
+
+/**
+* send replay message
+* @id incomming message id
+* @status incomming message status
+* @body pointer to replay message
+* @size body size
+*/
+void SendReplayMsg(ubyte id, MSG_STATUS status, ubyte *body, int size){
+	msgHeader h;
+	Delivery d;
+	h[RPL_HEAD_INDEX_TYPE]			= RPL_TYPE;
+	h[RPL_HEAD_INDEX_ID]				= id;
+	h[RPL_HEAD_INDEX_BODY_SIZE]	= size;
+	h[RPL_HEAD_INDEX_STATUS]		= status;
+
+	memcpy(&d.Msg[0], h,  MSG_HEADER_SIZE);
+	memcpy(&d.Msg[MSG_HEADER_SIZE], body, size);
+
+	SendSafe(d.Msg, MSG_HEADER_SIZE + size);
 }
 
 /**

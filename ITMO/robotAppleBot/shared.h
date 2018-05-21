@@ -10,18 +10,19 @@ typedef enum COMMAND {
 	CMD_DOWN_LANDLE		  			= 4,
 	CMD_PARK_ALL							= 5,
 	CMD_LOOK_FOR_APPLE_BY_ARM = 6,
-	CMD_CORD_START						= 7,
-	CMD_CORD_FINISH				    = 8,
+	//CMD_CORD_START						= 7,
+	//CMD_CORD_FINISH				    = 8,
 	CMD_MOVE_PL_10MM					= 9,
-	CMD_CORD 									= 10,
-	CMD_CONNECT								= 11
+	//CMD_CORD 									= 10,
+	CMD_CONNECT								= 11,
+	CMD_GET_COORD							= 12
 } COMMAND;
 
 //typedef char commandMsg[COMMAND_MSG_SIZE];
 //----------------------------------------
 bool sendCommand(COMMAND cmd, int value);
 bool sendCommand(COMMAND cmd, int value, bool waitComplete);
-bool sendCoord(short v1, short v2, short v3);
+void getMsgCoord(ubyte *body, short v1, short v2, short v3);
 void getCommand(char *msg, COMMAND &cmd);
 void getValue(char *msg, int &value);
 void getValue(char *msg, short &v1, short &v2, short &v3);
@@ -40,15 +41,10 @@ bool sendCommand(COMMAND cmd, int value){
 	return sendCommand(cmd, value, true);
 }
 
-bool sendCoord(short v1, short v2, short v3){
-	const int messageSize = 16;
-	char msg[messageSize];
-	COMMAND cmd = CMD_CORD;
-	memcpy(&msg[0], &cmd, sizeof(int));
-	memcpy(&msg[sizeof(int)], &v1, sizeof(short));
-	memcpy(&msg[sizeof(int)*2], &v2, sizeof(short));
-	memcpy(&msg[sizeof(int)*3], &v3, sizeof(byte));
-	return SendMsg(&msg[0], messageSize, false, 3, 3000);
+void getMsgCoord(ubyte *body, short v1, short v2, short v3){
+	memcpy(&body[0], &v1, sizeof(short));
+	memcpy(&body[sizeof(int)*1], &v2, sizeof(short));
+	memcpy(&body[sizeof(int)*2], &v3, sizeof(short));
 }
 
 void getCommand(char *msg, COMMAND &cmd){

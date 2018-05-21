@@ -84,13 +84,18 @@ task main()
 	//startTask(holdPlPositionByArm);
 
 	//int id =0;
+	long const sizeCordReplayBody = sizeof(int)*3;
+	ubyte bodyCoord[sizeCordReplayBody];
 
 	while(true){
 		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
 			id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
 			if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE ){
 				getCommand(inDelivery.Msg, cmd);
-				if ( cmd != CMD_CORD) {
+				if ( cmd == CMD_GET_COORD ){
+					getMsgCoord(&bodyCoord[0], msgCam[0], msgCam[1], msgCam[2]);
+					SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyCoord, sizeCordReplayBody);
+				}else{
 					getValue(inDelivery.Msg, value);
 					executeCMD(cmd, value);
 					if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
@@ -131,23 +136,23 @@ task BlueToothListener()
 		sleep(100);
 	}
 }
-
+/*
 task cordDel(){
 	short t[3] = {0, 0, 0};
 	bool first = true;
 	while(true){
 		if ((first) || (t[0] !=  msgCam[0]) || (t[1] !=  msgCam[1]) || (t[2] !=  msgCam[2]))
 		{
-			sendCoord(msgCam[0], msgCam[1], msgCam[2]);
 			t[0] =  msgCam[0];
 			t[1] =  msgCam[1];
 			t[2] =  msgCam[2];
+			sendCoord(t[0], t[1], t[2]);
 		}
 		sleep(200);
-		first = false;
+		if (first) first = false;
 	}
 }
-
+*/
 void resetMotorsEncoder() {
 	nMotorEncoder[mArm]    = 0;
 	nMotorEncoder[mLandle] = 0;
@@ -157,12 +162,14 @@ void resetMotorsEncoder() {
 void executeCMD(COMMAND cmd, int value){
 	switch (cmd)
 	{
+		/*
 	case CMD_CORD_START:
 		startTask(cordDel);
 		break;
 	case CMD_CORD_FINISH:
 		stopTask(cordDel);
 		break;
+		*/
 	case CMD_UP_ARM:
 		upArmMM(value);
 		break;
@@ -480,36 +487,6 @@ void InitLandleDiffEnc() {
 }
 
 void InitArmDiffMM() {
-	/*
-	armDiffMM[0] = 0; //5;
-	armDiffMM[1] = 3; //8;
-	armDiffMM[2] = 5; //13;
-	armDiffMM[3] = 7;
-	armDiffMM[4] = 9;
-	armDiffMM[5] = 10;
-	armDiffMM[6] = 10;
-	armDiffMM[7] = 11;
-	armDiffMM[8] = 11;
-	armDiffMM[9] = 10;
-	armDiffMM[10] = 7;
-	armDiffMM[11] = 6;
-	armDiffMM[12] = 3;
-	armDiffMM[13] = 2;
-	armDiffMM[14] = 3;
-	armDiffMM[15] = 0;
-	armDiffMM[16] = -2;
-	armDiffMM[17] = -3;
-	armDiffMM[18] = -6;
-	armDiffMM[19] = -9;
-	armDiffMM[20] = -10;
-	armDiffMM[21] = -10; //-15;
-	armDiffMM[22] = -10; //-18;
-	armDiffMM[23] = -10; //-24;
-	armDiffMM[24] = -10; //-31;
-	armDiffMM[25] = -10; //-40;
-	armDiffMM[26] = -10; //-47;
-	armDiffMM[27] = -10; //-58;
-	*/
 	armDiffMM[0] = 0; //5;
 	armDiffMM[1] = 7; //8;
 	armDiffMM[2] = 12; //13;
@@ -531,42 +508,11 @@ void InitArmDiffMM() {
 	armDiffMM[18] = 51;
 	armDiffMM[19] = 52;
 	armDiffMM[20] = 48;
-	armDiffMM[21] = 45; //-15;
-	armDiffMM[22] = 44; //-18;
-	armDiffMM[23] = 41; //-24;
-	armDiffMM[24] = 37; //-31;
-	armDiffMM[25] = 31; //-40;
-	armDiffMM[26] = 27; //-47;
-	armDiffMM[27] = 20; //-58;
+	armDiffMM[21] = 45;
+	armDiffMM[22] = 44;
+	armDiffMM[23] = 41;
+	armDiffMM[24] = 37;
+	armDiffMM[25] = 31;
+	armDiffMM[26] = 27;
+	armDiffMM[27] = 20;
 }
-
-
-/*
-void getArrayDistFromLadleDependsOnArm(){
-
-TFileHandle   hFileHandle;              // will keep track of our file
-TFileIOResult nIOResult;                // will store our IO results
-string        sFileName = "Landle.txt";   // the name of our file
-short         nFileSize = 1000;          // will store our file size
-string result = "";
-
-byte CR = 0x13;   // define CR (carriage return)
-byte LF = 0x10;   // define LF (line feed)
-
-OpenWrite( hFileHandle, nIOResult, sFileName, nFileSize);    // open the file for writing (creates the file if it does not exist)
-int d = MSDISTreadDist(S1);
-int a[7];
-for(int i = 0; i <= 270; i += 10){
-upArmMM(i);
-sleep(3000);
-for(int j =0; j <7;j++){
-a[j] = MSDISTreadDist(S1);
-sleep(500);
-}
-sprintf(result, "%d %d\n\r", i , GetMedian(a,7));
-WriteText(hFileHandle, nIOResult, result);         // write 'sMessageToWrite' to the file
-//WriteByte(hFileHandle, nIOResult, CR);                      // write 'CR' to the file (carriage return)
-//WriteByte(hFileHandle, nIOResult, LF);                      // write 'LF' to the file (line feed)
-}
-Close(hFileHandle, nIOResult);                              // close our file (DON'T FORGET THIS STEP!)
-}*/

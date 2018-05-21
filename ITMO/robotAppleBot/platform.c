@@ -79,6 +79,11 @@ task main()
 
 	resetMotorsEncoder();
 
+	while (true){
+		sendCommand(CMD_GET_COORD, 0);
+		sleep(1000);
+	}
+
 	int iConnect = 0;
 	//startTask (BlueToothListener);
 	startTask(armListerner);
@@ -95,9 +100,9 @@ task main()
 	//startTask (armListerner);
 
 
-	goToTheTree();
+	/*	goToTheTree();
 	for (int h = 0; h < 10 ; h++)
-		sleep(1000);
+	sleep(1000);*/
 	//----------------------
 	int i =0;
 	//sendCommand(CMD_MOVE_PL, -100);
@@ -108,7 +113,7 @@ task main()
 		sendCommand(CMD_DOWN_LANDLE, 45);
 		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM, 0);
 		sleep(1000);
-		sendCommand(CMD_CORD_START, 0);
+		sendCommand(CMD_GET_COORD, 0);
 		sleep(1000);
 		int accuracy = 25;
 		int shiftMM = 0;
@@ -121,7 +126,6 @@ task main()
 		if (msgCam[2] == 1) {
 			unloading();
 		}
-		sendCommand(CMD_CORD_FINISH,0);
 		if(i < 3)goAheadMM(120);
 		i++;
 	}
@@ -158,39 +162,40 @@ void unloading(){
 	rotatePlatform(0);
 	//sendCommand(CMD_DOWN_LANDLE, 45);
 }
-
+/*
 task armListerner() {
-	ubyte idOld = 128;
-	COMMAND cmd ;
+ubyte idOld = 128;
+COMMAND cmd ;
 
-	while(true){
-		if ((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
-			if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE){
-				getCommand(inDelivery.Msg, cmd);
-				if ((cmd == CMD_CORD) && (idOld != inDelivery.Msg[MSG_HEAD_INDEX_ID])) {
-					getValue(inDelivery.Msg, msgCam[0], msgCam[1], msgCam[2]);
-					idOld = inDelivery.Msg[MSG_HEAD_INDEX_ID];
-				}
-			}
-			sleep(200);
-		}
-	}
+while(true){
+if ((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
+if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE){
+getCommand(inDelivery.Msg, cmd);
+if ((cmd == CMD_CORD) && (idOld != inDelivery.Msg[MSG_HEAD_INDEX_ID])) {
+getValue(inDelivery.Msg, msgCam[0], msgCam[1], msgCam[2]);
+idOld = inDelivery.Msg[MSG_HEAD_INDEX_ID];
+}
+}
+sleep(200);
+}
+}
 }
 
-
+*/
+/*
 task BlueToothListener()
 {
-	while(true) {
-		if (bQueuedMsgAvailable()) {
-			msgCam[0] = messageParm[0];
-			msgCam[1] = messageParm[1];
-			msgCam[2] = messageParm[2];
-			ClearMessage();
-		}
-		sleep(200);
-	}
+while(true) {
+if (bQueuedMsgAvailable()) {
+msgCam[0] = messageParm[0];
+msgCam[1] = messageParm[1];
+msgCam[2] = messageParm[2];
+ClearMessage();
 }
-
+sleep(200);
+}
+}
+*/
 void goAheadEncCalc(){
 	int encNorm = getDistRightMedian();
 	int i=0;

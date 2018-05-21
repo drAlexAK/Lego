@@ -106,21 +106,28 @@ task main()
 		sendCommand(CMD_DOWN_LANDLE, 45);
 		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM, 0);
 		sleep(1000);
-		sendCommand(CMD_GET_COORD, 0);
-		sleep(1000);
 		int accuracy = 25;
 		int shiftMM = 0;
 		int sum =0;
 		short x =0;
 		short y =0;
 		while((getCoord(y, x)) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
-			shiftMM = x / 100;
-			sum += shiftMM;
-			if (abs(shiftMM) > 10) goAheadMM(shiftMM);
+			shiftMM = x / 5;
+			if (abs(shiftMM) > 15) {
+				sum += shiftMM;
+				goAheadMM(shiftMM);
+			} else {
+				break;
+			}
 		}
-		if (getCoord(y, x)){
+		if (getCoord(y, x)) {
 			unloading();
+			if (abs(sum) > 0) goAheadMM(-1 * sum);
+			continue;
 		}
+		else
+			sendCommand(CMD_PARK_ALL,0);
+
 		if(i < 3)goAheadMM(120);
 		i++;
 	}
@@ -195,13 +202,14 @@ sleep(200);
 bool getCoord(short &p1, short &p2){
 	for(int i = 0; i < 3; i++){
 		if(sendCommand(CMD_GET_COORD, 0)){
-			short tmp =0;
-			memcpy(&tmp, outDelivery.Msg[12],4);
+			int tmp = 0;
+			memcpy(&tmp, outDelivery.Msg[12], 4);
 
-			if(tmp == 0) return false; // here isn't an apple
-
-			memcpy(&p1, outDelivery.Msg[4], 4);
-			memcpy(&p2, outDelivery.Msg[8], 4);
+			if((short)tmp == 0) return false; // here isn't an apple
+			memcpy(&tmp, outDelivery.Msg[4], 4);
+			p1 = (short) tmp;
+			memcpy(&tmp, outDelivery.Msg[8], 4);
+			p2 = (short) tmp;
 			return true;
 		}
 		sleep(500);

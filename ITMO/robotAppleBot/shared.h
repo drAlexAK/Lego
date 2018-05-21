@@ -10,7 +10,7 @@ typedef enum COMMAND {
 	CMD_DOWN_LANDLE		  			= 4,
 	CMD_PARK_ALL							= 5,
 	CMD_LOOK_FOR_APPLE_BY_ARM = 6,
-	CMD_MOVE_PL_10MM					= 7,
+	CMD_SHIFT_PL_MM					  = 7,
 	CMD_CONNECT								= 8,
 	CMD_GET_COORD							= 9
 } COMMAND;

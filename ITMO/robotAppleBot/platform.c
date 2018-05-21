@@ -65,6 +65,7 @@ void unloading();
 void rotatePlatform(int deg);
 void goToTheTree();
 bool getCoord(short &p1, short &p2);
+bool catchApple();
 //tasks
 task controlMotors();
 task parkingRotation();
@@ -116,12 +117,12 @@ task main()
 			if (abs(shiftMM) > 10) {
 				sum += shiftMM;
 				goAheadMM(shiftMM);
-			} else {
+				} else {
 				break;
 			}
 		}
 		if (getCoord(y, x)) {
-			unloading();
+			if (catchApple()) unloading();
 			if (abs(sum) > 0) goAheadMM(-1 * sum);
 			continue;
 		}
@@ -154,9 +155,24 @@ void goToTheTree(){
 	findTrees();
 }
 
+// gets an apple and confirms the apple in the basket. here are three attempts
+bool catchApple(){
+	short x =0;
+	short y =0;
+	int shift = 100;
+	for ( int i = 0 ; i < 3; i++) {
+		sendCommand(CMD_SHIFT_PL_MM, shift);
+		sendCommand(CMD_DOWN_LANDLE, 0);
+		sleep(100);
+		if (getCoord(y, x)) return true;
+		sendCommand(CMD_SHIFT_PL_MM, -1 * shift);
+		shift +=15;
+	}
+	return false;
+}
+
+
 void unloading(){
-	sendCommand(CMD_MOVE_PL_10MM, 100);
-	sendCommand(CMD_DOWN_LANDLE, 0);
 	sendCommand(CMD_MOVE_PL, 0);
 	rotatePlatform(-90);
 	sendCommand(CMD_UP_ARM, 0);
@@ -206,7 +222,7 @@ bool getCoord(short &p1, short &p2){
 			memcpy(&tmp, outDelivery.Msg[12], 4);
 
 			if((short)tmp == 0) return false; // here isn't an apple
-			memcpy(&tmp, outDelivery.Msg[4], 4);
+				memcpy(&tmp, outDelivery.Msg[4], 4);
 			p1 = (short) tmp;
 			memcpy(&tmp, outDelivery.Msg[8], 4);
 			p2 = (short) tmp;

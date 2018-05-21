@@ -10,12 +10,9 @@ typedef enum COMMAND {
 	CMD_DOWN_LANDLE		  			= 4,
 	CMD_PARK_ALL							= 5,
 	CMD_LOOK_FOR_APPLE_BY_ARM = 6,
-	//CMD_CORD_START						= 7,
-	//CMD_CORD_FINISH				    = 8,
-	CMD_MOVE_PL_10MM					= 9,
-	//CMD_CORD 									= 10,
-	CMD_CONNECT								= 11,
-	CMD_GET_COORD							= 12
+	CMD_MOVE_PL_10MM					= 7,
+	CMD_CONNECT								= 8,
+	CMD_GET_COORD							= 9
 } COMMAND;
 
 //typedef char commandMsg[COMMAND_MSG_SIZE];

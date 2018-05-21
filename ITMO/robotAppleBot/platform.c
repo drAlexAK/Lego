@@ -113,7 +113,7 @@ task main()
 		short y =0;
 		while((getCoord(y, x)) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
 			shiftMM = x / 5;
-			if (abs(shiftMM) > 15) {
+			if (abs(shiftMM) > 10) {
 				sum += shiftMM;
 				goAheadMM(shiftMM);
 			} else {

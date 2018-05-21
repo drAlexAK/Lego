@@ -175,10 +175,10 @@ task ReadMsg(){
 			if (header[RPL_HEAD_INDEX_BODY_SIZE] > 0) {
 				while (nxtGetAvailHSBytes() < (byte) header[RPL_HEAD_INDEX_BODY_SIZE])
 					sleep(100); /* waiting messages */
-				nxtReadRawHS(d.Msg[MSG_HEADER_SIZE], header[RPL_HEAD_INDEX_BODY_SIZE]);
+				nxtReadRawHS(d.Msg[0], header[RPL_HEAD_INDEX_BODY_SIZE]);
 				if (outDelivery.Msg[MSG_HEAD_INDEX_ID] == header[RPL_HEAD_INDEX_ID]) {
 					outDelivery.Status = (MSG_STATUS) header[RPL_HEAD_INDEX_STATUS]; /* sets outgoing message status */
-					memcpy(outDelivery.Msg[MSG_HEADER_SIZE], d.Msg[MSG_HEADER_SIZE], header[RPL_HEAD_INDEX_BODY_SIZE]);
+					memcpy(outDelivery.Msg[MSG_HEADER_SIZE], d.Msg[0], header[RPL_HEAD_INDEX_BODY_SIZE]);
 				}
 			}
 		}
@@ -223,7 +223,7 @@ void SendReplayMsg(ubyte id, MSG_STATUS status){
 	h[RPL_HEAD_INDEX_TYPE]			= RPL_TYPE;
 	h[RPL_HEAD_INDEX_ID]				= id;
 	h[RPL_HEAD_INDEX_BODY_SIZE]			= 0;
-	h[RPL_HEAD_INDEX_STATUS]		= status;
+	h[RPL_HEAD_INDEX_STATUS]		= (ubyte) status;
 	SendSafe(&h[0], MSG_HEADER_SIZE);
 }
 
@@ -240,7 +240,7 @@ void SendReplayMsg(ubyte id, MSG_STATUS status, char *body, ubyte size){
 	h[RPL_HEAD_INDEX_TYPE]			= RPL_TYPE;
 	h[RPL_HEAD_INDEX_ID]				= id;
 	h[RPL_HEAD_INDEX_BODY_SIZE]	= size;
-	h[RPL_HEAD_INDEX_STATUS]		= status;
+	h[RPL_HEAD_INDEX_STATUS]		= (ubyte) status;
 
 	memcpy(&d.Msg[0], h,  MSG_HEADER_SIZE);
 	memcpy(&d.Msg[MSG_HEADER_SIZE], body, size);

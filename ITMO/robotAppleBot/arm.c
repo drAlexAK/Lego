@@ -71,6 +71,7 @@ task main()
 		iConnect ++;
 		sleep(500);
 	}
+
 	displayTextLine(2, "Connected");
 
 	startTask(BlueToothListener);

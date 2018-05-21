@@ -14,7 +14,7 @@
 //int vMax = 60;
 int vBase = 50;
 //int vMin = 0;
-short msgCam[3] = {0,0,0};
+//short msgCam[3] = {0,0,0};
 int vLeft  = 0;
 int vRight = 0;
 //
@@ -64,6 +64,7 @@ void goAheadEncCalc();
 void unloading();
 void rotatePlatform(int deg);
 void goToTheTree();
+bool getCoord(short &p1, short &p2);
 //tasks
 task controlMotors();
 task parkingRotation();
@@ -78,11 +79,6 @@ task main()
 	sleep(1000);
 
 	resetMotorsEncoder();
-
-	while (true){
-		sendCommand(CMD_GET_COORD, 0);
-		sleep(1000);
-	}
 
 	int iConnect = 0;
 	//startTask (BlueToothListener);
@@ -105,9 +101,6 @@ task main()
 	sleep(1000);*/
 	//----------------------
 	int i =0;
-	//sendCommand(CMD_MOVE_PL, -100);
-	//rotatePlatform(45);
-
 
 	while(i < 4){
 		sendCommand(CMD_DOWN_LANDLE, 45);
@@ -118,12 +111,14 @@ task main()
 		int accuracy = 25;
 		int shiftMM = 0;
 		int sum =0;
-		while((msgCam[2] == 1) && ((msgCam[1] < -1 * accuracy ) || (msgCam[1] > accuracy ))){ // hor
-			shiftMM = msgCam[1] / 100;
+		short x =0;
+		short y =0;
+		while((getCoord(&y, &x)) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
+			shiftMM = x / 100;
 			sum += shiftMM;
 			if (abs(shiftMM) > 10) goAheadMM(shiftMM);
 		}
-		if (msgCam[2] == 1) {
+		if (getCoord(&y, &x){
 			unloading();
 		}
 		if(i < 3)goAheadMM(120);
@@ -196,6 +191,24 @@ sleep(200);
 }
 }
 */
+
+bool getCoord(short &p1, short &p2){
+	for(int i = 0; i < 3; i++){
+		if(sendCommand(CMD_GET_COORD, 0)){
+			short tmp =0;
+			memcpy(&tmp, outDelivery.Msg[12],4);
+
+			if(tmp == 0) return false; // here isn't an apple
+
+			memcpy(&p1, outDelivery.Msg[4], 4);
+			memcpy(&p2, outDelivery.Msg[8], 4);
+			return true;
+		}
+		sleep(500);
+	}
+	return false;
+}
+
 void goAheadEncCalc(){
 	int encNorm = getDistRightMedian();
 	int i=0;

@@ -104,7 +104,8 @@ task main()
 	int i =0;
 
 	while(i < 4){
-		sendCommand(CMD_DOWN_LANDLE, 45);
+		sendCommand(CMD_SET_LANDLE_BY_ARM,0);
+		sendCommand(CMD_MOVE_PL,0);
 		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM, 0);
 		sleep(1000);
 		int accuracy = 25;
@@ -159,15 +160,18 @@ void goToTheTree(){
 bool catchApple(){
 	short x =0;
 	short y =0;
-	int shift = 100;
-	for ( int i = 0 ; i < 3; i++) {
-		sendCommand(CMD_SHIFT_PL_MM, shift);
+	int shiftPL = 100;
+	int shiftArm = 50;
+	for (int i = 0; i < 3; i++) {
+		sendCommand(CMD_SHIFT_PL_MM, shiftPL);
 		sendCommand(CMD_DOWN_LANDLE, 0);
+		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL);
 		sleep(100);
 		if (getCoord(y, x)) return true;
-		sendCommand(CMD_SHIFT_PL_MM, -1 * shift);
-		shift +=15;
-	}
+		sendCommand(CMD_SET_LANDLE_BY_ARM,0);
+		shiftPL +=15;
+	}// skip unride apple
+	sendCommand(CMD_SHIFT_ARM_MM,shiftArm);
 	return false;
 }
 

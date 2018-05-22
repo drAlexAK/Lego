@@ -13,7 +13,6 @@
 //int vMax = 60;
 int vBase = 50;
 //int vMin = 0;
-//short msgCam[3] = {0,0,0};
 int vLeft  = 0;
 int vRight = 0;
 //
@@ -64,26 +63,24 @@ void unloading();
 void rotatePlatform(int deg);
 void goToTheTree();
 bool getCoord(short &p1, short &p2);
-bool catchApple();
 int getArmMM();
+bool catchApple();
+void moveByHor(int &sum);
 //tasks
 task controlMotors();
 task parkingRotation();
-task BlueToothListener();
-//task armListerner();
 
 task main()
 {
-	sleep(5000);
+
 	InitialyzePipe();
 	startTask (controlMotors);
-	sleep(1000);
 
 	resetMotorsEncoder();
 
 	int iConnect = 0;
-	//startTask (BlueToothListener);
-	//startTask(armListerner);
+	startTask (BlueToothListener);
+
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
 		displayTextLine(2, "Connecting %d", iConnect);
 		iConnect ++;
@@ -93,45 +90,30 @@ task main()
 
 	sleep(7000);
 
-
-	//startTask (armListerner);
-
-
 	/*	goToTheTree();
 	for (int h = 0; h < 10 ; h++)
 	sleep(1000);*/
 	//----------------------
 	int i =0;
+	int sum =0;
+	short y, x;
 
 	while(i < 4){
 		sendCommand(CMD_SET_LANDLE_BY_ARM,0);
 		sendCommand(CMD_MOVE_PL,0);
 		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM, 0);
 		sleep(1000);
-		int accuracy = 25;
-		int shiftMM = 0;
-		int sum =0;
-		short x =0;
-		short y =0;
-		while((getCoord(y, x)) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
-			shiftMM = x / 7;
-			writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
-			if (abs(shiftMM) > 10) {
-				sum += shiftMM;
-				goAheadMM(shiftMM);
-				} else {
-				break;
-			}
-		}
+		//moveByHor(sum);
 		if (getCoord(y, x)) {
 			if (catchApple()) unloading();
-			if (abs(sum) > 10) goAheadMM(-1 * sum);
+			//if (abs(sum) > 10) goAheadMM(-1 * sum);
 			continue;
 		}
 		else
+		{
 			sendCommand(CMD_PARK_ALL,0);
-
-		if(i < 3)goAheadMM(120);
+		}
+		if (i < 3) goAheadMM(120);
 		i++;
 	}
 
@@ -191,40 +173,6 @@ void unloading(){
 	writeDebugStreamLine("Finish unload");
 	//sendCommand(CMD_DOWN_LANDLE, 45);
 }
-/*
-task armListerner() {
-ubyte idOld = 128;
-COMMAND cmd ;
-
-while(true){
-if ((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
-if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE){
-getCommand(inDelivery.Msg, cmd);
-if ((cmd == CMD_CORD) && (idOld != inDelivery.Msg[MSG_HEAD_INDEX_ID])) {
-getValue(inDelivery.Msg, msgCam[0], msgCam[1], msgCam[2]);
-idOld = inDelivery.Msg[MSG_HEAD_INDEX_ID];
-}
-}
-sleep(200);
-}
-}
-}
-
-*/
-/*
-task BlueToothListener()
-{
-while(true) {
-if (bQueuedMsgAvailable()) {
-msgCam[0] = messageParm[0];
-msgCam[1] = messageParm[1];
-msgCam[2] = messageParm[2];
-ClearMessage();
-}
-sleep(200);
-}
-}
-*/
 
 int getArmMM(){
 	for(int i = 0; i < 3; i++){
@@ -234,13 +182,18 @@ int getArmMM(){
 			memcpy(&tmp, outDelivery.Msg[4], 4);
 			return tmp;
 		}
-		sleep(500);
+		sleep(100);
 		writeDebugStreamLine("Failed get Arm mm");
 	}
 	return ARM_MAX_POSITION_270MM;
 }
 
 bool getCoord(short &p1, short &p2){
+	p1 = msgCam[0];
+	p2 = msgCam[1];
+	return (msgCam[2] == 1);
+
+	/*
 	for(int i = 0; i < 3; i++){
 		writeDebugStreamLine("Getting coord");
 		if(sendCommand(CMD_GET_COORD, 0)){
@@ -255,9 +208,10 @@ bool getCoord(short &p1, short &p2){
 			return true;
 		}
 		writeDebugStreamLine("Failed get coord");
-		sleep(500);
+		sleep(100);
 	}
 	return false;
+	*/
 }
 
 void goAheadEncCalc(){
@@ -576,4 +530,22 @@ task parkingRotation(){
 	semaphoreLock( semParkingRotation );
 	rotatePlatform(0);
 	if (bDoesTaskOwnSemaphore(semParkingRotation)) semaphoreUnlock(semParkingRotation);
+}
+
+void moveByHor( int &sum){
+	int accuracy = 25;
+	int shiftMM = 0;
+	short x =0;
+	short y =0;
+	while((getCoord(y, x)) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
+		shiftMM = x / 7;
+		writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
+		if (abs(shiftMM) > 10) {
+			sum += shiftMM;
+			goAheadMM(shiftMM);
+			} else {
+			break;
+		}
+	}
+
 }

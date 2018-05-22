@@ -19,6 +19,8 @@ typedef enum COMMAND {
 	CMD_GET_ARM_MM						= 12
 } COMMAND;
 
+short msgCam[3] = {0,0,0};
+
 //typedef char commandMsg[COMMAND_MSG_SIZE];
 //----------------------------------------
 bool sendCommand(COMMAND cmd, int value);
@@ -28,7 +30,20 @@ void getCommand(char *msg, COMMAND &cmd);
 void getValue(char *msg, int &value);
 void getValue(char *msg, short &v1, short &v2, short &v3);
 int getLimitSpeed(const int speedMin, int speedMax, int startEnc, int currentEnc, int targetEnc);
+task BlueToothListener();
 
+task BlueToothListener()
+{
+	while(true) {
+		if (bQueuedMsgAvailable()) {
+			msgCam[0] = messageParm[0];
+			msgCam[1] = messageParm[1];
+			msgCam[2] = messageParm[2];
+			ClearMessage();
+		}
+		sleep(50);
+	}
+}
 
 //-----------------------------------------
 bool sendCommand(COMMAND cmd, int value, bool waitComplete){

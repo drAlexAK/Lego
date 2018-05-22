@@ -39,7 +39,6 @@ task ParkingArm();
 task ParkingPl();
 task ParkingLandle();
 task holdPlPositionByArm();
-task BlueToothListener();
 task holdVerticalLandlePositionByArm();
 void executeCMD(COMMAND cmd,int value);
 void InitArmDiffMM();
@@ -56,7 +55,6 @@ int getPlCurrentPositionMM();
 
 byte armDiffMM[28];
 short landleDiffEnc[28];
-short msgCam[3] = {0,0,0};
 short shiftLandle[10] = {-77, -60, -32, -11, -7, -13, -55, -77, -77, -77};
 
 task main()
@@ -156,36 +154,6 @@ task main()
 	stopAllTasks();
 }
 
-task BlueToothListener()
-{
-	while(true) {
-		if (bQueuedMsgAvailable()) {
-			msgCam[0] = messageParm[0];
-			msgCam[1] = messageParm[1];
-			msgCam[2] = messageParm[2];
-			ClearMessage();
-			//sendCoord(msgCam[0], msgCam[1], msgCam[2]);
-		}
-		sleep(50);
-	}
-}
-/*
-task cordDel(){
-short t[3] = {0, 0, 0};
-bool first = true;
-while(true){
-if ((first) || (t[0] !=  msgCam[0]) || (t[1] !=  msgCam[1]) || (t[2] !=  msgCam[2]))
-{
-t[0] =  msgCam[0];
-t[1] =  msgCam[1];
-t[2] =  msgCam[2];
-sendCoord(t[0], t[1], t[2]);
-}
-sleep(200);
-if (first) first = false;
-}
-}
-*/
 void resetMotorsEncoder() {
 	nMotorEncoder[mArm]    = 0;
 	nMotorEncoder[mLandle] = 0;

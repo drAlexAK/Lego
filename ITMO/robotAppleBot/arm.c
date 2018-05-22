@@ -13,7 +13,7 @@
 //#define DEBUG
 //
 #define ARM_270MM_ENCODER 				9340
-#define ARM_MAX_POSITION_270MM    270
+//#define ARM_MAX_POSITION_270MM    270 moved to shared
 #define M_ARM_SPEED_MIN           20
 #define M_ARM_SPEED_MAX           100
 #define LANDLE_11000_ENCODER      2000 // 11000
@@ -115,16 +115,22 @@ task main()
 
 	ubyte const sizeCordReplayBody = sizeof(int)*3;
 	char bodyCoord[sizeCordReplayBody];
+	char bodyInt[sizeof(int)];
 
 	while(true){
 		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
 			id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
 			if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE ){
 				getCommand(inDelivery.Msg, cmd);
-				if ( cmd == CMD_GET_COORD ){
+				if (cmd == CMD_GET_COORD){
 					getMsgCoord(&bodyCoord[0], msgCam[0], msgCam[1], msgCam[2]);
 					SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyCoord, sizeCordReplayBody);
-					}else{
+				}
+				else if (cmd == CMD_GET_ARM_MM) {
+					getIntAsArray(&bodyInt[0],nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER);
+					SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyInt, sizeof(int));
+				}
+				else {
 					getValue(inDelivery.Msg, value);
 					executeCMD(cmd, value);
 					if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
@@ -160,7 +166,7 @@ task BlueToothListener()
 			ClearMessage();
 			//sendCoord(msgCam[0], msgCam[1], msgCam[2]);
 		}
-		sleep(100);
+		sleep(50);
 	}
 }
 /*
@@ -214,7 +220,7 @@ void executeCMD(COMMAND cmd, int value){
 	case CMD_SHIFT_ARM_MM:
 		int mm2 = nMotorEncoder[mArm] / (ARM_270MM_ENCODER / ARM_MAX_POSITION_270MM);
 		upArmMM(value + mm2);
-	break;
+		break;
 	case CMD_PARK_ALL:
 	default:
 		Parking();

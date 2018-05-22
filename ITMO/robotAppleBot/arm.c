@@ -13,7 +13,7 @@
 //#define DEBUG
 //
 #define ARM_270MM_ENCODER 				9340
-#define ARM_MAX_POSITION_270MM    270
+//#define ARM_MAX_POSITION_270MM    270 moved to shared
 #define M_ARM_SPEED_MIN           20
 #define M_ARM_SPEED_MAX           100
 #define LANDLE_11000_ENCODER      2000 // 11000
@@ -40,13 +40,14 @@ task ParkingPl();
 task ParkingLandle();
 task holdPlPositionByArm();
 task BlueToothListener();
-task verticalLandlePositionByArm();
+task holdVerticalLandlePositionByArm();
 void executeCMD(COMMAND cmd,int value);
 void InitArmDiffMM();
 void InitLandleDiffEnc();
 void movePl(int posit);
 void lookForAppleByArm();
 bool isAppleHere();
+void setVerticalLandlePositionByArm();
 int getLandlePositionByArmEnc(int enc);
 int getPlPositionByArmEnc(int enc);
 int getPlPositionByArmMM(int posit);
@@ -56,10 +57,38 @@ int getPlCurrentPositionMM();
 byte armDiffMM[28];
 short landleDiffEnc[28];
 short msgCam[3] = {0,0,0};
+short shiftLandle[10] = {-77, -60, -32, -11, -7, -13, -55, -77, -77, -77};
 
 task main()
 {
+	/*
+	InitialyzePipe();
+	startTask(BlueToothListener);
+	InitArmDiffMM();
+	InitLandleDiffEnc();
+	resetMotorsEncoder();
+
+
+	sleep(3000);
+	downLandle(45);
+	startTask(holdPlPositionByArm);
+	startTask(holdVerticalLandlePositionByArm);
+	sleep(250);
+	for (int k = 0; k <= 270; k+=30){
+	upArmMM(k);
+	displayBigTextLine(2, "&d" , k);
 	sleep(5000);
+	sleep(5000);
+	sleep(5000);
+	sleep(5000);
+	}
+
+	stopTask(holdPlPositionByArm);
+	stopTask(holdVerticalLandlePositionByArm);
+	sleep(3000);
+	Parking();
+	return;
+	*/
 	ubyte id =0;
 	COMMAND cmd ;
 	int value =0;
@@ -84,19 +113,24 @@ task main()
 	//////////////////////////
 	//startTask(holdPlPositionByArm);
 
-	//int id =0;
 	ubyte const sizeCordReplayBody = sizeof(int)*3;
 	char bodyCoord[sizeCordReplayBody];
+	char bodyInt[sizeof(int)];
 
 	while(true){
 		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
 			id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
 			if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE ){
 				getCommand(inDelivery.Msg, cmd);
-				if ( cmd == CMD_GET_COORD ){
+				if (cmd == CMD_GET_COORD){
 					getMsgCoord(&bodyCoord[0], msgCam[0], msgCam[1], msgCam[2]);
 					SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyCoord, sizeCordReplayBody);
-				}else{
+				}
+				else if (cmd == CMD_GET_ARM_MM) {
+					getIntAsArray(&bodyInt[0],nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER);
+					SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyInt, sizeof(int));
+				}
+				else {
 					getValue(inDelivery.Msg, value);
 					executeCMD(cmd, value);
 					if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
@@ -116,9 +150,7 @@ task main()
 	sleep(1000);
 	upArmMM(0);
 	downLandle(90);
-
 	sleep(10000);
-
 	Parking();
 	*/
 	stopAllTasks();
@@ -134,24 +166,24 @@ task BlueToothListener()
 			ClearMessage();
 			//sendCoord(msgCam[0], msgCam[1], msgCam[2]);
 		}
-		sleep(100);
+		sleep(50);
 	}
 }
 /*
 task cordDel(){
-	short t[3] = {0, 0, 0};
-	bool first = true;
-	while(true){
-		if ((first) || (t[0] !=  msgCam[0]) || (t[1] !=  msgCam[1]) || (t[2] !=  msgCam[2]))
-		{
-			t[0] =  msgCam[0];
-			t[1] =  msgCam[1];
-			t[2] =  msgCam[2];
-			sendCoord(t[0], t[1], t[2]);
-		}
-		sleep(200);
-		if (first) first = false;
-	}
+short t[3] = {0, 0, 0};
+bool first = true;
+while(true){
+if ((first) || (t[0] !=  msgCam[0]) || (t[1] !=  msgCam[1]) || (t[2] !=  msgCam[2]))
+{
+t[0] =  msgCam[0];
+t[1] =  msgCam[1];
+t[2] =  msgCam[2];
+sendCoord(t[0], t[1], t[2]);
+}
+sleep(200);
+if (first) first = false;
+}
 }
 */
 void resetMotorsEncoder() {
@@ -163,14 +195,9 @@ void resetMotorsEncoder() {
 void executeCMD(COMMAND cmd, int value){
 	switch (cmd)
 	{
-		/*
-	case CMD_CORD_START:
-		startTask(cordDel);
+	case CMD_SET_LANDLE_BY_ARM:
+		setVerticalLandlePositionByArm();
 		break;
-	case CMD_CORD_FINISH:
-		stopTask(cordDel);
-		break;
-		*/
 	case CMD_UP_ARM:
 		upArmMM(value);
 		break;
@@ -186,9 +213,13 @@ void executeCMD(COMMAND cmd, int value){
 	case CMD_LOOK_FOR_APPLE_BY_ARM:
 		lookForAppleByArm();
 		break;
-	case CMD_MOVE_PL_10MM:
-		int mm = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
-		movePl(100+mm);
+	case CMD_SHIFT_PL_MM:
+		int mm1 = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
+		movePl(value + mm1);
+		break;
+	case CMD_SHIFT_ARM_MM:
+		int mm2 = nMotorEncoder[mArm] / (ARM_270MM_ENCODER / ARM_MAX_POSITION_270MM);
+		upArmMM(value + mm2);
 		break;
 	case CMD_PARK_ALL:
 	default:
@@ -256,9 +287,8 @@ void downLandle(int angel)
 }
 
 void lookForAppleByArm() {
-
 	startTask(holdPlPositionByArm);
-	startTask(verticalLandlePositionByArm);
+	startTask(holdVerticalLandlePositionByArm);
 	sleep(250);
 
 	int posit = ARM_MAX_POSITION_270MM;
@@ -286,14 +316,14 @@ void lookForAppleByArm() {
 	motor[mPl]=0;
 	motor[mLandle]=0;
 	stopTask(holdPlPositionByArm);
-	stopTask(verticalLandlePositionByArm);
+	stopTask(holdVerticalLandlePositionByArm);
 }
 
 bool isAppleHere() {
-	const int accuracy = -50;
-	const int shiftPosition = -40;
+	const int accuracy = 25;
+	int shiftPosition = shiftLandle[((nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM) / ARM_270MM_ENCODER ) / 30];
 	if (msgCam[2] == 1) { //apple here
-		if (((msgCam[0] - shiftPosition) < 0) && ((msgCam[0] - shiftPosition) > accuracy)) return true;
+		if (((msgCam[0] - shiftPosition) < accuracy) && ((msgCam[0] - shiftPosition) > -1 * accuracy)) return true;
 	}
 	return false;
 }
@@ -360,32 +390,35 @@ void movePl(int posit){
 	motor[mPl]=0;
 }
 
-task verticalLandlePositionByArm()
-{
+task holdVerticalLandlePositionByArm(){
+	while(true){
+		setVerticalLandlePositionByArm();
+		sleep(10);
+	}
+}
+
+
+void setVerticalLandlePositionByArm() {
 	const int accuracy = 3;
 	int targetEnc = 0;
 	int startEnc = 0;
 	int speed = 0;
 
-	while(true){
-		targetEnc = getLandlePositionByArmEnc(nMotorEncoder[mArm]);
-		startEnc = nMotorEncoder[mLandle];
-		if((targetEnc - startEnc) > 0){
-			while(((nMotorEncoder[mLandle] - accuracy) < targetEnc) && ((nMotorEncoder[mLandle] + accuracy) < targetEnc)){
-				speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, startEnc, nMotorEncoder[mLandle], targetEnc);
-				motor[mLandle] = speed;
-			}
-			} else {
-			while(((nMotorEncoder[mLandle] - accuracy) > targetEnc) && ((nMotorEncoder[mLandle] + accuracy) > targetEnc)) {
-				speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, startEnc, nMotorEncoder[mLandle], targetEnc);
-				motor[mLandle]= speed;
-			}
+	targetEnc = getLandlePositionByArmEnc(nMotorEncoder[mArm]);
+	startEnc = nMotorEncoder[mLandle];
+	if((targetEnc - startEnc) > 0){
+		while(((nMotorEncoder[mLandle] - accuracy) < targetEnc) && ((nMotorEncoder[mLandle] + accuracy) < targetEnc)){
+			speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, startEnc, nMotorEncoder[mLandle], targetEnc);
+			motor[mLandle] = speed;
 		}
-		motor[mLandle]=0;
-		sleep(10);
+		} else {
+		while(((nMotorEncoder[mLandle] - accuracy) > targetEnc) && ((nMotorEncoder[mLandle] + accuracy) > targetEnc)) {
+			speed = getLimitSpeed(M_PL_SPEED_MIN, M_PL_SPEED_MAX, startEnc, nMotorEncoder[mLandle], targetEnc);
+			motor[mLandle]= speed;
+		}
 	}
+	motor[mLandle]=0;
 }
-
 
 task holdPlPositionByArm()
 {
@@ -446,13 +479,12 @@ void upArmMMStrongVert(int posit){
 	motor[mArm]=0;
 }
 
-int getLandlePositionByArmEnc(int enc){
+int getLandlePositionByArmEnc (int enc){
 	const int armMM2Enc = 325;
 	int index = abs(enc / armMM2Enc);
 	if (index > 27) index = 27;
 	if (index < 0) index = 0;
 	return landleDiffEnc[index];
-
 }
 
 void InitLandleDiffEnc() {

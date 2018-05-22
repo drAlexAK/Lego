@@ -2,6 +2,7 @@
 #include "nxtPipe.h"
 
 #define COMMAND_MSG_SIZE 4
+#define ARM_MAX_POSITION_270MM    270
 
 typedef enum COMMAND {
 	CMD_MOVE_PL								= 1,
@@ -10,9 +11,12 @@ typedef enum COMMAND {
 	CMD_DOWN_LANDLE		  			= 4,
 	CMD_PARK_ALL							= 5,
 	CMD_LOOK_FOR_APPLE_BY_ARM = 6,
-	CMD_MOVE_PL_10MM					= 7,
+	CMD_SHIFT_PL_MM					  = 7,
 	CMD_CONNECT								= 8,
-	CMD_GET_COORD							= 9
+	CMD_GET_COORD							= 9,
+	CMD_SET_LANDLE_BY_ARM			= 10,
+	CMD_SHIFT_ARM_MM 					= 11,
+	CMD_GET_ARM_MM						= 12
 } COMMAND;
 
 //typedef char commandMsg[COMMAND_MSG_SIZE];
@@ -32,7 +36,7 @@ bool sendCommand(COMMAND cmd, int value, bool waitComplete){
 	char msg[messageSize];
 	memcpy(&msg[0], &cmd, sizeof(int));
 	memcpy(&msg[sizeof(int)], &value, sizeof(int));
-	return SendMsg(&msg[0], messageSize, waitComplete, 3, 15000);
+	return SendMsg(&msg[0], messageSize, waitComplete, 3, 3000);
 }
 bool sendCommand(COMMAND cmd, int value){
 	return sendCommand(cmd, value, true);
@@ -42,6 +46,10 @@ void getMsgCoord(char *body, short v1, short v2, short v3){
 	memcpy(&body[0], &v1, sizeof(short));
 	memcpy(&body[sizeof(int)*1], &v2, sizeof(short));
 	memcpy(&body[sizeof(int)*2], &v3, sizeof(short));
+}
+
+void getIntAsArray(char *body, int v){
+	memcpy(&body[0], &v, sizeof(int));
 }
 
 void getCommand(char *msg, COMMAND &cmd){

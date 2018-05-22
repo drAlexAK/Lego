@@ -96,11 +96,15 @@ void SendReplayMsg(ubyte id, MSG_STATUS status, char *body, ubyte size);
 */
 void SendSafe(char *msg, ubyte size);
 task ReadMsg();
+bool isItTraceArray(ubyte *b, int size);
+void skipTraceHSByte();
+void waitAvailHSBytes(ubyte size);
 //-------------------
 Delivery outDelivery;
 Delivery inDelivery;
 int UnknowMessageCounter = 0; /* contains numbers of incomming messages unknow type */
 TSemaphore lockSend; 				/* multithreading synchronization */
+char traceByteArray[16] = { 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1};
 //---------------------------------------
 /**
 * returns check summ
@@ -140,14 +144,22 @@ bool SendMsg(ubyte *body, int size, bool waitComplete, int attempts, int timeOut
 	while (((outDelivery.Status != MSG_STATUS_COMPLETED) && (waitComplete)) ||
 		((outDelivery.Status != MSG_STATUS_DELIVERED) && (waitComplete == false)))
 	{
-		if ((timeOut !=0) && (time1[T1] >= timeOut)) return false; // timeout is exceeded
-			if (outDelivery.Status == MSG_STATUS_ERROR) {
+		if ((timeOut !=0) && (time1[T1] >= timeOut)) {
+			if ((attempts != 0) && (outDelivery.Attempts >= attempts)) {
+				return false; // timeout is exceeded
+				} else {
+				outDelivery.Attempts++;
+				clearTimer(T1);
+				SendSafe(traceByteArray, 16);
+			}
+		}
+		if (outDelivery.Status == MSG_STATUS_ERROR) {
 			if ((attempts != 0) && (outDelivery.Attempts >= attempts)) return false; // attempts are exceeded
 				outDelivery.Attempts++;
 			outDelivery.Status = MSG_STATUS_SENT;
 			SendSafe(d.Msg, d.Size);
 		}
-		sleep(100);
+		sleep(1000);
 	}
 	return true;
 }
@@ -158,8 +170,55 @@ bool SendMsg(ubyte *body, int size, bool waitComplete, int attempts, int timeOut
 */
 void SendSafe(char *msg, ubyte size){
 	semaphoreLock( lockSend );
-	nxtWriteRawHS(msg, size, 0);
+	sleep(10);
+	TFileIOResult ioResult ;
+	if (size <= 4) {
+		ioResult = nxtWriteRawHS(msg, size, 0);
+		writeDebugStreamLine("nxtWriteRawHS: %d" , (int) ioResult);
+	}
+	else
+	{
+		ioResult = nxtWriteRawHS(msg, 4, 0);
+		writeDebugStreamLine("nxtWriteRawHS: %d" , (int) ioResult);
+		sleep(10);
+		size -= 4;
+		if (size  > 0) ioResult = nxtWriteRawHS(&msg[4], size, 0);
+		writeDebugStreamLine("nxtWriteRawHS: %d" , (int) ioResult);
+	}
 	if (bDoesTaskOwnSemaphore(lockSend)) semaphoreUnlock(lockSend);
+}
+
+bool isItTraceArray(ubyte *b, int size) {
+	for (int i = 0; i < size; i++) {
+		if (b[i] != 255) return false;
+	}
+	return true;
+}
+
+void skipTraceHSByte() {
+	ubyte c[1];
+	while(true) {
+		while ( nxtGetAvailHSBytes() < 1) {
+			sleep(100); /* waiting messages */
+		}
+		nxtReadRawHS(c, 1);
+		if (c != 255) return;
+	}
+}
+
+void waitAvailHSBytes(ubyte size) {
+	while ( true ){
+		semaphoreLock( lockSend );
+		if (nxtGetAvailHSBytes() < size) {
+			if (bDoesTaskOwnSemaphore(lockSend)) semaphoreUnlock(lockSend);
+			sleep(100); /* waiting messages */
+		}
+		else
+		{
+			if (bDoesTaskOwnSemaphore(lockSend)) semaphoreUnlock(lockSend);
+			break;
+		}
+	}
 }
 
 task ReadMsg(){
@@ -168,14 +227,19 @@ task ReadMsg(){
 
 	ubyte header[MSG_HEADER_SIZE];
 	while(true){
-		while ( nxtGetAvailHSBytes() < MSG_HEADER_SIZE)
-			sleep(100); /* waiting messages */
+		waitAvailHSBytes( MSG_HEADER_SIZE ); // waiting messages
+		semaphoreLock( lockSend );
 		nxtReadRawHS(header, MSG_HEADER_SIZE);
-		if(header[MSG_HEAD_INDEX_TYPE] == RPL_TYPE){ /* analyze reply message */
+		if (bDoesTaskOwnSemaphore(lockSend)) semaphoreUnlock(lockSend);
+		if ( isItTraceArray(header, MSG_HEADER_SIZE)) {
+			skipTraceHSByte();
+		}
+		else if(header[MSG_HEAD_INDEX_TYPE] == RPL_TYPE){ /* analyze reply message */
 			if (header[RPL_HEAD_INDEX_BODY_SIZE] > 0) {
-				while (nxtGetAvailHSBytes() < (byte) header[RPL_HEAD_INDEX_BODY_SIZE])
-					sleep(100); /* waiting messages */
+				waitAvailHSBytes( (byte) header[RPL_HEAD_INDEX_BODY_SIZE] ); // waiting messages
+				semaphoreLock( lockSend );
 				nxtReadRawHS(d.Msg[0], header[RPL_HEAD_INDEX_BODY_SIZE]);
+				if (bDoesTaskOwnSemaphore(lockSend)) semaphoreUnlock(lockSend);
 			}
 			if (outDelivery.Msg[MSG_HEAD_INDEX_ID] == header[RPL_HEAD_INDEX_ID]) {
 				if (header[RPL_HEAD_INDEX_BODY_SIZE] > 0)
@@ -190,19 +254,24 @@ task ReadMsg(){
 			d.Status = MSG_STATUS_DELIVERED;
 			d.Size = MSG_HEADER_SIZE + header[MSG_HEAD_INDEX_BODY_SIZE];
 			if (header[MSG_HEAD_INDEX_BODY_SIZE] > 0) {
-				while (nxtGetAvailHSBytes() < (byte) header[MSG_HEAD_INDEX_BODY_SIZE])
-					sleep(100); /* waiting messages */
+				waitAvailHSBytes( (byte) header[MSG_HEAD_INDEX_BODY_SIZE] ); // waiting messages
+				semaphoreLock( lockSend );
 				nxtReadRawHS(d.Msg[MSG_HEADER_SIZE], header[MSG_HEAD_INDEX_BODY_SIZE]);
+				if (bDoesTaskOwnSemaphore(lockSend)) semaphoreUnlock(lockSend);
 				cs = GetCheckSumm(d.Msg[MSG_HEADER_SIZE], header[MSG_HEAD_INDEX_BODY_SIZE]);
 			}
-			memcpy(inDelivery , d, sizeof(d) );
 			if (cs != header[MSG_HEAD_INDEX_CS])
 				SendReplayMsg(header[MSG_HEAD_INDEX_ID], MSG_STATUS_ERROR);
-			else
+			else {
 				SendReplayMsg(header[MSG_HEAD_INDEX_ID], MSG_STATUS_DELIVERED);
-			} else {
+				memcpy(inDelivery , d, sizeof(d) );
+			}
+		}
+		else {
 			UnknowMessageCounter++; /* increase unknow incomming messages */
 		}
+		if (bDoesTaskOwnSemaphore(lockSend)) semaphoreUnlock(lockSend);
+		sleep(100);
 	}
 }
 /**
@@ -257,20 +326,9 @@ void InitialyzePipe(){
 	semaphoreInitialize(lockSend);
 	nxtEnableHSPort();			/* configure S4 as a high-speed port */
 	nxtHS_Mode = hsRawMode; /* Set port mode. This can be one of hsRawMode, hsMsgModeMaster, hsMsgModeSlave.
-	RS485 is a half duplex protocol,
-	that means that only one BXT can say something at any given time. */
+	RS485 is a half duplex protocol,	that means that only one BXT can say something at any given time. */
 	nxtSetHSBaudRate(9600);	/* configure S4 as a high-speed port and select a BAUD rate */
-	sleep(100);
+	sleep(1000);
 	startTask(ReadMsg);
 	sleep(1000);
 }
-
-/*
-task main()
-{
-char a[5] = {'h', 'e', 'l', 'l', 'o'};
-Initialyze();
-bool res  = SendMsg(a, 5, true, 0, 5000);
-while (true) sleep(100);
-}
-*/

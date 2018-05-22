@@ -177,6 +177,7 @@ int Capture()
 }
 
 bool compar(short *a1, short *a2, int size){
+	return false;
 	for(int i = 0; i < size; i++){
 		if(a1[i] != a2[i]) return false;
 	}

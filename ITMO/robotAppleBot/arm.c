@@ -13,7 +13,7 @@
 //#define DEBUG
 //
 #define ARM_270MM_ENCODER 				9340
-#define ARM_MAX_POSITION_270MM    270
+//#define ARM_MAX_POSITION_270MM    270 moved to shared
 #define M_ARM_SPEED_MIN           20
 #define M_ARM_SPEED_MAX           100
 #define LANDLE_11000_ENCODER      2000 // 11000
@@ -39,7 +39,6 @@ task ParkingArm();
 task ParkingPl();
 task ParkingLandle();
 task holdPlPositionByArm();
-task BlueToothListener();
 task holdVerticalLandlePositionByArm();
 void executeCMD(COMMAND cmd,int value);
 void InitArmDiffMM();
@@ -56,7 +55,6 @@ int getPlCurrentPositionMM();
 
 byte armDiffMM[28];
 short landleDiffEnc[28];
-short msgCam[3] = {0,0,0};
 short shiftLandle[10] = {-77, -60, -32, -11, -7, -13, -55, -77, -77, -77};
 
 task main()
@@ -115,16 +113,22 @@ task main()
 
 	ubyte const sizeCordReplayBody = sizeof(int)*3;
 	char bodyCoord[sizeCordReplayBody];
+	char bodyInt[sizeof(int)];
 
 	while(true){
 		if((inDelivery.Size > 0) && (inDelivery.Status == MSG_STATUS_DELIVERED)){
 			id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
 			if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE ){
 				getCommand(inDelivery.Msg, cmd);
-				if ( cmd == CMD_GET_COORD ){
+				if (cmd == CMD_GET_COORD){
 					getMsgCoord(&bodyCoord[0], msgCam[0], msgCam[1], msgCam[2]);
 					SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyCoord, sizeCordReplayBody);
-					}else{
+				}
+				else if (cmd == CMD_GET_ARM_MM) {
+					getIntAsArray(&bodyInt[0],nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER);
+					SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyInt, sizeof(int));
+				}
+				else {
 					getValue(inDelivery.Msg, value);
 					executeCMD(cmd, value);
 					if (id == inDelivery.Msg[MSG_HEAD_INDEX_ID]) {
@@ -150,36 +154,6 @@ task main()
 	stopAllTasks();
 }
 
-task BlueToothListener()
-{
-	while(true) {
-		if (bQueuedMsgAvailable()) {
-			msgCam[0] = messageParm[0];
-			msgCam[1] = messageParm[1];
-			msgCam[2] = messageParm[2];
-			ClearMessage();
-			//sendCoord(msgCam[0], msgCam[1], msgCam[2]);
-		}
-		sleep(100);
-	}
-}
-/*
-task cordDel(){
-short t[3] = {0, 0, 0};
-bool first = true;
-while(true){
-if ((first) || (t[0] !=  msgCam[0]) || (t[1] !=  msgCam[1]) || (t[2] !=  msgCam[2]))
-{
-t[0] =  msgCam[0];
-t[1] =  msgCam[1];
-t[2] =  msgCam[2];
-sendCoord(t[0], t[1], t[2]);
-}
-sleep(200);
-if (first) first = false;
-}
-}
-*/
 void resetMotorsEncoder() {
 	nMotorEncoder[mArm]    = 0;
 	nMotorEncoder[mLandle] = 0;
@@ -214,7 +188,7 @@ void executeCMD(COMMAND cmd, int value){
 	case CMD_SHIFT_ARM_MM:
 		int mm2 = nMotorEncoder[mArm] / (ARM_270MM_ENCODER / ARM_MAX_POSITION_270MM);
 		upArmMM(value + mm2);
-	break;
+		break;
 	case CMD_PARK_ALL:
 	default:
 		Parking();

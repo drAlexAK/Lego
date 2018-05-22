@@ -14,7 +14,9 @@ using namespace std;
 ////
 int Capture();
 ////
-bool compar(short *dataToSend, short *dataToSendOld, int size);
+bool compar(short *a1, short *a2, int size);
+void zeroArray(short *a1, int size);
+void copyArr(short *a1, short *a2, int size);
 
 int main()
 {
@@ -55,8 +57,8 @@ vector<btSender> GetListOfBricks()
 
 int Capture()
 {
-	short * dataToSend = new short[2];
-	short * dataToSendOld = new short[2];
+	short *dataToSend = new short[3];
+	short *dataToSendOld = new short[3];
 	vector<btSender> lBricks = GetListOfBricks();
 
 	VideoCapture cap(0); //capture the video from webcam
@@ -104,8 +106,8 @@ int Capture()
 		inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
 
 		//morphological opening (removes small objects from the foreground)
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
+		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) );
+		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) ); 
 
 		//morphological closing (removes small holes from the foreground)
 		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(10, 10)) ); 
@@ -118,7 +120,6 @@ int Capture()
 		double dM10 = oMoments.m10;
 		double dArea = oMoments.m00;
 
-		dataToSend[2] = 0;
 		// if the area <= 10000, I consider that the there are no object in the image and it's because of the noise, the area is not zero 
 		if (dArea > 1000000)
 		{
@@ -133,12 +134,15 @@ int Capture()
 				dataToSend[1] = posX - colCenter;
 				dataToSend[2] = 1;				
 			}
+			else
+			{
+				zeroArray(dataToSend, 3);
+			}
+
 		}
 		else
 		{
-			dataToSend[0] = 0;
-			dataToSend[1] = 0;
-			dataToSend[2] = 0;
+			zeroArray(dataToSend, 3);
 		}
 
 		if (!compar(dataToSend, dataToSendOld, 3)) {
@@ -148,12 +152,15 @@ int Capture()
 					cout << "Error: " << lBricks.at(i).GetErrorID() << " Cannot send to port '" << lBricks.at(i).GetComPortName() << "' " << lBricks.at(i).GetErrorMessage() ;
 				}
 			}
-			std::copy(dataToSend, dataToSend + 3, dataToSendOld);
+			copyArr(dataToSend, dataToSendOld, 3);
+		} else {
+			cout << ".";
 		}
+
 		imshow("Thresholded Image", imgThresholded); //show the thresholded image
 		imshow("Original", imgOriginal); //show the original image
 
-		if (waitKey(100) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
+		if (waitKey(100) == 27) //wait for 'esc' key press for 100ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
 			break; 
@@ -166,9 +173,21 @@ int Capture()
 	return 0;
 }
 
-bool compar(short *dataToSend, short *dataToSendOld, int size){
-	for(int i =0; i < size;i++){
-		if(dataToSend[i] != dataToSendOld[i]) return false;
+bool compar(short *a1, short *a2, int size){
+	for(int i = 0; i < size; i++){
+		if(a1[i] != a2[i]) return false;
 	}
 	return true;
+}
+
+void zeroArray(short *a, int size){
+	for(int i = 0; i < size; i++){
+		a[i] = 0;
+	}
+}
+
+void copyArr(short *a1, short *a2, int size){
+	for(int i = 0; i < size; i++){
+		a2[i] = a1[i];
+	}
 }

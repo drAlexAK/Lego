@@ -98,7 +98,7 @@ void SendSafe(char *msg, ubyte size);
 task ReadMsg();
 bool isItTraceArray(ubyte *b, int size);
 void skipTraceHSByte();
-int waitAvailHSBytes(ubyte size);
+void waitAvailHSBytes(ubyte size);
 //-------------------
 Delivery outDelivery;
 Delivery inDelivery;
@@ -193,7 +193,7 @@ void skipTraceHSByte() {
 	}
 }
 
-int waitAvailHSBytes(ubyte size) {
+void waitAvailHSBytes(ubyte size) {
 	while ( true ){
 		semaphoreLock( lockSend );
 		if (nxtGetAvailHSBytes() < size) {
@@ -206,6 +206,7 @@ int waitAvailHSBytes(ubyte size) {
 			break;
 		}
 	}
+}
 
 	task ReadMsg(){
 		ubyte cs = 0;

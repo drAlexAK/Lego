@@ -28,7 +28,8 @@ vector<string> GetListOfCOMPorts()
 {
 	vector<string> lCom;
 	//lCom.push_back("COM3");
-	lCom.push_back("COM11"); // COM3 - platform, COM11 - arm
+	lCom.push_back("COM13"); 
+	lCom.push_back("COM3"); // COM3 - platform, COM11 - arm
 	return lCom;
 }
 
@@ -41,14 +42,13 @@ vector<btSender> GetListOfBricks()
 	{
 		while(true){		
 			cout << "Connecting to '" << lCom.at(i) << "'" << endl;
-			btSender* brick = new btSender(lCom.at(i));
-			if (brick->IsItConnected())
+			lBricks.push_back (btSender());
+			if (lBricks.back().Connect(lCom.at(i)))
 			{
 				cout << "Has been connected to '" << lCom.at(i) << "'" << endl; 
-				lBricks.push_back(*(brick)); // if you push back an object vector will call the object destructor and handle will be closed after that
 				break;
 			}
-			cout << "Error: " << brick->GetErrorID() << " " << brick->GetErrorMessage() << endl;
+			cout << "Error: " << lBricks.back().GetErrorID() << " " << lBricks.back().GetErrorMessage() << endl;
 			Sleep(1000); 
 		} 
 	}
@@ -162,6 +162,9 @@ int Capture()
 
 		if (waitKey(100) == 27) //wait for 'esc' key press for 100ms. If 'esc' key is pressed, break loop
 		{
+			for (uint i = 0; i < lBricks.size(); i++)	{
+				lBricks.at(i).Disconnect();
+			}
 			cout << "esc key is pressed by user" << endl;
 			break; 
 		}

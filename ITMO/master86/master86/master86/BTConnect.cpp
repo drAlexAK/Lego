@@ -3,15 +3,14 @@
 #include <atlbase.h>
 
 
-btSender::btSender(string name) {
-	comPortName = name;
-	hCom = getBluetoothHandle(name);
-	valid = (hCom != INVALID_HANDLE_VALUE);
+btSender::btSender() {
+	comPortName = "";
+	hCom = INVALID_HANDLE_VALUE;
 }
 
 btSender::~btSender()
 {
-	Disconnect();
+	//Disconnect();
 }
 
 void btSender::Disconnect() {
@@ -19,6 +18,14 @@ void btSender::Disconnect() {
 		CloseHandle(hCom);
 		hCom = INVALID_HANDLE_VALUE;
 	}
+}
+
+bool btSender::Connect(string name) {
+	Disconnect();
+	comPortName = name;
+	hCom = getBluetoothHandle(name);
+	valid = (hCom != INVALID_HANDLE_VALUE);
+	return valid;
 }
 
 bool btSender::IsItConnected() {

@@ -10,7 +10,7 @@ btSender::btSender() {
 
 btSender::~btSender()
 {
-	//Disconnect();
+	Disconnect();
 }
 
 void btSender::Disconnect() {

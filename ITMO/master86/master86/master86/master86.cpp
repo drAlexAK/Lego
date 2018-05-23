@@ -13,10 +13,12 @@ using namespace std;
 
 ////
 int Capture();
-////
 bool compar(short *a1, short *a2, int size);
 void zeroArray(short *a1, int size);
 void copyArr(short *a1, short *a2, int size);
+void GetListOfBricks(vector<btSender> &lBricks);
+vector<string> GetListOfCOMPorts();
+////
 
 int main()
 {
@@ -27,32 +29,29 @@ int main()
 vector<string> GetListOfCOMPorts()
 {
 	vector<string> lCom;
-	//lCom.push_back("COM3");
+
 	lCom.push_back("COM13"); 
-	lCom.push_back("COM3"); // COM3 - platform, COM11 - arm
+	lCom.push_back("COM3"); // COM3 - platform, COM13 - arm
 	return lCom;
 }
 
-vector<btSender> GetListOfBricks()
+void GetListOfBricks(vector<btSender> &lBricks)
 {
-	vector<btSender> lBricks;
-
 	vector<string>  lCom =  GetListOfCOMPorts();
 	for (uint i = 0; i < lCom.size(); i++)
 	{
 		while(true){		
-			cout << "Connecting to '" << lCom.at(i) << "'" << endl;
+			cout << "Connecting to '" << lCom[i] << "'" << endl;
 			lBricks.push_back (btSender());
-			if (lBricks.back().Connect(lCom.at(i)))
+			if (lBricks.back().Connect(lCom[i]))
 			{
-				cout << "Has been connected to '" << lCom.at(i) << "'" << endl; 
+				cout << "Has been connected to '" << lCom[i] << "'" << endl; 
 				break;
 			}
 			cout << "Error: " << lBricks.back().GetErrorID() << " " << lBricks.back().GetErrorMessage() << endl;
 			Sleep(1000); 
 		} 
 	}
-	return lBricks;
 }
 
 int Capture()
@@ -62,7 +61,8 @@ int Capture()
 	short *dataToSendOld = new short[msgElements];
 	short *msg = new short[msgElements];
 
-	vector<btSender> lBricks = GetListOfBricks();
+	vector<btSender> lBricks;
+	GetListOfBricks(lBricks);
 
 	VideoCapture cap(0); //capture the video from webcam
 
@@ -132,7 +132,6 @@ int Capture()
 
 			if (posX >= 0 && posY >= 0)
 			{
-
 				dataToSend[0] = posY - rowCenter;
 				dataToSend[1] = posX - colCenter;
 				dataToSend[2] = 1;				
@@ -141,7 +140,6 @@ int Capture()
 			{
 				zeroArray(dataToSend, msgElements);
 			}
-
 		}
 		else
 		{

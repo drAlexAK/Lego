@@ -57,8 +57,11 @@ vector<btSender> GetListOfBricks()
 
 int Capture()
 {
-	short *dataToSend = new short[3];
-	short *dataToSendOld = new short[3];
+	const int msgElements = 3;
+	short *dataToSend = new short[msgElements];
+	short *dataToSendOld = new short[msgElements];
+	short *msg = new short[msgElements];
+
 	vector<btSender> lBricks = GetListOfBricks();
 
 	VideoCapture cap(0); //capture the video from webcam
@@ -136,23 +139,24 @@ int Capture()
 			}
 			else
 			{
-				zeroArray(dataToSend, 3);
+				zeroArray(dataToSend, msgElements);
 			}
 
 		}
 		else
 		{
-			zeroArray(dataToSend, 3);
+			zeroArray(dataToSend, msgElements);
 		}
 
 		if (!compar(dataToSend, dataToSendOld, 3)) {
 			cout << dataToSend[0] << " " << dataToSend[1] << "    " << dataToSend[2] << endl;  
 			for (uint i = 0; i < lBricks.size(); i++)	{
-				if (lBricks.at(i).Send(dataToSend, 3) == false) {
+				copyArr(dataToSend,  msg, msgElements);
+				if (lBricks.at(i).Send(msg, msgElements) == false) {
 					cout << "Error: " << lBricks.at(i).GetErrorID() << " Cannot send to port '" << lBricks.at(i).GetComPortName() << "' " << lBricks.at(i).GetErrorMessage() ;
 				}
 			}
-			copyArr(dataToSend, dataToSendOld, 3);
+			copyArr(dataToSend, dataToSendOld, msgElements);
 		} else {
 			cout << ".";
 		}

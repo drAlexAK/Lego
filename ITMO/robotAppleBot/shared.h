@@ -16,7 +16,9 @@ typedef enum COMMAND {
 	CMD_GET_COORD							= 9,
 	CMD_SET_LANDLE_BY_ARM			= 10,
 	CMD_SHIFT_ARM_MM 					= 11,
-	CMD_GET_ARM_MM						= 12
+	CMD_GET_ARM_MM						= 12,
+	CMD_SAVE_ARM_MM						= 13,
+	CMD_RESTORE_ARM_MM				= 14
 } COMMAND;
 
 short msgCam[3] = {0,0,0};

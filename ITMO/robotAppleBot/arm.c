@@ -29,7 +29,7 @@
 TSemaphore  semParkingArm;
 TSemaphore  semParkingPl;
 TSemaphore  semParkingLandle;
-//----------------------------a
+//----------------------------
 void upArmMM(int posit);
 void upArmMMStrongVert(int posit);
 void resetMotorsEncoder();
@@ -53,9 +53,11 @@ int getPlPositionByArmMM(int posit);
 int getPlCurrentPositionMM();
 //----------------------------
 
+int armMM =0;
+
 byte armDiffMM[28];
 short landleDiffEnc[28];
-short shiftLandle[10] = {-77, -60, -32, -11, -7, -13, -55, -77, -77, -77};
+short shiftLandle[10] = {-77, -60, -32, -11, -9, -19, -62, -77, -82, -90};
 
 task main()
 {
@@ -139,9 +141,8 @@ task main()
 			}
 		}
 		sleep(200);
+		displayTextLine(2, "Message id %d", id);
 	}
-
-
 
 	/*sleep(10000);
 	downLandle(0);
@@ -161,6 +162,7 @@ void resetMotorsEncoder() {
 }
 
 void executeCMD(COMMAND cmd, int value){
+	displayTextLine(3, "%d %d", (int) cmd, value);
 	switch (cmd)
 	{
 	case CMD_SET_LANDLE_BY_ARM:
@@ -185,8 +187,14 @@ void executeCMD(COMMAND cmd, int value){
 		int mm1 = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
 		movePl(value + mm1);
 		break;
+	case CMD_SAVE_ARM_MM:
+		armMM = nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER;
+		break;
+	case CMD_RESTORE_ARM_MM:
+		upArmMM(armMM + value);
+		break;
 	case CMD_SHIFT_ARM_MM:
-		int mm2 = nMotorEncoder[mArm] / (ARM_270MM_ENCODER / ARM_MAX_POSITION_270MM);
+		int mm2 = nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER;
 		upArmMM(value + mm2);
 		break;
 	case CMD_PARK_ALL:

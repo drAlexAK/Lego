@@ -13,10 +13,12 @@ using namespace std;
 
 ////
 int Capture();
-////
 bool compar(short *a1, short *a2, int size);
 void zeroArray(short *a1, int size);
 void copyArr(short *a1, short *a2, int size);
+void GetListOfBricks(vector<btSender> &lBricks);
+vector<string> GetListOfCOMPorts();
+////
 
 int main()
 {
@@ -27,39 +29,40 @@ int main()
 vector<string> GetListOfCOMPorts()
 {
 	vector<string> lCom;
-	//lCom.push_back("COM3");
-	lCom.push_back("COM11"); // COM3 - platform, COM11 - arm
+
+	lCom.push_back("COM13"); 
+	lCom.push_back("COM3"); // COM3 - platform, COM13 - arm
 	return lCom;
 }
 
-vector<btSender> GetListOfBricks()
+void GetListOfBricks(vector<btSender> &lBricks)
 {
-	vector<btSender> lBricks;
-
 	vector<string>  lCom =  GetListOfCOMPorts();
 	for (uint i = 0; i < lCom.size(); i++)
 	{
 		while(true){		
-			cout << "Connecting to '" << lCom.at(i) << "'" << endl;
-			btSender* brick = new btSender(lCom.at(i));
-			if (brick->IsItConnected())
+			cout << "Connecting to '" << lCom[i] << "'" << endl;
+			lBricks.push_back (btSender());
+			if (lBricks.back().Connect(lCom[i]))
 			{
-				cout << "Has been connected to '" << lCom.at(i) << "'" << endl; 
-				lBricks.push_back(*(brick)); // if you push back an object vector will call the object destructor and handle will be closed after that
+				cout << "Has been connected to '" << lCom[i] << "'" << endl; 
 				break;
 			}
-			cout << "Error: " << brick->GetErrorID() << " " << brick->GetErrorMessage() << endl;
+			cout << "Error: " << lBricks.back().GetErrorID() << " " << lBricks.back().GetErrorMessage() << endl;
 			Sleep(1000); 
 		} 
 	}
-	return lBricks;
 }
 
 int Capture()
 {
-	short *dataToSend = new short[3];
-	short *dataToSendOld = new short[3];
-	vector<btSender> lBricks = GetListOfBricks();
+	const int msgElements = 3;
+	short *dataToSend = new short[msgElements];
+	short *dataToSendOld = new short[msgElements];
+	short *msg = new short[msgElements];
+
+	vector<btSender> lBricks;
+	GetListOfBricks(lBricks);
 
 	VideoCapture cap(0); //capture the video from webcam
 
@@ -129,30 +132,29 @@ int Capture()
 
 			if (posX >= 0 && posY >= 0)
 			{
-
 				dataToSend[0] = posY - rowCenter;
 				dataToSend[1] = posX - colCenter;
 				dataToSend[2] = 1;				
 			}
 			else
 			{
-				zeroArray(dataToSend, 3);
+				zeroArray(dataToSend, msgElements);
 			}
-
 		}
 		else
 		{
-			zeroArray(dataToSend, 3);
+			zeroArray(dataToSend, msgElements);
 		}
 
 		if (!compar(dataToSend, dataToSendOld, 3)) {
 			cout << dataToSend[0] << " " << dataToSend[1] << "    " << dataToSend[2] << endl;  
 			for (uint i = 0; i < lBricks.size(); i++)	{
-				if (lBricks.at(i).Send(dataToSend, 3) == false) {
+				copyArr(dataToSend,  msg, msgElements);
+				if (lBricks.at(i).Send(msg, msgElements) == false) {
 					cout << "Error: " << lBricks.at(i).GetErrorID() << " Cannot send to port '" << lBricks.at(i).GetComPortName() << "' " << lBricks.at(i).GetErrorMessage() ;
 				}
 			}
-			copyArr(dataToSend, dataToSendOld, 3);
+			copyArr(dataToSend, dataToSendOld, msgElements);
 		} else {
 			cout << ".";
 		}
@@ -162,6 +164,9 @@ int Capture()
 
 		if (waitKey(100) == 27) //wait for 'esc' key press for 100ms. If 'esc' key is pressed, break loop
 		{
+			for (uint i = 0; i < lBricks.size(); i++)	{
+				lBricks.at(i).Disconnect();
+			}
 			cout << "esc key is pressed by user" << endl;
 			break; 
 		}
@@ -174,6 +179,7 @@ int Capture()
 }
 
 bool compar(short *a1, short *a2, int size){
+	return false;
 	for(int i = 0; i < size; i++){
 		if(a1[i] != a2[i]) return false;
 	}

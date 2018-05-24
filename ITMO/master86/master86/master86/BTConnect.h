@@ -9,7 +9,8 @@ class btSender {
 	DWORD errID;
 	HANDLE getBluetoothHandle(string comport);
 public:
-	btSender(string name);
+	btSender();
+	bool Connect(string name);
 	void Disconnect();
 	bool Send(short* bytesToSend, int size);
 	bool IsItConnected();

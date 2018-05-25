@@ -27,7 +27,7 @@ int enc =0;
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
-#define DIST_TREE_NORM  		300
+#define DIST_TREE_NORM  		320
 #define DIST_BETWEEN_FENCE_TREE  100
 #define DIST_FRONT_MIN 			20
 #define DEGREES_360_ENC 		4250
@@ -42,6 +42,7 @@ int enc =0;
 TSemaphore  semParkingRotation;
 //----------------------------
 //
+int distToTree =0;
 //function
 //int getSpeedByFrontDistance();
 void resetMotorsEncoder();
@@ -92,6 +93,7 @@ task main()
 	sleep(5000);
 
 	goToTheTree();
+	distToTree = getDistRightMedian();
 	//for (int h = 0; h < 10 ; h++)
 	//sleep(1000);
 	//----------------------
@@ -119,6 +121,8 @@ task main()
 
 	sendCommand(CMD_PARK_ALL,0);
 	Parking();
+	sleep(1000);
+	goAheadMM(-300);
 
 	vRight = vLeft = 0;
 	stopAllTasks();
@@ -129,8 +133,8 @@ void goToTheTree(){
 #ifdef DEBUG
 	sleep(1000);
 #endif
-	robotAngelCalibration(100);
-	sleep(10000);
+	robotAngelCalibration(200);
+	//sleep(10000);
 #ifdef DEBUG
 	sleep(1000);
 #endif
@@ -158,8 +162,9 @@ void lookForAppleVertical() {
 bool catchApple(){
 	short x =0;
 	short y =0;
-	int shiftPL = 100;
+	int shiftPL = 100 + (DIST_TREE_NORM - distToTree);
 	int shiftArm = 50;
+
 	writeDebugStreamLine("Starting catch apple");
 	for (int i = 0; i < 3; i++) {
 		if(!getCoord(y, x)) break;
@@ -168,6 +173,24 @@ bool catchApple(){
 		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL);
 		sleep(100);
 		if (getCoord(y, x)) return true;
+
+		rotatePlatform(30);
+
+		if (getCoord(y, x)){
+			rotatePlatform(0);
+			return true;
+		}
+
+		rotatePlatform(-30);
+
+		if (getCoord(y, x)){
+			rotatePlatform(0);
+			return true;
+		}
+
+		rotatePlatform(0);
+		if (getCoord(y, x)) return true;
+
 		writeDebugStreamLine("Failed catch apple");
 		sendCommand(CMD_SET_LANDLE_BY_ARM);
 		shiftPL += 10;
@@ -183,9 +206,11 @@ void unloading(){
 	//int tmp = getArmMM();
 	sendCommand(CMD_MOVE_PL, 0);
 	rotatePlatform(-90);
-	sendCommand(CMD_UP_ARM, 0);
+	sendCommand(CMD_UP_ARM, 70);
 	while(SensorValue(sFront) > 20) sleep(100);
 	sendCommand(CMD_DOWN_LANDLE, 90);
+	sleep(4000);
+	sendCommand(CMD_DOWN_LANDLE, 0);
 	rotatePlatform(0);
 	sendCommand(CMD_RESTORE_ARM_MM, 0);
 	//sendCommand(CMD_UP_ARM, tmp);
@@ -290,7 +315,7 @@ task controlMotors()
 		}
 	}
 }
-
+/*
 void findTreesOld()
 {
 	int eNorm = getDistRightMedian();
@@ -352,7 +377,7 @@ void findTreesOld()
 		sleep(30);
 	}
 }
-
+*/
 
 void findTrees()
 {
@@ -372,6 +397,7 @@ void findTrees()
 			i++;
 			if(i > 2 ){
 				vLeft = vRight = 0;
+				sleep(100);
 #ifdef DEBUG
 				playSound(soundBeepBeep);
 				sleep(300);
@@ -384,8 +410,8 @@ void findTrees()
 					goAheadMM(50);
 				}
 				//goAheadMM(-20);
-				robotAngelCalibration(70);
-				goAheadMM(-70);
+				robotAngelCalibration(80);
+				goAheadMM(-30);
 				return;
 			}
 			sleep(30);
@@ -456,7 +482,7 @@ int convertEncoderAheadToMM(int encoder) {
 }
 
 void goAheadMM(int dist){ //MM
-	if (dist < 10) return ;
+	if (abs(dist) < 10) return;
 	goAheadEncoder((CM40_ENC * dist) / 400);
 }
 
@@ -521,7 +547,6 @@ void goToTree(int dist){
 }
 
 //----------------------------------------------------------------------------- - -|
-//----------------------------------------------------------------------------- - -|
 void rotatePlatform(int deg){
 	if (abs(deg) > ROTATION_MAX_360_DEGREE) deg = sgn(deg) * ROTATION_MAX_360_DEGREE;
 	int	enc = (DEGREES_360_ROTATION_ENC * deg) / ROTATION_MAX_360_DEGREE;
@@ -556,14 +581,14 @@ task parkingRotation(){
 }
 
 int moveByHor(){
-	int accuracy = 50;
+	int accuracy = 25;
 	int shiftMM = 0;
 	short x =0, y =0;
 	int sum =0;
 	bool appleHere = getCoord(y, x);
 	while ((appleHere) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
 
-		shiftMM = x / 9;
+		shiftMM = x / 15;
 		//writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
 		if (abs(shiftMM) > 10) {
 			sum += shiftMM;
@@ -573,7 +598,7 @@ int moveByHor(){
 		{
 			break;
 		}
-		sleep(50);
+		sleep(200);
 		appleHere = getCoord(y, x);
 	}
 	if ( ! getCoord(y, x)) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back

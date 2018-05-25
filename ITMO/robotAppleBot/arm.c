@@ -57,7 +57,7 @@ int armMM =0;
 
 byte armDiffMM[28];
 short landleDiffEnc[28];
-short shiftLandle[10] = {-77, -60, -32, -11, -9, -19, -62, -77, -82, -90};
+short shiftLandle[10] ={-50, -40, -32, -11, 21, 1, -42, -57, -62, -70}; // {-77, -60, -32, -11, -9, -19, -62, -77, -82, -90};
 
 task main()
 {

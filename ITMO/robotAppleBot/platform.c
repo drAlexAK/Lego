@@ -27,7 +27,7 @@ int enc =0;
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
-#define DIST_TREE_NORM  		320
+#define DIST_TREE_NORM  		280
 #define DIST_BETWEEN_FENCE_TREE  100
 #define DIST_FRONT_MIN 			20
 #define DEGREES_360_ENC 		4250
@@ -103,22 +103,34 @@ task main()
 	const int maxGetAppleAttempts = 6;
 	int getAppleAttempts = 0;
 
-	while(i < 4){
-		getAppleAttempts ++;
+	for(int k =0 ; k < 2; k++){
+		i =0;
+		sum =0;
+		getAppleAttempts = 0;
 
-		sendCommand(CMD_SET_LANDLE_BY_ARM, 0);
-		sendCommand(CMD_MOVE_PL,0);
+		while(i < 4){
+			getAppleAttempts ++;
 
-		lookForAppleVertical();
+			sendCommand(CMD_SET_LANDLE_BY_ARM, 0);
+			sendCommand(CMD_MOVE_PL,0);
 
-		displayTextLine(2, "LookUp apple %d", i);
+			lookForAppleVertical();
 
-		if (i < 3) {
+			displayTextLine(2, "LookUp apple %d", i);
+
+			if (i < 3) {
+			if(k == 0)
 			goAheadMM(120);
-		}
-		i++;
-	}
 
+			if(k == 1)
+			goAheadMM(-120);
+			}
+			i++;
+		}
+		sleep(5000);
+		getAppleAttempts =0;
+		i =0;
+	}
 	sendCommand(CMD_PARK_ALL,0);
 	Parking();
 	sleep(1000);
@@ -142,19 +154,19 @@ void goToTheTree(){
 }
 
 void lookForAppleVertical() {
-		short y, x;
-		int sum = 0;
-		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM);
-		sleep(100);
+	short y, x;
+	int sum = 0;
+	sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM);
+	sleep(100);
 
-		if (getCoord(y, x)) {
+	if (getCoord(y, x)) {
 
-			sum = moveByHor();
-			if (catchApple()) unloading();
-			if (abs(sum) > 10) goAheadMM(-1 * sum);
-			lookForAppleVertical();
-		}
-		sendCommand(CMD_PARK_ALL);
+		sum = moveByHor();
+		if (catchApple()) unloading();
+		if (abs(sum) > 10) goAheadMM(-1 * sum);
+		lookForAppleVertical();
+	}
+	sendCommand(CMD_PARK_ALL);
 }
 
 
@@ -162,7 +174,7 @@ void lookForAppleVertical() {
 bool catchApple(){
 	short x =0;
 	short y =0;
-	int shiftPL = 100 + (DIST_TREE_NORM - distToTree);
+	int shiftPL = 100;// - (DIST_TREE_NORM - distToTree);
 	int shiftArm = 50;
 
 	writeDebugStreamLine("Starting catch apple");
@@ -318,64 +330,64 @@ task controlMotors()
 /*
 void findTreesOld()
 {
-	int eNorm = getDistRightMedian();
-	if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
-	int e =0;
-	int u =0;
-	int eOld =e;
-	int v =0;
-	int i =0;
-	bool treeIsFind = false;
-	int encPos = 0;
-	int distBeginTree = 0;
-	int distEndTree = 0;
+int eNorm = getDistRightMedian();
+if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
+int e =0;
+int u =0;
+int eOld =e;
+int v =0;
+int i =0;
+bool treeIsFind = false;
+int encPos = 0;
+int distBeginTree = 0;
+int distEndTree = 0;
 
-	while(true){
-		e = eNorm - MSDISTreadDist(sFrontRight);
-		// error must be great then different distance between fence and tree
-		while(((e >= DIST_BETWEEN_FENCE_TREE) && (!treeIsFind)) ||
-			((abs(e) >= DIST_BETWEEN_FENCE_TREE) && (treeIsFind))){
-			i++;
-			if(i > 2 ){
-				vLeft = vRight = 0;
-				playSound(soundBeepBeep);
-				sleep(300);
-				if( !treeIsFind ){
-					int dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
-					goToTree(dist);
-					nMotorEncoder[mLeft] =0;
-					nMotorEncoder[mRight] =0;
-					i = 0;
-					eNorm = MSDISTreadDist(sFrontRight);
-					distBeginTree = eNorm;
-					treeIsFind = true;
-					break;
-					}else{
-					encPos = nMotorEncoder[mLeft];
-					goAheadMM(-100);
-					int lenght = convertEncoderAheadToMM(encPos) - 100;
-					distEndTree = getDistRightMedian();
-					int errPosition = distEndTree - distBeginTree;
-					int deg = sgn(errPosition) * getAngelDeviationDegree(abs(errPosition), lenght);//mm
-					if (abs(deg) > 3 ) 	turnRobotDegree(deg);
-					return;
-				}
-			}
-			sleep(30);
-			e = eNorm - MSDISTreadDist(sFrontRight);
-		}
-		if( treeIsFind ){
-			encPos = nMotorEncoder[mLeft];
-			distEndTree = eNorm - e;
-		}
-		i = 0;
-		u = (e  + ((e - eOld) / 4 )) / 3;
-		v = vBase - (u * 0.5);
-		vLeft =  v ;// - u;
-		vRight = v ;// + u;
-		eOld = e;
-		sleep(30);
-	}
+while(true){
+e = eNorm - MSDISTreadDist(sFrontRight);
+// error must be great then different distance between fence and tree
+while(((e >= DIST_BETWEEN_FENCE_TREE) && (!treeIsFind)) ||
+((abs(e) >= DIST_BETWEEN_FENCE_TREE) && (treeIsFind))){
+i++;
+if(i > 2 ){
+vLeft = vRight = 0;
+playSound(soundBeepBeep);
+sleep(300);
+if( !treeIsFind ){
+int dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
+goToTree(dist);
+nMotorEncoder[mLeft] =0;
+nMotorEncoder[mRight] =0;
+i = 0;
+eNorm = MSDISTreadDist(sFrontRight);
+distBeginTree = eNorm;
+treeIsFind = true;
+break;
+}else{
+encPos = nMotorEncoder[mLeft];
+goAheadMM(-100);
+int lenght = convertEncoderAheadToMM(encPos) - 100;
+distEndTree = getDistRightMedian();
+int errPosition = distEndTree - distBeginTree;
+int deg = sgn(errPosition) * getAngelDeviationDegree(abs(errPosition), lenght);//mm
+if (abs(deg) > 3 ) 	turnRobotDegree(deg);
+return;
+}
+}
+sleep(30);
+e = eNorm - MSDISTreadDist(sFrontRight);
+}
+if( treeIsFind ){
+encPos = nMotorEncoder[mLeft];
+distEndTree = eNorm - e;
+}
+i = 0;
+u = (e  + ((e - eOld) / 4 )) / 3;
+v = vBase - (u * 0.5);
+vLeft =  v ;// - u;
+vRight = v ;// + u;
+eOld = e;
+sleep(30);
+}
 }
 */
 
@@ -602,5 +614,5 @@ int moveByHor(){
 		appleHere = getCoord(y, x);
 	}
 	if ( ! getCoord(y, x)) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
-	return sum;
+		return sum;
 }

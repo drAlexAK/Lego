@@ -1,4 +1,3 @@
-
 #include "opencv2/video/tracking.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/videoio.hpp"
@@ -78,8 +77,6 @@ int Capture()
 	int rowCenter = imgTmp.rows / 2;
 	int colCenter = imgTmp.cols / 2;
 
-	//Create a black image with the size as the camera output
-	//Mat imgLines = Mat::zeros( imgTmp.size(), CV_8UC3 );;
 
 	while (true)
 	{
@@ -91,30 +88,57 @@ int Capture()
 			cout << "Cannot read a frame from video stream" << endl;
 			break;
 		}
-
-		// Mat imgHSV;
-		// cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-
+		/*
 		Mat imgThresholded;
 		Mat imgTreeTunk;
 
-		inRange(imgOriginal, Scalar(0, 0, 0), Scalar(0, 60, 0), imgTreeTunk); // cut of tuee tunk
+		inRange(imgOriginal, Scalar(40, 40, 80), Scalar(70, 70, 120), imgTreeTunk); // cut of tuee tunk and branches
+
+
+		//inRange(imgTreeTunk, Scalar(80, 100, 250), Scalar(100, 125, 255), imgTreeTunk); // cut of plane
+		//inRange(imgTreeTunk, Scalar(100, 170, 250), Scalar(120, 200, 255), imgTreeTunk); // cut of plane
+
 		Mat imgBlack(imgOriginal.size(), CV_8UC3, Scalar(0)); 
 		imgBlack.copyTo(imgOriginal, imgTreeTunk);
 
 		imgTreeTunk.release();
 		imgBlack.release();
 
-		//inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
 		inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
+
+		*/
+
+		Mat imgThresholded;
+		Mat imgTreeTunk;
+		Mat imgBlack(imgOriginal.size(), CV_8UC3, Scalar(0)); 
+
+		inRange(imgOriginal, Scalar(40, 40, 80), Scalar(90, 90, 120), imgTreeTunk); // cut of tuee tunk and branches
+		imgBlack.copyTo(imgOriginal, imgTreeTunk);
+
+		
+		inRange(imgOriginal, Scalar(80, 100, 250), Scalar(100, 125, 255), imgTreeTunk); // cut of plane
+		imgBlack.copyTo(imgOriginal, imgTreeTunk);
+
+		inRange(imgOriginal, Scalar(100, 170, 250), Scalar(120, 200, 255), imgTreeTunk); // cut of farther apples
+		imgBlack.copyTo(imgOriginal, imgTreeTunk);
+
+		inRange(imgOriginal, Scalar(125, 175, 165), Scalar(150, 200, 185), imgTreeTunk); // leaves
+		imgBlack.copyTo(imgOriginal, imgTreeTunk);
+
+
+		imgTreeTunk.release();
+		imgBlack.release();
+
+		inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
+
 
 		//morphological opening (removes small objects from the foreground)
 		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) );
 		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) ); 
 
 		//morphological closing (removes small holes from the foreground)
-		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(10, 10)) ); 
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(10, 10)) );
+		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) ); 
+		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) );
 
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
@@ -179,7 +203,7 @@ int Capture()
 }
 
 bool compar(short *a1, short *a2, int size){
-	return false;
+	//return false;
 	for(int i = 0; i < size; i++){
 		if(a1[i] != a2[i]) return false;
 	}

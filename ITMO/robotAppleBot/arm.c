@@ -210,12 +210,12 @@ void Parking(){
 	semaphoreInitialize(semParkingLandle);
 
 	startTask(ParkingArm);
-	sleep(100);
+	sleep(50);
 	startTask(ParkingPl);
-	sleep(100);
+	sleep(50);
 	startTask(ParkingLandle);
+	sleep(50);
 
-	sleep(100);
 	semaphoreLock( semParkingArm );
 	semaphoreLock( semParkingPl );
 	semaphoreLock( semParkingLandle );

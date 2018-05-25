@@ -27,7 +27,7 @@ int enc =0;
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
-#define DIST_TREE_NORM  		280
+#define DIST_TREE_NORM  		300
 #define DIST_BETWEEN_FENCE_TREE  100
 #define DIST_FRONT_MIN 			20
 #define DEGREES_360_ENC 		4250
@@ -63,6 +63,7 @@ void unloading();
 void rotatePlatform(int deg);
 void goToTheTree();
 bool getCoord(short &p1, short &p2);
+void lookForAppleVertical();
 //int getArmMM();
 bool catchApple();
 int moveByHor();
@@ -90,37 +91,31 @@ task main()
 
 	sleep(5000);
 
-	/*	goToTheTree();
-	for (int h = 0; h < 10 ; h++)
-	sleep(1000);*/
+	goToTheTree();
+	//for (int h = 0; h < 10 ; h++)
+	//sleep(1000);
 	//----------------------
 	int i =0;
 	int sum = 0;
-	short y, x;
+
+	const int maxGetAppleAttempts = 6;
+	int getAppleAttempts = 0;
 
 	while(i < 4){
-		displayTextLine(2, "LookUp apple %d", i);
-		sendCommand(CMD_SET_LANDLE_BY_ARM,0);
-		sendCommand(CMD_MOVE_PL,0);
-		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM, 0);
-		sleep(1000);
+		getAppleAttempts ++;
 
-		if (getCoord(y, x)) {
-			sum = moveByHor();
-			if (catchApple()) unloading();
-			if (abs(sum) > 10) goAheadMM(-1 * sum);
-			continue;
+		sendCommand(CMD_SET_LANDLE_BY_ARM, 0);
+		sendCommand(CMD_MOVE_PL,0);
+
+		lookForAppleVertical();
+
+		displayTextLine(2, "LookUp apple %d", i);
+
+		if (i < 3) {
+			goAheadMM(120);
 		}
-		else
-		{
-			sendCommand(CMD_PARK_ALL,0);
-		}
-		if (i < 3) goAheadMM(120);
 		i++;
 	}
-
-	//while(msgCam[2] == 0) sleep(100);
-	//sleep(1000);
 
 	sendCommand(CMD_PARK_ALL,0);
 	Parking();
@@ -135,18 +130,36 @@ void goToTheTree(){
 	sleep(1000);
 #endif
 	robotAngelCalibration(100);
+	sleep(10000);
 #ifdef DEBUG
 	sleep(1000);
 #endif
 	findTrees();
 }
 
+void lookForAppleVertical() {
+		short y, x;
+		int sum = 0;
+		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM);
+		sleep(100);
+
+		if (getCoord(y, x)) {
+
+			sum = moveByHor();
+			if (catchApple()) unloading();
+			if (abs(sum) > 10) goAheadMM(-1 * sum);
+			lookForAppleVertical();
+		}
+		sendCommand(CMD_PARK_ALL);
+}
+
+
 // gets an apple and confirms the apple in the basket. here are three attempts
 bool catchApple(){
 	short x =0;
 	short y =0;
 	int shiftPL = 100;
-	const int shiftArm = 50;
+	int shiftArm = 50;
 	writeDebugStreamLine("Starting catch apple");
 	for (int i = 0; i < 3; i++) {
 		if(!getCoord(y, x)) break;
@@ -156,10 +169,11 @@ bool catchApple(){
 		sleep(100);
 		if (getCoord(y, x)) return true;
 		writeDebugStreamLine("Failed catch apple");
-		sendCommand(CMD_SET_LANDLE_BY_ARM, 0);
+		sendCommand(CMD_SET_LANDLE_BY_ARM);
 		shiftPL += 10;
 	}
-	sendCommand(CMD_SHIFT_ARM_MM, shiftArm); // skip unride apple
+	sendCommand(CMD_SAVE_ARM_MM);
+	sendCommand(CMD_RESTORE_ARM_MM, shiftArm); // skip unride apple
 	return false;
 }
 
@@ -355,7 +369,6 @@ void findTrees()
 		while(e >= DIST_BETWEEN_FENCE_TREE){
 			vLeft =  vRight = M_BODY_SPEED_MIN;
 
-
 			i++;
 			if(i > 2 ){
 				vLeft = vRight = 0;
@@ -370,9 +383,9 @@ void findTrees()
 					goToTree(dist);
 					goAheadMM(50);
 				}
-
-				robotAngelCalibration(100);
-				goAheadMM(-60);
+				//goAheadMM(-20);
+				robotAngelCalibration(70);
+				goAheadMM(-70);
 				return;
 			}
 			sleep(30);
@@ -547,10 +560,11 @@ int moveByHor(){
 	int shiftMM = 0;
 	short x =0, y =0;
 	int sum =0;
+	bool appleHere = getCoord(y, x);
+	while ((appleHere) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
 
-	while((getCoord(y, x)) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
 		shiftMM = x / 9;
-		writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
+		//writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
 		if (abs(shiftMM) > 10) {
 			sum += shiftMM;
 			goAheadMM(shiftMM);
@@ -560,7 +574,8 @@ int moveByHor(){
 			break;
 		}
 		sleep(50);
+		appleHere = getCoord(y, x);
 	}
+	if ( ! getCoord(y, x)) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
 	return sum;
-
 }

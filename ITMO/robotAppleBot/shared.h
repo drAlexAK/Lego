@@ -25,6 +25,7 @@ short msgCam[3] = {0,0,0};
 
 //typedef char commandMsg[COMMAND_MSG_SIZE];
 //----------------------------------------
+bool sendCommand(COMMAND cmd);
 bool sendCommand(COMMAND cmd, int value);
 bool sendCommand(COMMAND cmd, int value, bool waitComplete);
 void getMsgCoord(char *body, short v1, short v2, short v3);
@@ -55,8 +56,13 @@ bool sendCommand(COMMAND cmd, int value, bool waitComplete){
 	memcpy(&msg[sizeof(int)], &value, sizeof(int));
 	return SendMsg(&msg[0], messageSize, waitComplete, 3, 3000);
 }
+
 bool sendCommand(COMMAND cmd, int value){
 	return sendCommand(cmd, value, true);
+}
+
+bool sendCommand(COMMAND cmd){
+	return sendCommand(cmd, 0, true);
 }
 
 void getMsgCoord(char *body, short v1, short v2, short v3){

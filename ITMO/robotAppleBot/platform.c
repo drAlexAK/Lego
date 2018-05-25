@@ -1,5 +1,5 @@
 #pragma config(Sensor, S2,     sFrontRight,    sensorI2CCustomFastSkipStates9V)
-#pragma config(Sensor, S4,     sFront,         sensorSONAR)
+#pragma config(Sensor, S3,     sFront,         sensorSONAR)
 #pragma config(Motor,  motorA,          mLeft,         tmotorNXT, PIDControl, encoder)
 #pragma config(Motor,  motorB,          mRotation,     tmotorNXT, PIDControl, encoder)
 #pragma config(Motor,  motorC,          mRight,        tmotorNXT, PIDControl, encoder)
@@ -27,7 +27,7 @@ int enc =0;
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
-#define DIST_TREE_NORM  		280
+#define DIST_TREE_NORM  		320
 #define DIST_BETWEEN_FENCE_TREE  100
 #define DIST_FRONT_MIN 			20
 #define DEGREES_360_ENC 		4250
@@ -42,6 +42,7 @@ int enc =0;
 TSemaphore  semParkingRotation;
 //----------------------------
 //
+int distToTree =0;
 //function
 //int getSpeedByFrontDistance();
 void resetMotorsEncoder();
@@ -63,9 +64,10 @@ void unloading();
 void rotatePlatform(int deg);
 void goToTheTree();
 bool getCoord(short &p1, short &p2);
-int getArmMM();
+void lookForAppleVertical();
+//int getArmMM();
 bool catchApple();
-void moveByHor(int &sum);
+int moveByHor();
 //tasks
 task controlMotors();
 task parkingRotation();
@@ -88,40 +90,39 @@ task main()
 	}
 	displayTextLine(2, "Connected");
 
-	sleep(7000);
+	sleep(5000);
 
-	/*	goToTheTree();
-	for (int h = 0; h < 10 ; h++)
-	sleep(1000);*/
+	goToTheTree();
+	distToTree = getDistRightMedian();
+	//for (int h = 0; h < 10 ; h++)
+	//sleep(1000);
 	//----------------------
 	int i =0;
-	int sum =0;
-	short y, x;
+	int sum = 0;
+
+	const int maxGetAppleAttempts = 6;
+	int getAppleAttempts = 0;
 
 	while(i < 4){
-		sendCommand(CMD_SET_LANDLE_BY_ARM,0);
+		getAppleAttempts ++;
+
+		sendCommand(CMD_SET_LANDLE_BY_ARM, 0);
 		sendCommand(CMD_MOVE_PL,0);
-		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM, 0);
-		sleep(1000);
-		//moveByHor(sum);
-		if (getCoord(y, x)) {
-			if (catchApple()) unloading();
-			//if (abs(sum) > 10) goAheadMM(-1 * sum);
-			continue;
+
+		lookForAppleVertical();
+
+		displayTextLine(2, "LookUp apple %d", i);
+
+		if (i < 3) {
+			goAheadMM(120);
 		}
-		else
-		{
-			sendCommand(CMD_PARK_ALL,0);
-		}
-		if (i < 3) goAheadMM(120);
 		i++;
 	}
 
-	//while(msgCam[2] == 0) sleep(100);
-	//sleep(1000);
-
 	sendCommand(CMD_PARK_ALL,0);
 	Parking();
+	sleep(1000);
+	goAheadMM(-300);
 
 	vRight = vLeft = 0;
 	stopAllTasks();
@@ -132,19 +133,38 @@ void goToTheTree(){
 #ifdef DEBUG
 	sleep(1000);
 #endif
-	robotAngelCalibration(100);
+	robotAngelCalibration(200);
+	//sleep(10000);
 #ifdef DEBUG
 	sleep(1000);
 #endif
 	findTrees();
 }
 
+void lookForAppleVertical() {
+		short y, x;
+		int sum = 0;
+		sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM);
+		sleep(100);
+
+		if (getCoord(y, x)) {
+
+			sum = moveByHor();
+			if (catchApple()) unloading();
+			if (abs(sum) > 10) goAheadMM(-1 * sum);
+			lookForAppleVertical();
+		}
+		sendCommand(CMD_PARK_ALL);
+}
+
+
 // gets an apple and confirms the apple in the basket. here are three attempts
 bool catchApple(){
 	short x =0;
 	short y =0;
-	int shiftPL = 100;
-	const int shiftArm = 50;
+	int shiftPL = 100 + (DIST_TREE_NORM - distToTree);
+	int shiftArm = 50;
+
 	writeDebugStreamLine("Starting catch apple");
 	for (int i = 0; i < 3; i++) {
 		if(!getCoord(y, x)) break;
@@ -153,62 +173,88 @@ bool catchApple(){
 		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL);
 		sleep(100);
 		if (getCoord(y, x)) return true;
+
+		rotatePlatform(30);
+
+		if (getCoord(y, x)){
+			rotatePlatform(0);
+			return true;
+		}
+
+		rotatePlatform(-30);
+
+		if (getCoord(y, x)){
+			rotatePlatform(0);
+			return true;
+		}
+
+		rotatePlatform(0);
+		if (getCoord(y, x)) return true;
+
 		writeDebugStreamLine("Failed catch apple");
-		sendCommand(CMD_SET_LANDLE_BY_ARM, 0);
+		sendCommand(CMD_SET_LANDLE_BY_ARM);
 		shiftPL += 10;
 	}
-	sendCommand(CMD_SHIFT_ARM_MM, shiftArm); // skip unride apple
+	sendCommand(CMD_SAVE_ARM_MM);
+	sendCommand(CMD_RESTORE_ARM_MM, shiftArm); // skip unride apple
 	return false;
 }
 
 void unloading(){
 	writeDebugStreamLine("Starting unload");
-	int tmp = getArmMM();
+	sendCommand(CMD_SAVE_ARM_MM,0);
+	//int tmp = getArmMM();
 	sendCommand(CMD_MOVE_PL, 0);
 	rotatePlatform(-90);
-	sendCommand(CMD_UP_ARM, 0);
+	sendCommand(CMD_UP_ARM, 70);
+	while(SensorValue(sFront) > 20) sleep(100);
 	sendCommand(CMD_DOWN_LANDLE, 90);
+	sleep(4000);
+	sendCommand(CMD_DOWN_LANDLE, 0);
 	rotatePlatform(0);
-	sendCommand(CMD_UP_ARM, tmp);
+	sendCommand(CMD_RESTORE_ARM_MM, 0);
+	//sendCommand(CMD_UP_ARM, tmp);
 	writeDebugStreamLine("Finish unload");
 	//sendCommand(CMD_DOWN_LANDLE, 45);
 }
-
+/*
 int getArmMM(){
-	for(int i = 0; i < 3; i++){
-		writeDebugStreamLine("Getting Arm mm");
-		if(sendCommand(CMD_GET_ARM_MM,0)){
-			int tmp =0;
-			memcpy(&tmp, outDelivery.Msg[4], 4);
-			return tmp;
-		}
-		sleep(100);
-		writeDebugStreamLine("Failed get Arm mm");
-	}
-	return ARM_MAX_POSITION_270MM;
+for(int i = 0; i < 3; i++){
+writeDebugStreamLine("Getting Arm mm");
+if(sendCommand(CMD_GET_ARM_MM,0)){
+int tmp =0;
+memcpy(&tmp, outDelivery.Msg[4], 4);
+return tmp;
 }
+sleep(100);
+writeDebugStreamLine("Failed get Arm mm");
+}
+return ARM_MAX_POSITION_270MM;
+}
+*/
 
 bool getCoord(short &p1, short &p2){
+	//return true;
 	p1 = msgCam[0];
 	p2 = msgCam[1];
 	return (msgCam[2] == 1);
 
 	/*
 	for(int i = 0; i < 3; i++){
-		writeDebugStreamLine("Getting coord");
-		if(sendCommand(CMD_GET_COORD, 0)){
-			int tmp = 0;
-			memcpy(&tmp, outDelivery.Msg[12], 4);
+	writeDebugStreamLine("Getting coord");
+	if(sendCommand(CMD_GET_COORD, 0)){
+	int tmp = 0;
+	memcpy(&tmp, outDelivery.Msg[12], 4);
 
-			if((short)tmp == 0) return false; // here isn't an apple
-				memcpy(&tmp, outDelivery.Msg[4], 4);
-			p1 = (short) tmp;
-			memcpy(&tmp, outDelivery.Msg[8], 4);
-			p2 = (short) tmp;
-			return true;
-		}
-		writeDebugStreamLine("Failed get coord");
-		sleep(100);
+	if((short)tmp == 0) return false; // here isn't an apple
+	memcpy(&tmp, outDelivery.Msg[4], 4);
+	p1 = (short) tmp;
+	memcpy(&tmp, outDelivery.Msg[8], 4);
+	p2 = (short) tmp;
+	return true;
+	}
+	writeDebugStreamLine("Failed get coord");
+	sleep(100);
 	}
 	return false;
 	*/
@@ -269,7 +315,7 @@ task controlMotors()
 		}
 	}
 }
-
+/*
 void findTreesOld()
 {
 	int eNorm = getDistRightMedian();
@@ -331,6 +377,7 @@ void findTreesOld()
 		sleep(30);
 	}
 }
+*/
 
 void findTrees()
 {
@@ -346,9 +393,11 @@ void findTrees()
 		// error must be great then different distance between fence and tree
 		while(e >= DIST_BETWEEN_FENCE_TREE){
 			vLeft =  vRight = M_BODY_SPEED_MIN;
+
 			i++;
 			if(i > 2 ){
 				vLeft = vRight = 0;
+				sleep(100);
 #ifdef DEBUG
 				playSound(soundBeepBeep);
 				sleep(300);
@@ -360,9 +409,9 @@ void findTrees()
 					goToTree(dist);
 					goAheadMM(50);
 				}
-
-				robotAngelCalibration(100);
-				goAheadMM(-60);
+				//goAheadMM(-20);
+				robotAngelCalibration(80);
+				goAheadMM(-30);
 				return;
 			}
 			sleep(30);
@@ -433,7 +482,7 @@ int convertEncoderAheadToMM(int encoder) {
 }
 
 void goAheadMM(int dist){ //MM
-	if (dist < 10) return ;
+	if (abs(dist) < 10) return;
 	goAheadEncoder((CM40_ENC * dist) / 400);
 }
 
@@ -498,7 +547,6 @@ void goToTree(int dist){
 }
 
 //----------------------------------------------------------------------------- - -|
-//----------------------------------------------------------------------------- - -|
 void rotatePlatform(int deg){
 	if (abs(deg) > ROTATION_MAX_360_DEGREE) deg = sgn(deg) * ROTATION_MAX_360_DEGREE;
 	int	enc = (DEGREES_360_ROTATION_ENC * deg) / ROTATION_MAX_360_DEGREE;
@@ -532,20 +580,27 @@ task parkingRotation(){
 	if (bDoesTaskOwnSemaphore(semParkingRotation)) semaphoreUnlock(semParkingRotation);
 }
 
-void moveByHor( int &sum){
+int moveByHor(){
 	int accuracy = 25;
 	int shiftMM = 0;
-	short x =0;
-	short y =0;
-	while((getCoord(y, x)) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
-		shiftMM = x / 7;
-		writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
+	short x =0, y =0;
+	int sum =0;
+	bool appleHere = getCoord(y, x);
+	while ((appleHere) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
+
+		shiftMM = x / 15;
+		//writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
 		if (abs(shiftMM) > 10) {
 			sum += shiftMM;
 			goAheadMM(shiftMM);
-			} else {
+		}
+		else
+		{
 			break;
 		}
+		sleep(200);
+		appleHere = getCoord(y, x);
 	}
-
+	if ( ! getCoord(y, x)) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
+	return sum;
 }

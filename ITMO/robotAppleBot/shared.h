@@ -16,13 +16,16 @@ typedef enum COMMAND {
 	CMD_GET_COORD							= 9,
 	CMD_SET_LANDLE_BY_ARM			= 10,
 	CMD_SHIFT_ARM_MM 					= 11,
-	CMD_GET_ARM_MM						= 12
+	CMD_GET_ARM_MM						= 12,
+	CMD_SAVE_ARM_MM						= 13,
+	CMD_RESTORE_ARM_MM				= 14
 } COMMAND;
 
 short msgCam[3] = {0,0,0};
 
 //typedef char commandMsg[COMMAND_MSG_SIZE];
 //----------------------------------------
+bool sendCommand(COMMAND cmd);
 bool sendCommand(COMMAND cmd, int value);
 bool sendCommand(COMMAND cmd, int value, bool waitComplete);
 void getMsgCoord(char *body, short v1, short v2, short v3);
@@ -53,8 +56,13 @@ bool sendCommand(COMMAND cmd, int value, bool waitComplete){
 	memcpy(&msg[sizeof(int)], &value, sizeof(int));
 	return SendMsg(&msg[0], messageSize, waitComplete, 3, 3000);
 }
+
 bool sendCommand(COMMAND cmd, int value){
 	return sendCommand(cmd, value, true);
+}
+
+bool sendCommand(COMMAND cmd){
+	return sendCommand(cmd, 0, true);
 }
 
 void getMsgCoord(char *body, short v1, short v2, short v3){

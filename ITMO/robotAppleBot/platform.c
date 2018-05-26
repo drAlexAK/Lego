@@ -64,7 +64,7 @@ void unloading();
 void rotatePlatform(int deg);
 void goToTheTree();
 bool getCoord(short &p1, short &p2);
-void lookForAppleVertical();
+bool lookForAppleVertical();
 //int getArmMM();
 bool catchApple();
 int moveByHor();
@@ -81,15 +81,17 @@ task main()
 	resetMotorsEncoder();
 
 	int iConnect = 0;
-	startTask (BlueToothListener);
+
 
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
 		displayTextLine(2, "Connecting %d", iConnect);
 		iConnect ++;
-		sleep(500);
+		sleep(200);
+		InitialyzePipe();
 	}
 	displayTextLine(2, "Connected");
 
+	startTask (BlueToothListener);
 	sleep(5000);
 
 	goToTheTree();
@@ -111,23 +113,22 @@ task main()
 		while(i < 4){
 			getAppleAttempts ++;
 
-			sendCommand(CMD_SET_LANDLE_BY_ARM, 0);
-			sendCommand(CMD_MOVE_PL,0);
-
-			lookForAppleVertical();
+			while (lookForAppleVertical());
+			sendCommand(CMD_PARK_ALL);
+			sleep(3000);
 
 			displayTextLine(2, "LookUp apple %d", i);
 
 			if (i < 3) {
-			if(k == 0)
-			goAheadMM(120);
+				if(k == 0)
+					goAheadMM(120);
 
-			if(k == 1)
-			goAheadMM(-120);
+				if(k == 1)
+					goAheadMM(-120);
 			}
 			i++;
 		}
-		sleep(5000);
+		sleep(1000);
 		getAppleAttempts =0;
 		i =0;
 	}
@@ -153,20 +154,22 @@ void goToTheTree(){
 	findTrees();
 }
 
-void lookForAppleVertical() {
+bool lookForAppleVertical() {
 	short y, x;
 	int sum = 0;
+	sendCommand(CMD_SET_LANDLE_BY_ARM, 0);
+	sendCommand(CMD_MOVE_PL,0);
 	sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM);
 	sleep(100);
-
+	InitialyzePipe(); //reinit pipe
 	if (getCoord(y, x)) {
 
 		sum = moveByHor();
 		if (catchApple()) unloading();
 		if (abs(sum) > 10) goAheadMM(-1 * sum);
-		lookForAppleVertical();
+		return true;
 	}
-	sendCommand(CMD_PARK_ALL);
+	return false;
 }
 
 
@@ -214,14 +217,14 @@ bool catchApple(){
 
 void unloading(){
 	writeDebugStreamLine("Starting unload");
-	sendCommand(CMD_SAVE_ARM_MM,0);
+	sendCommand(CMD_SAVE_ARM_MM);
 	//int tmp = getArmMM();
 	sendCommand(CMD_MOVE_PL, 0);
 	rotatePlatform(-90);
 	sendCommand(CMD_UP_ARM, 120);
 	while(SensorValue(sFront) > 20) sleep(100);
 	sendCommand(CMD_DOWN_LANDLE, 110);
-	sleep(2000);
+	sleep(1000);
 	sendCommand(CMD_DOWN_LANDLE, 0);
 	rotatePlatform(0);
 	sendCommand(CMD_RESTORE_ARM_MM, 0);

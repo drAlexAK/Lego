@@ -16,7 +16,7 @@
 //#define ARM_MAX_POSITION_270MM    270 moved to shared
 #define M_ARM_SPEED_MIN           20
 #define M_ARM_SPEED_MAX           100
-#define LANDLE_11000_ENCODER      2000 // 11000
+#define LANDLE_11000_ENCODER      2400  //2000 // 11000
 #define M_LANDLE_SPEED_MIN        10
 #define M_LANDLE_SPEED_MAX        100
 //----------------------------
@@ -98,7 +98,8 @@ task main()
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
 		displayTextLine(2, "Connecting %d", iConnect);
 		iConnect ++;
-		sleep(500);
+		sleep(200);
+		InitialyzePipe();
 	}
 
 	displayTextLine(2, "Connected");
@@ -141,7 +142,7 @@ task main()
 			}
 		}
 		sleep(200);
-		displayTextLine(2, "Message id %d", id);
+		displayTextLine(3, "id %d, c: %d, s: %d", id, (int) cmd, (int) inDelivery.Status);
 	}
 
 	/*sleep(10000);
@@ -162,7 +163,7 @@ void resetMotorsEncoder() {
 }
 
 void executeCMD(COMMAND cmd, int value){
-	displayTextLine(3, "%d %d", (int) cmd, value);
+	displayTextLine(4, "%d %d", (int) cmd, value);
 	switch (cmd)
 	{
 	case CMD_SET_LANDLE_BY_ARM:
@@ -289,10 +290,10 @@ void lookForAppleByArm() {
 	}
 	motor[mArm] = 0;
 	sleep(500);
-	motor[mPl]=0;
-	motor[mLandle]=0;
 	stopTask(holdPlPositionByArm);
 	stopTask(holdVerticalLandlePositionByArm);
+	motor[mPl]=0;
+	motor[mLandle]=0;
 }
 
 bool isAppleHere() {

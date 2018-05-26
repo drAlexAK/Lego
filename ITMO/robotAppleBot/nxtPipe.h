@@ -163,26 +163,51 @@ bool SendMsg(ubyte *body, int size, bool waitComplete, int attempts, int timeOut
 	}
 	return true;
 }
+
+// Clear the read buffer
+void ClearReadBuffer() {
+	ubyte b[4];
+	int available = 0;
+	int size = 0;
+
+	while (nxtGetAvailHSBytes() > 0)
+	{
+		int available = nxtGetAvailHSBytes();
+		int size = ( available > 4 ? 4 : available );
+		nxtReadRawHS(&b[0], size);
+	}
+}
+
 /**
 * send message safe with multithreading synchronization
 * @param msg pointer to message array
 * @param size message size, bytes
 */
 void SendSafe(char *msg, ubyte size){
+	while (nxtGetAvailHSBytes() > 0) {
+		displayTextLine(0, "queuee: %d" , nxtGetAvailHSBytes());
+		sleep(10);
+	}
 	semaphoreLock( lockSend );
+	ClearReadBuffer();
 	sleep(10);
 	TFileIOResult ioResult ;
 	if (size <= 4) {
+		//ClearReadBuffer(); //clear buffer before write
 		ioResult = nxtWriteRawHS(msg, size, 0);
 		writeDebugStreamLine("nxtWriteRawHS: %d" , (int) ioResult);
 	}
 	else
 	{
+		//ClearReadBuffer(); //clear buffer before write
 		ioResult = nxtWriteRawHS(msg, 4, 0);
 		writeDebugStreamLine("nxtWriteRawHS: %d" , (int) ioResult);
 		sleep(10);
 		size -= 4;
-		if (size  > 0) ioResult = nxtWriteRawHS(&msg[4], size, 0);
+		if (size  > 0) {
+			//ClearReadBuffer(); //clear buffer before write
+			ioResult = nxtWriteRawHS(&msg[4], size, 0);
+		}
 		writeDebugStreamLine("nxtWriteRawHS: %d" , (int) ioResult);
 	}
 	if (bDoesTaskOwnSemaphore(lockSend)) semaphoreUnlock(lockSend);
@@ -197,9 +222,11 @@ bool isItTraceArray(ubyte *b, int size) {
 
 void skipTraceHSByte() {
 	ubyte c[1];
+	int iWait = 0;
 	while(true) {
-		while ( nxtGetAvailHSBytes() < 1) {
-			sleep(100); /* waiting messages */
+		while (( nxtGetAvailHSBytes() < 1) && (iWait < 5)) {
+			sleep(100); //  waiting a message
+			iWait ++;   //  perpetual cycle protection
 		}
 		nxtReadRawHS(c, 1);
 		if (c != 255) return;
@@ -327,8 +354,9 @@ void InitialyzePipe(){
 	nxtEnableHSPort();			/* configure S4 as a high-speed port */
 	nxtHS_Mode = hsRawMode; /* Set port mode. This can be one of hsRawMode, hsMsgModeMaster, hsMsgModeSlave.
 	RS485 is a half duplex protocol,	that means that only one BXT can say something at any given time. */
-	nxtSetHSBaudRate(9600);	/* configure S4 as a high-speed port and select a BAUD rate */
+	nxtSetHSBaudRate(); //(9600);	/* configure S4 as a high-speed port and select a BAUD rate */
 	sleep(1000);
+	ClearReadBuffer();
 	startTask(ReadMsg);
 	sleep(1000);
 }

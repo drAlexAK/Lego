@@ -57,8 +57,8 @@ int armMM =0;
 
 byte armDiffMM[28];
 short landleDiffEnc[28];
-short shiftLandle[10] ={-50, -40, -32, -11, 21, 1, -42, -57, -62, -70}; // {-77, -60, -32, -11, -9, -19, -62, -77, -82, -90};
-
+short shiftLandle[10] =  {-77, -60, -32, -11, -9, -19, -52, -57, -42, -40};
+//{-30, -20, -12, 9, 41, 21, -22, -37, -42, -50};
 task main()
 {
 	/*
@@ -244,8 +244,8 @@ task ParkingPl(){
 void downLandle(int angel)
 {
 	if (angel < 0)  angel  = 0;
-	if (angel > 90) angel = 90;
-	int	targetEnc = LANDLE_11000_ENCODER / 90 * angel;
+	if (angel > 110) angel = 110;
+	int	targetEnc = LANDLE_11000_ENCODER / 110 * angel;
 	int startEnc = nMotorEncoder[mLandle];
 	int speed = 0 ;
 	if((targetEnc - startEnc) > 0){
@@ -296,10 +296,10 @@ void lookForAppleByArm() {
 }
 
 bool isAppleHere() {
-	const int accuracy = 25;
+	const int accuracy = 50;
 	int shiftPosition = shiftLandle[((nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM) / ARM_270MM_ENCODER ) / 30];
 	if (msgCam[2] == 1) { //apple here
-		if (((msgCam[0] - shiftPosition) < accuracy) && ((msgCam[0] - shiftPosition) > -1 * accuracy)) return true;
+		if (((msgCam[0] + shiftPosition) < accuracy) && ((msgCam[0] + shiftPosition) > -1 * accuracy)) return true;
 	}
 	return false;
 }

@@ -218,10 +218,10 @@ void unloading(){
 	//int tmp = getArmMM();
 	sendCommand(CMD_MOVE_PL, 0);
 	rotatePlatform(-90);
-	sendCommand(CMD_UP_ARM, 70);
+	sendCommand(CMD_UP_ARM, 120);
 	while(SensorValue(sFront) > 20) sleep(100);
-	sendCommand(CMD_DOWN_LANDLE, 90);
-	sleep(4000);
+	sendCommand(CMD_DOWN_LANDLE, 110);
+	sleep(2000);
 	sendCommand(CMD_DOWN_LANDLE, 0);
 	rotatePlatform(0);
 	sendCommand(CMD_RESTORE_ARM_MM, 0);

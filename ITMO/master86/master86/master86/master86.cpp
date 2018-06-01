@@ -6,6 +6,9 @@
 #include <queue>
 #include <iostream>
 #include "BTConnect.h"
+#include "sstream"
+#include "string"
+#include "fstream"
 
 using namespace cv;
 using namespace std;
@@ -17,7 +20,17 @@ void zeroArray(short *a1, int size);
 void copyArr(short *a1, short *a2, int size);
 void GetListOfBricks(vector<btSender> &lBricks);
 vector<string> GetListOfCOMPorts();
+void getExcludeScalar(vector<ScalarRange> &scRange);
 ////
+
+typedef struct ScalarRange{
+	ScalarRange(Scalar ls, Scalar us){
+		lowBound = ls;
+		upBound = us;
+	}
+	Scalar lowBound;
+	Scalar upBound;
+}ScalarRange;
 
 int main()
 {
@@ -219,5 +232,21 @@ void zeroArray(short *a, int size){
 void copyArr(short *a1, short *a2, int size){
 	for(int i = 0; i < size; i++){
 		a2[i] = a1[i];
+	}
+}
+
+void getExcludeScalar(vector<ScalarRange> &scRange){
+	const string exFile = "exclude.txt";
+	string line;
+	ifstream file(exFile);
+	int lR, lB, lG,
+		uR, uB, uG;
+	while(getline(file, line)){
+		if((line.length() > 6) && (line[0] != '/')){
+			istringstream sStream(line);
+			sStream >> lB >> lG >> lR;
+			sStream >> uB >> uG >> uR;
+			scRange.push_back(ScalarRange(Scalar(lB, lG, lR), Scalar(uB, uG, uR)));
+		}
 	}
 }

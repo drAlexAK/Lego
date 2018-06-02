@@ -13,15 +13,6 @@
 using namespace cv;
 using namespace std;
 
-////
-int Capture();
-bool compar(short *a1, short *a2, int size);
-void zeroArray(short *a1, int size);
-void copyArr(short *a1, short *a2, int size);
-void GetListOfBricks(vector<btSender> &lBricks);
-vector<string> GetListOfCOMPorts();
-void getExcludeScalar(vector<ScalarRange> &scRange);
-////
 
 typedef struct ScalarRange{
 	ScalarRange(Scalar ls, Scalar us){
@@ -31,6 +22,17 @@ typedef struct ScalarRange{
 	Scalar lowBound;
 	Scalar upBound;
 }ScalarRange;
+
+////
+int Capture();
+bool compar(short *a1, short *a2, int size);
+void zeroArray(short *a1, int size);
+void copyArr(short *a1, short *a2, int size);
+void GetListOfBricks(vector<btSender> &lBricks);
+vector<string> GetListOfCOMPorts();
+void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exlude);
+void getExcludeScalar(vector<ScalarRange> &scRange);
+////
 
 int main()
 {
@@ -68,13 +70,14 @@ void GetListOfBricks(vector<btSender> &lBricks)
 
 int Capture()
 {
+	char key = '0';  
 	const int msgElements = 3;
 	short *dataToSend = new short[msgElements];
 	short *dataToSendOld = new short[msgElements];
 	short *msg = new short[msgElements];
 
 	vector<btSender> lBricks;
-	GetListOfBricks(lBricks);
+	//GetListOfBricks(lBricks);
 
 	VideoCapture cap(0); //capture the video from webcam
 
@@ -86,10 +89,13 @@ int Capture()
 
 	//Capture a temporary image from the camera
 	Mat imgTmp;
-	cap.read(imgTmp); 
+	cap.read(imgTmp);
+	Mat imgBlack(imgTmp.size(), CV_8UC3, Scalar(0));
 	int rowCenter = imgTmp.rows / 2;
 	int colCenter = imgTmp.cols / 2;
+	vector<ScalarRange> exlude;
 
+	getExcludeScalar(exlude);
 
 	while (true)
 	{
@@ -122,8 +128,8 @@ int Capture()
 		*/
 
 		Mat imgThresholded;
-		Mat imgTreeTunk;
-		Mat imgBlack(imgOriginal.size(), CV_8UC3, Scalar(0)); 
+		//Mat imgTreeTunk;
+		/*Mat imgBlack(imgOriginal.size(), CV_8UC3, Scalar(0)); 
 
 		inRange(imgOriginal, Scalar(40, 40, 80), Scalar(90, 90, 120), imgTreeTunk); // cut of tuee tunk and branches
 		imgBlack.copyTo(imgOriginal, imgTreeTunk);
@@ -138,9 +144,11 @@ int Capture()
 		inRange(imgOriginal, Scalar(125, 175, 165), Scalar(150, 200, 185), imgTreeTunk); // leaves
 		imgBlack.copyTo(imgOriginal, imgTreeTunk);
 
-
 		imgTreeTunk.release();
 		imgBlack.release();
+		*/
+
+		replaceColor(imgOriginal, imgBlack, exlude);
 
 		inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
 
@@ -198,16 +206,19 @@ int Capture()
 
 		imshow("Thresholded Image", imgThresholded); //show the thresholded image
 		imshow("Original", imgOriginal); //show the original image
-
-		if (waitKey(100) == 27) //wait for 'esc' key press for 100ms. If 'esc' key is pressed, break loop
-		{
-			for (uint i = 0; i < lBricks.size(); i++)	{
-				lBricks.at(i).Disconnect();
-			}
-			cout << "esc key is pressed by user" << endl;
-			break; 
+		key = waitKey(100);
+		switch (key){
+		case  27:
+				for (uint i = 0; i < lBricks.size(); i++)	{
+					lBricks.at(i).Disconnect();
+				}
+				cout << "esc key is pressed by user" << endl;
+				return 0; 
+			break;
+		case 'r':			
+	getExcludeScalar(exlude);
+			break;
 		}
-
 		//Sleep(100);
 	}
 	for (uint i = 0; i < lBricks.size(); i++)	
@@ -235,7 +246,17 @@ void copyArr(short *a1, short *a2, int size){
 	}
 }
 
+void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exlude){
+	Mat dst;
+	for(int i =0; i < exlude.size(); i++){
+		inRange(src, exlude[i].lowBound, exlude[i].upBound, dst); // cut of farther apples
+		bkg.copyTo(src, dst);
+	}
+}
+
+
 void getExcludeScalar(vector<ScalarRange> &scRange){
+	scRange.clear();
 	const string exFile = "exclude.txt";
 	string line;
 	ifstream file(exFile);
@@ -246,6 +267,7 @@ void getExcludeScalar(vector<ScalarRange> &scRange){
 			istringstream sStream(line);
 			sStream >> lB >> lG >> lR;
 			sStream >> uB >> uG >> uR;
+			cout << "load exclude color: (" << lB << ' ' << lG << ' ' << lR << ") (" << uB << ' ' << uG << ' ' << uR << ')' << endl;  
 			scRange.push_back(ScalarRange(Scalar(lB, lG, lR), Scalar(uB, uG, uR)));
 		}
 	}

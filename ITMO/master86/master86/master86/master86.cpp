@@ -31,7 +31,10 @@ void copyArr(short *a1, short *a2, int size);
 void GetListOfBricks(vector<btSender> &lBricks);
 vector<string> GetListOfCOMPorts();
 void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exlude);
+void builtTreshHold(Mat &src, Mat &thd, const vector<ScalarRange> &inlude);
 void getExcludeScalar(vector<ScalarRange> &scRange);
+void getIncludeScalar(vector<ScalarRange> &scRange);
+void getIncludeScalar(vector<ScalarRange> &scRange);
 ////
 
 int main()
@@ -93,13 +96,16 @@ int Capture()
 	Mat imgBlack(imgTmp.size(), CV_8UC3, Scalar(0));
 	int rowCenter = imgTmp.rows / 2;
 	int colCenter = imgTmp.cols / 2;
-	vector<ScalarRange> exlude;
+	vector<ScalarRange> exclude;
+	vector<ScalarRange> include;
 
-	getExcludeScalar(exlude);
+	getExcludeScalar(exclude);
+	getIncludeScalar(include);
 
 	while (true)
 	{
 		Mat imgOriginal;
+
 		bool bSuccess = cap.read(imgOriginal); // read a new frame from video
 
 		if (!bSuccess) //if not success, break loop
@@ -107,51 +113,15 @@ int Capture()
 			cout << "Cannot read a frame from video stream" << endl;
 			break;
 		}
-		/*
-		Mat imgThresholded;
-		Mat imgTreeTunk;
-
-		inRange(imgOriginal, Scalar(40, 40, 80), Scalar(70, 70, 120), imgTreeTunk); // cut of tuee tunk and branches
-
-
-		//inRange(imgTreeTunk, Scalar(80, 100, 250), Scalar(100, 125, 255), imgTreeTunk); // cut of plane
-		//inRange(imgTreeTunk, Scalar(100, 170, 250), Scalar(120, 200, 255), imgTreeTunk); // cut of plane
-
-		Mat imgBlack(imgOriginal.size(), CV_8UC3, Scalar(0)); 
-		imgBlack.copyTo(imgOriginal, imgTreeTunk);
-
-		imgTreeTunk.release();
-		imgBlack.release();
-
-		inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
-
-		*/
 
 		Mat imgThresholded;
-		//Mat imgTreeTunk;
-		/*Mat imgBlack(imgOriginal.size(), CV_8UC3, Scalar(0)); 
 
-		inRange(imgOriginal, Scalar(40, 40, 80), Scalar(90, 90, 120), imgTreeTunk); // cut of tuee tunk and branches
-		imgBlack.copyTo(imgOriginal, imgTreeTunk);
+		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
 
-		
-		inRange(imgOriginal, Scalar(80, 100, 250), Scalar(100, 125, 255), imgTreeTunk); // cut of plane
-		imgBlack.copyTo(imgOriginal, imgTreeTunk);
+		replaceColor(imgOriginal, imgBlack, exclude);
+		builtTreshHold(imgOriginal, imgThresholded, include);
 
-		inRange(imgOriginal, Scalar(100, 170, 250), Scalar(120, 200, 255), imgTreeTunk); // cut of farther apples
-		imgBlack.copyTo(imgOriginal, imgTreeTunk);
-
-		inRange(imgOriginal, Scalar(125, 175, 165), Scalar(150, 200, 185), imgTreeTunk); // leaves
-		imgBlack.copyTo(imgOriginal, imgTreeTunk);
-
-		imgTreeTunk.release();
-		imgBlack.release();
-		*/
-
-		replaceColor(imgOriginal, imgBlack, exlude);
-
-		inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
-
+		//inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
 
 		//morphological opening (removes small objects from the foreground)
 		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) );
@@ -209,14 +179,15 @@ int Capture()
 		key = waitKey(100);
 		switch (key){
 		case  27:
-				for (uint i = 0; i < lBricks.size(); i++)	{
-					lBricks.at(i).Disconnect();
-				}
-				cout << "esc key is pressed by user" << endl;
-				return 0; 
+			for (uint i = 0; i < lBricks.size(); i++)	{
+				lBricks.at(i).Disconnect();
+			}
+			cout << "esc key is pressed by user" << endl;
+			return 0; 
 			break;
 		case 'r':			
-	getExcludeScalar(exlude);
+			getExcludeScalar(exclude);
+			getIncludeScalar(include);
 			break;
 		}
 		//Sleep(100);
@@ -249,8 +220,19 @@ void copyArr(short *a1, short *a2, int size){
 void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exlude){
 	Mat dst;
 	for(int i =0; i < exlude.size(); i++){
-		inRange(src, exlude[i].lowBound, exlude[i].upBound, dst); // cut of farther apples
+		inRange(src, exlude[i].lowBound, exlude[i].upBound, dst); // cut of colors by vector
 		bkg.copyTo(src, dst);
+	}
+}
+
+void builtTreshHold(Mat &src, Mat &thd, const vector<ScalarRange> &inlude){
+	Mat dst;
+	for(int i =0; i < inlude.size(); i++){
+		inRange(src, inlude[i].lowBound, inlude[i].upBound, dst); //
+		if(i == 0)
+			thd = dst.clone();
+		else 
+			bitwise_or(dst, thd, thd);
 	}
 }
 
@@ -268,6 +250,24 @@ void getExcludeScalar(vector<ScalarRange> &scRange){
 			sStream >> lB >> lG >> lR;
 			sStream >> uB >> uG >> uR;
 			cout << "load exclude color: (" << lB << ' ' << lG << ' ' << lR << ") (" << uB << ' ' << uG << ' ' << uR << ')' << endl;  
+			scRange.push_back(ScalarRange(Scalar(lB, lG, lR), Scalar(uB, uG, uR)));
+		}
+	}
+}
+
+void getIncludeScalar(vector<ScalarRange> &scRange){
+	scRange.clear();
+	const string exFile = "include.txt";
+	string line;
+	ifstream file(exFile);
+	int lR, lB, lG,
+		uR, uB, uG;
+	while(getline(file, line)){
+		if((line.length() > 6) && (line[0] != '/')){
+			istringstream sStream(line);
+			sStream >> lB >> lG >> lR;
+			sStream >> uB >> uG >> uR;
+			cout << "load include color: (" << lB << ' ' << lG << ' ' << lR << ") (" << uB << ' ' << uG << ' ' << uR << ')' << endl;  
 			scRange.push_back(ScalarRange(Scalar(lB, lG, lR), Scalar(uB, uG, uR)));
 		}
 	}

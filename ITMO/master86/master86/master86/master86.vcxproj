@@ -81,6 +81,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+    <Text Include="exclude.txt" />
+    <Text Include="include.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTConnect.cpp" />

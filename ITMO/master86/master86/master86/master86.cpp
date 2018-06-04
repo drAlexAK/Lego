@@ -9,6 +9,8 @@
 #include "sstream"
 #include "string"
 #include "fstream"
+#include "map"
+#include "cmath"
 
 using namespace cv;
 using namespace std;
@@ -33,9 +35,21 @@ vector<string> GetListOfCOMPorts();
 void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exlude);
 void builtTreshHold(Mat &src, Mat &thd, const vector<ScalarRange> &inlude);
 void getExcludeScalar(vector<ScalarRange> &scRange);
-void getIncludeScalar(vector<ScalarRange> &scRange);
-void getIncludeScalar(vector<ScalarRange> &scRange);
+void getIncludeScalar(vector<ScalarRange> &scRange, string inFile);
+void initInclude();
+void loadIncludes(vector<ScalarRange> &scRange);
 ////
+
+
+
+typedef enum color{
+	red		= 2,
+	yellow  = 4,
+	green   = 8
+}color;
+
+map<color, string> includeNameOfFile;
+int colorFilter = red | yellow; 
 
 int main()
 {
@@ -43,7 +57,7 @@ int main()
 	return 0;
 }
 
-vector<string> GetListOfCOMPorts()
+vector<string> GetListOfCOMPorts() 
 {
 	vector<string> lCom;
 
@@ -100,7 +114,9 @@ int Capture()
 	vector<ScalarRange> include;
 
 	getExcludeScalar(exclude);
-	getIncludeScalar(include);
+	//	getIncludeScalar(include);
+	initInclude();
+	loadIncludes(include);
 
 	while (true)
 	{
@@ -139,11 +155,13 @@ int Capture()
 		double dArea = oMoments.m00;
 
 		// if the area <= 10000, I consider that the there are no object in the image and it's because of the noise, the area is not zero 
-		if (dArea > 1000000)
+		if (dArea > 3000000)
 		{
 			//calculate the position of the ball
 			int posX = dM10 / dArea;
 			int posY = dM01 / dArea;        
+
+			circle(imgOriginal, Point(posX, posY), 20, Scalar(200, 100, 50), 5);
 
 			if (posX >= 0 && posY >= 0)
 			{
@@ -187,7 +205,20 @@ int Capture()
 			break;
 		case 'r':			
 			getExcludeScalar(exclude);
-			getIncludeScalar(include);
+			loadIncludes(include);
+			//getIncludeScalar(include);
+			break;
+		case '1':
+			colorFilter = colorFilter ^ (2 << 0);
+			loadIncludes(include);
+			break;
+		case '2':
+			colorFilter = colorFilter ^ (2 << 1);
+			loadIncludes(include);
+			break;
+		case '3':
+			colorFilter = colorFilter ^ (2 << 2);
+			loadIncludes(include);
 			break;
 		}
 		//Sleep(100);
@@ -217,18 +248,19 @@ void copyArr(short *a1, short *a2, int size){
 	}
 }
 
-void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exlude){
+void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exclude){
 	Mat dst;
-	for(int i =0; i < exlude.size(); i++){
-		inRange(src, exlude[i].lowBound, exlude[i].upBound, dst); // cut of colors by vector
+	for(int i =0; i < exclude.size(); i++){
+		inRange(src, exclude[i].lowBound, exclude[i].upBound, dst); // cut of colors by vector
 		bkg.copyTo(src, dst);
 	}
 }
 
-void builtTreshHold(Mat &src, Mat &thd, const vector<ScalarRange> &inlude){
+void builtTreshHold(Mat &src, Mat &thd, const vector<ScalarRange> &include){
+	if(include.size() == 0) thd = Mat(Scalar(0)).clone();
 	Mat dst;
-	for(int i =0; i < inlude.size(); i++){
-		inRange(src, inlude[i].lowBound, inlude[i].upBound, dst); //
+	for(int i =0; i < include.size(); i++){
+		inRange(src, include[i].lowBound, include[i].upBound, dst); //
 		if(i == 0)
 			thd = dst.clone();
 		else 
@@ -249,17 +281,15 @@ void getExcludeScalar(vector<ScalarRange> &scRange){
 			istringstream sStream(line);
 			sStream >> lB >> lG >> lR;
 			sStream >> uB >> uG >> uR;
-			cout << "load exclude color: (" << lB << ' ' << lG << ' ' << lR << ") (" << uB << ' ' << uG << ' ' << uR << ')' << endl;  
+			cout << "  - color: (" << lB << ' ' << lG << ' ' << lR << ") (" << uB << ' ' << uG << ' ' << uR << ')' << endl;  
 			scRange.push_back(ScalarRange(Scalar(lB, lG, lR), Scalar(uB, uG, uR)));
 		}
 	}
 }
 
-void getIncludeScalar(vector<ScalarRange> &scRange){
-	scRange.clear();
-	const string exFile = "include.txt";
+void getIncludeScalar(vector<ScalarRange> &scRange, string inFile){
 	string line;
-	ifstream file(exFile);
+	ifstream file(inFile);
 	int lR, lB, lG,
 		uR, uB, uG;
 	while(getline(file, line)){
@@ -267,8 +297,27 @@ void getIncludeScalar(vector<ScalarRange> &scRange){
 			istringstream sStream(line);
 			sStream >> lB >> lG >> lR;
 			sStream >> uB >> uG >> uR;
-			cout << "load include color: (" << lB << ' ' << lG << ' ' << lR << ") (" << uB << ' ' << uG << ' ' << uR << ')' << endl;  
+			cout << "  + color: (" << lB << ' ' << lG << ' ' << lR << ") (" << uB << ' ' << uG << ' ' << uR << ')' << endl;  
 			scRange.push_back(ScalarRange(Scalar(lB, lG, lR), Scalar(uB, uG, uR)));
 		}
 	}
+}
+
+void loadIncludes(vector<ScalarRange> &scRange){
+	scRange.clear();
+	map<color, string> ::iterator includeNameOfFileIterator;
+	for(includeNameOfFileIterator = includeNameOfFile.begin(); includeNameOfFileIterator != includeNameOfFile.end(); includeNameOfFileIterator++){
+		if(((int)includeNameOfFileIterator->first & colorFilter) == (int)includeNameOfFileIterator->first){
+			cout << "+ " << includeNameOfFileIterator->second << endl;
+			getIncludeScalar(scRange,includeNameOfFileIterator->second);
+		}
+		else
+			cout << "- " << includeNameOfFileIterator->second << endl; 
+	}
+}
+
+void initInclude(){
+	includeNameOfFile.insert(make_pair(red, "includeRed.txt"));
+	includeNameOfFile.insert(make_pair(yellow, "includeYellow.txt"));
+	includeNameOfFile.insert(make_pair(green, "includeGreen.txt"));
 }

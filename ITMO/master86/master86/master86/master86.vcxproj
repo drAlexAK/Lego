@@ -80,6 +80,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <Text Include="includeGreen.txt" />
+    <Text Include="includeRed.txt" />
+    <Text Include="includeYellow.txt" />
     <Text Include="ReadMe.txt" />
     <Text Include="exclude.txt" />
     <Text Include="include.txt" />

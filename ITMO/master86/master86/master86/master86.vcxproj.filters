@@ -22,6 +22,15 @@
     <Text Include="include.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="includeGreen.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="includeRed.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="includeYellow.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="master86.cpp">

@@ -69,14 +69,14 @@ vector<string> GetListOfCOMPorts()
 void GetListOfBricks(vector<btSender> &lBricks)
 {
 	vector<string>  lCom =  GetListOfCOMPorts();
-	for (uint i = 0; i < lCom.size(); i++)
+	for (vector<string>::iterator it = lCom.begin(); it != lCom.end(); it++)
 	{
 		while(true){		
-			cout << "Connecting to '" << lCom.at(i) << "'" << endl;
+			cout << "Connecting to '" << *it << "'" << endl;
 			lBricks.push_back (btSender());
-			if (lBricks.back().Connect(lCom.at(i)))
+			if (lBricks.back().Connect(*it))
 			{
-				cout << "Has been connected to '" << lCom.at(i) << "'" << endl; 
+				cout << "Has been connected to '" << *it << "'" << endl; 
 				break;
 			}
 			cout << "Error: " << lBricks.back().GetErrorID() << " " << lBricks.back().GetErrorMessage() << endl;
@@ -181,10 +181,10 @@ int Capture()
 
 		if (!compar(dataToSend, dataToSendOld, 3)) {
 			cout << dataToSend[0] << " " << dataToSend[1] << "    " << dataToSend[2] << endl;  
-			for (uint i = 0; i < lBricks.size(); i++)	{
+			for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){
 				copyArr(dataToSend,  msg, msgElements);
-				if (lBricks.at(i).Send(msg, msgElements) == false) {
-					cout << "Error: " << lBricks.at(i).GetErrorID() << " Cannot send to port '" << lBricks.at(i).GetComPortName() << "' " << lBricks.at(i).GetErrorMessage() ;
+				if (it->Send(msg, msgElements) == false) {
+					cout << "Error: " << it->GetErrorID() << " Cannot send to port '" << it->GetComPortName() << "' " << it->GetErrorMessage();
 				}
 			}
 			copyArr(dataToSend, dataToSendOld, msgElements);
@@ -197,8 +197,8 @@ int Capture()
 		key = waitKey(100);
 		switch (key){
 		case  27:
-			for (uint i = 0; i < lBricks.size(); i++)	{
-				lBricks.at(i).Disconnect();
+			for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){
+				it->Disconnect();
 			}
 			cout << "esc key is pressed by user" << endl;
 			return 0; 
@@ -226,9 +226,10 @@ int Capture()
 		}
 		//Sleep(100);
 	}
-	for (uint i = 0; i < lBricks.size(); i++)	
-		lBricks.at(i).Disconnect(); 
-	return 0;
+		for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){
+				it->Disconnect();
+		}	
+		return 0;
 }
 
 bool compar(short *a1, short *a2, int size){
@@ -253,8 +254,8 @@ void copyArr(short *a1, short *a2, int size){
 
 void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exclude){
 	Mat dst;
-	for(int i =0; i < exclude.size(); i++){
-		inRange(src, exclude[i].lowBound, exclude[i].upBound, dst); // cut of colors by vector
+	for(vector<ScalarRange>::iterator it =exlude.begin(); it != exlude.end(); it++){
+		inRange(src, it->lowBound, it->upBound, dst); // cut of colors by vector
 		bkg.copyTo(src, dst);
 	}
 }
@@ -262,9 +263,9 @@ void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exclude){
 void builtTreshHold(Mat &src, Mat &thd, const vector<ScalarRange> &include){
 	if(include.size() == 0) thd = Mat(Scalar(0)).clone();
 	Mat dst;
-	for(int i =0; i < include.size(); i++){
-		inRange(src, include[i].lowBound, include[i].upBound, dst); //
-		if(i == 0)
+	for(vector<ScalarRange>::iterator it = include.begin(); it != include.end(); it++){
+		inRange(src, it->lowBound, it->upBound, dst); //
+		if(*it == 0)
 			thd = dst.clone();
 		else 
 			bitwise_or(dst, thd, thd);

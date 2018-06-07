@@ -72,11 +72,11 @@ void GetListOfBricks(vector<btSender> &lBricks)
 	for (uint i = 0; i < lCom.size(); i++)
 	{
 		while(true){		
-			cout << "Connecting to '" << lCom[i] << "'" << endl;
+			cout << "Connecting to '" << lCom.at(i) << "'" << endl;
 			lBricks.push_back (btSender());
-			if (lBricks.back().Connect(lCom[i]))
+			if (lBricks.back().Connect(lCom.at(i)))
 			{
-				cout << "Has been connected to '" << lCom[i] << "'" << endl; 
+				cout << "Has been connected to '" << lCom.at(i) << "'" << endl; 
 				break;
 			}
 			cout << "Error: " << lBricks.back().GetErrorID() << " " << lBricks.back().GetErrorMessage() << endl;
@@ -219,6 +219,9 @@ int Capture()
 		case '3':
 			colorFilter = colorFilter ^ (2 << 2);
 			loadIncludes(include);
+			break;
+		case '0':
+			colorFilter = 0;
 			break;
 		}
 		//Sleep(100);

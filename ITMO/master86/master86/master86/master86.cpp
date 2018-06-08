@@ -32,12 +32,13 @@ void zeroArray(short *a1, int size);
 void copyArr(short *a1, short *a2, int size);
 void GetListOfBricks(vector<btSender> &lBricks);
 vector<string> GetListOfCOMPorts();
-void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exlude);
-void builtTreshHold(Mat &src, Mat &thd, const vector<ScalarRange> &inlude);
+void replaceColor(Mat &src, Mat &bkg, vector<ScalarRange> &exlude);
+void builtTreshHold(Mat &src, Mat &thd, vector<ScalarRange> &inlude);
 void getExcludeScalar(vector<ScalarRange> &scRange);
 void getIncludeScalar(vector<ScalarRange> &scRange, string inFile);
 void initInclude();
 void loadIncludes(vector<ScalarRange> &scRange);
+void getErAndDi(int &rowsEr, int &colEr, int &colDi, int &rowsDi);
 ////
 
 
@@ -92,7 +93,8 @@ int Capture()
 	short *dataToSend = new short[msgElements];
 	short *dataToSendOld = new short[msgElements];
 	short *msg = new short[msgElements];
-
+	int erCol, erRow, diRow, diCol;
+	getErAndDi(erRow, erCol, diCol, diRow);
 	vector<btSender> lBricks;
 	//GetListOfBricks(lBricks);
 
@@ -140,12 +142,12 @@ int Capture()
 		//inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
 
 		//morphological opening (removes small objects from the foreground)
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) );
-		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) ); 
+		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(erRow, erCol)) );
+		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(diCol, diRow)) ); 
 
 		//morphological closing (removes small holes from the foreground)
-		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) ); 
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(25, 25)) );
+		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(diCol, diRow)) ); 
+		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(erCol, erRow)) );
 
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
@@ -222,6 +224,7 @@ int Capture()
 			break;
 		case '0':
 			colorFilter = 0;
+			loadIncludes(include);
 			break;
 		}
 		//Sleep(100);
@@ -252,20 +255,20 @@ void copyArr(short *a1, short *a2, int size){
 	}
 }
 
-void replaceColor(Mat &src, Mat &bkg, const vector<ScalarRange> &exclude){
+void replaceColor(Mat &src, Mat &bkg, vector<ScalarRange> &exclude){
 	Mat dst;
-	for(vector<ScalarRange>::iterator it =exlude.begin(); it != exlude.end(); it++){
+	for(vector<ScalarRange>::iterator it = exclude.begin(); it != exclude.end(); it++){
 		inRange(src, it->lowBound, it->upBound, dst); // cut of colors by vector
 		bkg.copyTo(src, dst);
 	}
 }
 
-void builtTreshHold(Mat &src, Mat &thd, const vector<ScalarRange> &include){
+void builtTreshHold(Mat &src, Mat &thd, vector<ScalarRange> &include){
 	if(include.size() == 0) thd = Mat(Scalar(0)).clone();
 	Mat dst;
 	for(vector<ScalarRange>::iterator it = include.begin(); it != include.end(); it++){
 		inRange(src, it->lowBound, it->upBound, dst); //
-		if(*it == 0)
+		if(it == include.begin())
 			thd = dst.clone();
 		else 
 			bitwise_or(dst, thd, thd);
@@ -324,4 +327,19 @@ void initInclude(){
 	includeNameOfFile.insert(make_pair(red, "includeRed.txt"));
 	includeNameOfFile.insert(make_pair(yellow, "includeYellow.txt"));
 	includeNameOfFile.insert(make_pair(green, "includeGreen.txt"));
+}
+
+void getErAndDi(int &rowsEr, int &colEr, int &colDi, int &rowsDi){
+	string line;
+	ifstream file("erodeAndDilet.txt");
+	while(getline(file, line)){
+		if((line.length() > 3) && (line[0] != '/') && (line[0] == 'e')){
+			istringstream sStream(line);
+			sStream >> rowsEr >> colEr;
+		}
+		if((line.length() > 3) && (line[0] != '/') && (line[0] == 'd')){
+			istringstream sStream(line);
+			sStream >> rowsDi >> colDi;
+		}
+	}
 }

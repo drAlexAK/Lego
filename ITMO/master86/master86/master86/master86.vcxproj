@@ -86,6 +86,7 @@
     <Text Include="ReadMe.txt" />
     <Text Include="exclude.txt" />
     <Text Include="include.txt" />
+    <Text Include="erodeAndDilet.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTConnect.cpp" />

@@ -39,6 +39,8 @@ void getIncludeScalar(vector<ScalarRange> &scRange, string inFile);
 void initInclude();
 void loadIncludes(vector<ScalarRange> &scRange);
 void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2);
+int getBrokenLine(OutputArrayOfArrays curve);
+void geometry(Mat &treshHold);
 ////
 
 
@@ -96,6 +98,9 @@ int Capture()
 	Size er1, er2, di1, di2;
 	getErAndDi(er1, di1, di2, er2);
 	vector<btSender> lBricks;
+
+	bool chekGeometry = true;
+
 	//GetListOfBricks(lBricks);
 
 	VideoCapture cap(0); //capture the video from webcam
@@ -147,7 +152,9 @@ int Capture()
 
 		//morphological closing (removes small holes from the foreground)
 		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di2) ); 
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er1) );
+		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er2) );
+
+		if(chekGeometry) geometry(imgThresholded);
 
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
@@ -208,6 +215,7 @@ int Capture()
 		case 'r':			
 			getExcludeScalar(exclude);
 			loadIncludes(include);
+			getErAndDi(er1, di1, di2, er2);
 			//getIncludeScalar(include);
 			break;
 		case '1':
@@ -226,6 +234,9 @@ int Capture()
 			colorFilter = 0;
 			loadIncludes(include);
 			break;
+		case 'g':
+			chekGeometry ^= true;
+			cout << "chekGeometry: " << chekGeometry << endl;
 		}
 		//Sleep(100);
 	}
@@ -342,7 +353,7 @@ void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 			sStream >> i >> k;
 
 			if(ic == 1){
-				Er1.height = i;
+				Er1.height = i; 
 				Er1.width = k;
 			}
 			else if(ic == 4){
@@ -360,4 +371,26 @@ void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 			ic++;
 		}
 	}
+	cout << "noise: " << Er1.height << 'x' << Er1.width << ' ' << Di1.height << 'x' << Di1.width << endl;
+	cout << "hole:  " << Di2.height << 'x' << Di2.width << ' ' << Er2.height << 'x' << Er2.width << endl;
+}
+
+void geometry(Mat &imgThreshold){
+	Mat oCanny;
+	vector<Vec4i> hierarchy;
+	vector<vector<Point>> contours; 
+	Canny(imgThreshold, oCanny, 100, 300, 3);
+	findContours(oCanny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+	for(vector<vector<Point>>::iterator it = contours.begin(); it != contours.end(); it++){
+		if(getBrokenLine(*it) > 5) {
+			drawContours(imgThreshold, contours, -1, 128, CV_FILLED);
+		}
+	}
+}
+
+int getBrokenLine(OutputArrayOfArrays curve){
+	int perimeter = arcLength(curve, true);
+	vector<Point> appCurve;
+	approxPolyDP(curve, appCurve, perimeter * 0.01, true);
+	return appCurve.size();
 }

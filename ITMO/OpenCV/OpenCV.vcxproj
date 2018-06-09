@@ -21,6 +21,9 @@
   <ItemGroup>
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="1.png" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2E034F6A-2460-4D73-9366-D7BC00041141}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

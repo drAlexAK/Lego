@@ -38,7 +38,7 @@ void getExcludeScalar(vector<ScalarRange> &scRange);
 void getIncludeScalar(vector<ScalarRange> &scRange, string inFile);
 void initInclude();
 void loadIncludes(vector<ScalarRange> &scRange);
-void getErAndDi(int &rowsEr, int &colEr, int &colDi, int &rowsDi);
+void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2);
 ////
 
 
@@ -331,7 +331,8 @@ void initInclude(){
 
 void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 	string line;
-	int i,k;
+	int i =0;
+	int k =0;
 	Size r;
 	int iE = 1;
 	int iD = 1;
@@ -342,24 +343,24 @@ void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 			sStream >> i >> k;
 
 			if(iE == 1){
-				Er1.height(i);
-				Er1.width(k);
+				Er1.height = i;
+				Er1.width = k;
 				iE++;
 			}else{
-				Er2.height(i);
-				Er2.width(k);
+				Er2.height = i;
+				Er2.width = k;
 			}
 		}
 		if((line.length() > 3) && (line[0] != '/') && (line[0] == 'd')){
 			istringstream sStream(line);
 			sStream >> i >> k;
 			if(iD == 1){
-				Di1.height(i);
-				Di1.width(k);
+				Di1.height = i;
+				Di1.width = k;
 				iD++;
 			}else{
-				Di2.height(i);
-				Di2.width(k);
+				Di2.height = i;
+				Di2.width = k;
 			}
 		}
 	}

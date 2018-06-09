@@ -334,34 +334,30 @@ void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 	int i =0;
 	int k =0;
 	Size r;
-	int iE = 1;
-	int iD = 1;
+	int ic = 1;
 	ifstream file("erodeAndDilet.txt");
 	while(getline(file, line)){
-		if((line.length() > 3) && (line[0] != '/') && (line[0] == 'e')){
+		if((line.length() > 3) && (line[0] != '/')){
 			istringstream sStream(line);
 			sStream >> i >> k;
 
-			if(iE == 1){
+			if(ic == 1){
 				Er1.height = i;
 				Er1.width = k;
-				iE++;
-			}else{
+			}
+			else if(ic == 4){
 				Er2.height = i;
 				Er2.width = k;
 			}
-		}
-		if((line.length() > 3) && (line[0] != '/') && (line[0] == 'd')){
-			istringstream sStream(line);
-			sStream >> i >> k;
-			if(iD == 1){
+			else if(ic == 2){
 				Di1.height = i;
 				Di1.width = k;
-				iD++;
-			}else{
+			}
+			else if(ic == 3){
 				Di2.height = i;
 				Di2.width = k;
 			}
+			ic++;
 		}
 	}
 }

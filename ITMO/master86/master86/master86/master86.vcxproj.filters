@@ -31,7 +31,7 @@
     <Text Include="includeYellow.txt">
       <Filter>Source Files</Filter>
     </Text>
-    <Text Include="erodeAndDilet.txt">
+    <Text Include="erodeAndDilate.txt">
       <Filter>Source Files</Filter>
     </Text>
   </ItemGroup>

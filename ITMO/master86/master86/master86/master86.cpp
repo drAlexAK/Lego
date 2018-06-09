@@ -353,7 +353,7 @@ void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 	int k =0;
 	Size r;
 	int ic = 1;
-	ifstream file("erodeAndDilet.txt");
+	ifstream file("erodeAndDilate.txt");
 	while(getline(file, line)){
 		if((line.length() > 3) && (line[0] != '/')){
 			istringstream sStream(line);
@@ -384,16 +384,16 @@ void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 
 void geometry(Mat &imgThreshold){
 	Mat oCanny;
-	Mat imgDrawing(imgThreshold.size(), CV_8UC3, Scalar(255, 255, 255));
+	Mat imgDrawing(imgThreshold.size(), CV_8UC3, Scalar(0));
 	vector<Vec4i> hierarchy;
 	vector<vector<Point>> contours; 
 	Canny(imgThreshold, oCanny, 100, 300, 3);
-	findContours(oCanny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+	findContours(oCanny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 	int i = 0;
 	for(vector<vector<Point>>::iterator it = contours.begin(); it != contours.end(); it++){
 		if(getBrokenLine(*it) > 5) {
 			//drawContours(imgThreshold, contours, -1, 128, CV_FILLED);
-			drawContours( imgDrawing, contours, i, 0, CV_FILLED  );
+			drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 			//bitwise_xor(imgThreshold, imgDrawing, imgThreshold);
 			imshow("imgDrawing", imgDrawing); //show the original image
 		}

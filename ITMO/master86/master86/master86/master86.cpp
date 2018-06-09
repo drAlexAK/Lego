@@ -12,9 +12,11 @@
 #include "map"
 #include "cmath"
 
+
+//#define CAMERA
+
 using namespace cv;
 using namespace std;
-
 
 typedef struct ScalarRange{
 	ScalarRange(Scalar ls, Scalar us){
@@ -46,6 +48,7 @@ void geometry(Mat &treshHold);
 
 
 typedef enum color{
+	none	= 0,
 	red		= 2,
 	yellow  = 4,
 	green   = 8
@@ -98,11 +101,11 @@ int Capture()
 	Size er1, er2, di1, di2;
 	getErAndDi(er1, di1, di2, er2);
 	vector<btSender> lBricks;
-
+	Mat imgTmp;
 	bool chekGeometry = true;
 
 	//GetListOfBricks(lBricks);
-
+#ifdef CAMERA
 	VideoCapture cap(0); //capture the video from webcam
 
 	if ( !cap.isOpened() )  // if not success, exit program
@@ -110,10 +113,12 @@ int Capture()
 		cout << "Cannot open the web cam" << endl;
 		return -1;
 	}
-
 	//Capture a temporary image from the camera
-	Mat imgTmp;
 	cap.read(imgTmp);
+#else
+	imgTmp= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
+#endif
+
 	Mat imgBlack(imgTmp.size(), CV_8UC3, Scalar(0));
 	int rowCenter = imgTmp.rows / 2;
 	int colCenter = imgTmp.cols / 2;
@@ -128,7 +133,7 @@ int Capture()
 	while (true)
 	{
 		Mat imgOriginal;
-
+#ifdef CAMERA
 		bool bSuccess = cap.read(imgOriginal); // read a new frame from video
 
 		if (!bSuccess) //if not success, break loop
@@ -136,7 +141,9 @@ int Capture()
 			cout << "Cannot read a frame from video stream" << endl;
 			break;
 		}
-
+#else
+		imgOriginal= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
+#endif
 		Mat imgThresholded;
 
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
@@ -147,14 +154,14 @@ int Capture()
 		//inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
 
 		//morphological opening (removes small objects from the foreground)
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er1) );
-		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di1) ); 
+		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er1));
+		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di1));
 
 		//morphological closing (removes small holes from the foreground)
 		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di2) ); 
 		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er2) );
 
-		if(chekGeometry) geometry(imgThresholded);
+		if((colorFilter != none) && (chekGeometry)) geometry(imgThresholded);
 
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
@@ -164,7 +171,7 @@ int Capture()
 		double dArea = oMoments.m00;
 
 		// if the area <= 10000, I consider that the there are no object in the image and it's because of the noise, the area is not zero 
-		if (dArea > 3000000)
+		if (dArea > 5000000)
 		{
 			//calculate the position of the ball
 			int posX = dM10 / dArea;
@@ -377,14 +384,20 @@ void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 
 void geometry(Mat &imgThreshold){
 	Mat oCanny;
+	Mat imgDrawing(imgThreshold.size(), CV_8UC3, Scalar(255, 255, 255));
 	vector<Vec4i> hierarchy;
 	vector<vector<Point>> contours; 
 	Canny(imgThreshold, oCanny, 100, 300, 3);
-	findContours(oCanny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+	findContours(oCanny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+	int i = 0;
 	for(vector<vector<Point>>::iterator it = contours.begin(); it != contours.end(); it++){
 		if(getBrokenLine(*it) > 5) {
-			drawContours(imgThreshold, contours, -1, 128, CV_FILLED);
+			//drawContours(imgThreshold, contours, -1, 128, CV_FILLED);
+			drawContours( imgDrawing, contours, i, 0, CV_FILLED  );
+			//bitwise_xor(imgThreshold, imgDrawing, imgThreshold);
+			imshow("imgDrawing", imgDrawing); //show the original image
 		}
+		i++;
 	}
 }
 

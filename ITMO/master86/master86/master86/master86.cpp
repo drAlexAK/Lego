@@ -93,8 +93,8 @@ int Capture()
 	short *dataToSend = new short[msgElements];
 	short *dataToSendOld = new short[msgElements];
 	short *msg = new short[msgElements];
-	int erCol, erRow, diRow, diCol;
-	getErAndDi(erRow, erCol, diCol, diRow);
+	Size er1, er2, di1, di2;
+	getErAndDi(er1, di1, di2, er2);
 	vector<btSender> lBricks;
 	//GetListOfBricks(lBricks);
 
@@ -142,12 +142,12 @@ int Capture()
 		//inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
 
 		//morphological opening (removes small objects from the foreground)
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(erRow, erCol)) );
-		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(diCol, diRow)) ); 
+		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er1) );
+		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di1) ); 
 
 		//morphological closing (removes small holes from the foreground)
-		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(diCol, diRow)) ); 
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(erCol, erRow)) );
+		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di2) ); 
+		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er1) );
 
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
@@ -229,10 +229,10 @@ int Capture()
 		}
 		//Sleep(100);
 	}
-		for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){
-				it->Disconnect();
-		}	
-		return 0;
+	for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){
+		it->Disconnect();
+	}	
+	return 0;
 }
 
 bool compar(short *a1, short *a2, int size){
@@ -329,17 +329,38 @@ void initInclude(){
 	includeNameOfFile.insert(make_pair(green, "includeGreen.txt"));
 }
 
-void getErAndDi(int &rowsEr, int &colEr, int &colDi, int &rowsDi){
+void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 	string line;
+	int i,k;
+	Size r;
+	int iE = 1;
+	int iD = 1;
 	ifstream file("erodeAndDilet.txt");
 	while(getline(file, line)){
 		if((line.length() > 3) && (line[0] != '/') && (line[0] == 'e')){
 			istringstream sStream(line);
-			sStream >> rowsEr >> colEr;
+			sStream >> i >> k;
+
+			if(iE == 1){
+				Er1.height(i);
+				Er1.width(k);
+				iE++;
+			}else{
+				Er2.height(i);
+				Er2.width(k);
+			}
 		}
 		if((line.length() > 3) && (line[0] != '/') && (line[0] == 'd')){
 			istringstream sStream(line);
-			sStream >> rowsDi >> colDi;
+			sStream >> i >> k;
+			if(iD == 1){
+				Di1.height(i);
+				Di1.width(k);
+				iD++;
+			}else{
+				Di2.height(i);
+				Di2.width(k);
+			}
 		}
 	}
 }

@@ -13,7 +13,7 @@
 #include "cmath"
 
 
-//#define CAMERA
+#define CAMERA
 
 using namespace cv;
 using namespace std;
@@ -43,6 +43,7 @@ void loadIncludes(vector<ScalarRange> &scRange);
 void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2);
 int getBrokenLine(OutputArrayOfArrays curve);
 void geometry(Mat &treshHold);
+string getColorFilterAsString();
 ////
 
 
@@ -158,10 +159,14 @@ int Capture()
 		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di1));
 
 		//morphological closing (removes small holes from the foreground)
-		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di2) ); 
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er2) );
+		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di2), Point(-1, -1), 2); 
+		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er2), Point(-1, -1), 2);
 
 		if((colorFilter != none) && (chekGeometry)) geometry(imgThresholded);
+
+		putText(imgOriginal, getColorFilterAsString(), Point(25, 25), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 100, 50), 2, CV_AA); 
+		putText(imgOriginal, "g: " + to_string(chekGeometry), Point(25, 65), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 100, 50), 2, CV_AA); 
+
 
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
@@ -383,22 +388,27 @@ void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2){
 }
 
 void geometry(Mat &imgThreshold){
+	rectangle(imgThreshold,Point(0, 0), Point(imgThreshold.cols - 1, imgThreshold.rows -1), Scalar(0));
 	Mat oCanny;
-	Mat imgDrawing(imgThreshold.size(), CV_8UC3, Scalar(0));
+	Mat imgDrawing(imgThreshold.size(), CV_8UC1, Scalar(0));
 	vector<Vec4i> hierarchy;
 	vector<vector<Point>> contours; 
 	Canny(imgThreshold, oCanny, 100, 300, 3);
-	findContours(oCanny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
-	int i = 0;
-	for(vector<vector<Point>>::iterator it = contours.begin(); it != contours.end(); it++){
-		if(getBrokenLine(*it) > 5) {
-			//drawContours(imgThreshold, contours, -1, 128, CV_FILLED);
-			drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
-			//bitwise_xor(imgThreshold, imgDrawing, imgThreshold);
-			imshow("imgDrawing", imgDrawing); //show the original image
+	findContours(oCanny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, Point(0, 0));
+
+	for(int i = 0; i  < contours.size(); i++){
+		RotatedRect rr = minAreaRect(Mat(contours[i]));
+		double aspectRetio = 0;
+		if((rr.size.height != 0) && (rr.size.width != 0)){
+			aspectRetio = rr.size.height / rr.size.width;
+			if(aspectRetio < 0) aspectRetio = rr.size.width / rr.size.height;
+			if((aspectRetio > 2.0) || (getBrokenLine(contours[i]) < 10)){	
+				drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
+			}
 		}
-		i++;
 	}
+	imshow("imgDrawing", imgDrawing);
+	bitwise_xor(imgThreshold, imgDrawing, imgThreshold);
 }
 
 int getBrokenLine(OutputArrayOfArrays curve){
@@ -406,4 +416,12 @@ int getBrokenLine(OutputArrayOfArrays curve){
 	vector<Point> appCurve;
 	approxPolyDP(curve, appCurve, perimeter * 0.01, true);
 	return appCurve.size();
+}
+
+string getColorFilterAsString(){
+	string filter = "";
+	if((colorFilter & red) == red) filter += "r";
+	if((colorFilter & yellow) == yellow) filter += "y";
+	if((colorFilter & green) == green) filter += "g";
+	return filter;
 }

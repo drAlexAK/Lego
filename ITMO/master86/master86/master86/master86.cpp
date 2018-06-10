@@ -400,15 +400,15 @@ void geometry(Mat &imgThreshold){
 		RotatedRect rr = minAreaRect(Mat(contours[i]));
 		RotatedRect re;
 		if(contours[i].size() > 6) re = fitEllipse(Mat(contours[i]));
-		double aspectRetioRR = 0;
-		double aspectRetioRE = 0;
+		double aspectRatioRR = 0; // Rectangle
+		double aspectRatioRE = 0; // Ellipse
 		if((rr.size.height != 0) && (rr.size.width != 0)){
 			if((re.size.height != 0) && (re.size.width != 0)){
-				aspectRetioRR = rr.size.height / rr.size.width;
-				if(aspectRetioRR < 0) aspectRetioRR = rr.size.width / rr.size.height;
-				aspectRetioRE = re.size.height / re.size.width;
-				if(aspectRetioRE < 0) aspectRetioRE = re.size.width / re.size.height;
-				if((aspectRetioRR > 2.0) || (aspectRetioRE > 2.0) || (getBrokenLine(contours[i]) < 10)){	
+				aspectRatioRR = rr.size.height / rr.size.width;
+				if(aspectRatioRR < 0) aspectRatioRR = rr.size.width / rr.size.height;
+				aspectRatioRE = re.size.height / re.size.width;
+				if(aspectRatioRE < 0) aspectRatioRE = re.size.width / re.size.height;
+				if((aspectRatioRR > 2.0) || (aspectRatioRE > 2.0) || (getBrokenLine(contours[i]) < 10)){	
 					drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 				}
 			}

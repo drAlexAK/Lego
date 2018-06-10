@@ -176,7 +176,7 @@ int Capture()
 		double dArea = oMoments.m00;
 
 		// if the area <= 10000, I consider that the there are no object in the image and it's because of the noise, the area is not zero 
-		if (dArea > 5000000)
+		if (dArea > 3000000)
 		{
 			//calculate the position of the ball
 			int posX = dM10 / dArea;
@@ -398,12 +398,19 @@ void geometry(Mat &imgThreshold){
 
 	for(int i = 0; i  < contours.size(); i++){
 		RotatedRect rr = minAreaRect(Mat(contours[i]));
-		double aspectRetio = 0;
+		RotatedRect re;
+		if(contours[i].size() > 6) re = fitEllipse(Mat(contours[i]));
+		double aspectRetioRR = 0;
+		double aspectRetioRE = 0;
 		if((rr.size.height != 0) && (rr.size.width != 0)){
-			aspectRetio = rr.size.height / rr.size.width;
-			if(aspectRetio < 0) aspectRetio = rr.size.width / rr.size.height;
-			if((aspectRetio > 2.0) || (getBrokenLine(contours[i]) < 10)){	
-				drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
+			if((re.size.height != 0) && (re.size.width != 0)){
+				aspectRetioRR = rr.size.height / rr.size.width;
+				if(aspectRetioRR < 0) aspectRetioRR = rr.size.width / rr.size.height;
+				aspectRetioRE = re.size.height / re.size.width;
+				if(aspectRetioRE < 0) aspectRetioRE = re.size.width / re.size.height;
+				if((aspectRetioRR > 2.0) || (aspectRetioRE > 2.0) || (getBrokenLine(contours[i]) < 10)){	
+					drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
+				}
 			}
 		}
 	}

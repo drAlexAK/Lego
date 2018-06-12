@@ -19,9 +19,6 @@
     <Text Include="exclude.txt">
       <Filter>Source Files</Filter>
     </Text>
-    <Text Include="include.txt">
-      <Filter>Source Files</Filter>
-    </Text>
     <Text Include="includeGreen.txt">
       <Filter>Source Files</Filter>
     </Text>

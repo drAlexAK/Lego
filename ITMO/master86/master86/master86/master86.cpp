@@ -149,24 +149,23 @@ int Capture()
 		Mat imgThresholded;
 
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
+		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
 
 		replaceColor(imgOriginal, imgBlack, exclude);
 		builtTreshHold(imgOriginal, imgThresholded, include);
-
-		//inRange(imgOriginal, Scalar(8, 0, 60), Scalar(90, 84, 255), imgThresholded); //Threshold the image
 
 		//morphological opening (removes small objects from the foreground)
 		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er1));
 		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di1));
 
-		//morphological closing (removes small holes from the foreground)
+		//morphological closing (removes small holes from the foreground), two iteration
 		dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, di2), Point(-1, -1), 2); 
 		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, er2), Point(-1, -1), 2);
 
 		if((colorFilter != none) && (chekGeometry)) geometry(imgThresholded);
 
-		putText(imgOriginal, getColorFilterAsString(), Point(25, 25), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 100, 50), 2, CV_AA); 
-		putText(imgOriginal, "g: " + to_string(chekGeometry), Point(25, 65), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 100, 50), 2, CV_AA); 
+		putText(imgOriginal, getColorFilterAsString(), Point(25, 25), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
+		putText(imgOriginal, "g:" + to_string(chekGeometry), Point(25, 65), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
 
 
 		//Calculate the moments of the thresholded image
@@ -176,7 +175,7 @@ int Capture()
 		double dM10 = oMoments.m10;
 		double dArea = oMoments.m00;
 
-		// if the area <= 10000, I consider that the there are no object in the image and it's because of the noise, the area is not zero 
+		// skip smell objects
 		if (dArea > 3000000)
 		{
 			//calculate the position of the ball
@@ -251,7 +250,6 @@ int Capture()
 			chekGeometry ^= true;
 			cout << "chekGeometry: " << chekGeometry << endl;
 		}
-		//Sleep(100);
 	}
 	for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){
 		it->Disconnect();

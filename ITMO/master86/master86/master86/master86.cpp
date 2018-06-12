@@ -100,10 +100,11 @@ int Capture()
 	short *dataToSendOld = new short[msgElements];
 	short *msg = new short[msgElements];
 	Size er1, er2, di1, di2;
-	getErAndDi(er1, di1, di2, er2);
 	vector<btSender> lBricks;
 	Mat imgTmp;
 	bool chekGeometry = true;
+
+	getErAndDi(er1, di1, di2, er2);
 
 	//GetListOfBricks(lBricks);
 #ifdef CAMERA
@@ -143,7 +144,7 @@ int Capture()
 			break;
 		}
 #else
-		imgOriginal= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
+		if(imgOriginal.data == NULL)imgOriginal= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
 #endif
 		Mat imgThresholded;
 

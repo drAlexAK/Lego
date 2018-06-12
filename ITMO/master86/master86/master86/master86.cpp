@@ -149,9 +149,9 @@ int Capture()
 		Mat imgThresholded;
 
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
-		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
+		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0); // size only odd
 
-		replaceColor(imgOriginal, imgBlack, exclude);
+		replaceColor(imgOriginal, imgBlack, exclude); // removes unwanted colors from original image
 		builtTreshHold(imgOriginal, imgThresholded, include);
 
 		//morphological opening (removes small objects from the foreground)

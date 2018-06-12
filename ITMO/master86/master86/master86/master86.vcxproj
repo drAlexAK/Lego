@@ -85,7 +85,6 @@
     <Text Include="includeYellow.txt" />
     <Text Include="ReadMe.txt" />
     <Text Include="exclude.txt" />
-    <Text Include="include.txt" />
     <Text Include="erodeAndDilate.txt" />
   </ItemGroup>
   <ItemGroup>

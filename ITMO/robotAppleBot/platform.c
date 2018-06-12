@@ -42,7 +42,7 @@ int enc =0;
 TSemaphore  semParkingRotation;
 //----------------------------
 //
-int distToTree =0;
+int distToTree = 0;
 //function
 //int getSpeedByFrontDistance();
 void resetMotorsEncoder();
@@ -75,14 +75,14 @@ task parkingRotation();
 task main()
 {
 
-	InitialyzePipe();
+	//InitialyzePipe();
 	startTask (controlMotors);
 
 	resetMotorsEncoder();
 
 	int iConnect = 0;
 
-
+/*
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
 		displayTextLine(2, "Connecting %d", iConnect);
 		iConnect ++;
@@ -92,10 +92,14 @@ task main()
 	displayTextLine(2, "Connected");
 
 	startTask (BlueToothListener);
+	*/
 	sleep(5000);
 
 	goToTheTree();
-	distToTree = getDistRightMedian();
+
+	stopAllTasks();
+	return;
+
 	//for (int h = 0; h < 10 ; h++)
 	//sleep(1000);
 	//----------------------
@@ -144,12 +148,11 @@ task main()
 void goToTheTree(){
 	startRobotPos();
 #ifdef DEBUG
-	sleep(1000);
+	sleep(500);
 #endif
-	robotAngelCalibration(200);
-	//sleep(10000);
+	robotAngelCalibration(250);
 #ifdef DEBUG
-	sleep(1000);
+	sleep(500);
 #endif
 	findTrees();
 }
@@ -249,30 +252,10 @@ return ARM_MAX_POSITION_270MM;
 */
 
 bool getCoord(short &p1, short &p2){
-	//return true;
+
 	p1 = msgCam[0];
 	p2 = msgCam[1];
 	return (msgCam[2] == 1);
-
-	/*
-	for(int i = 0; i < 3; i++){
-	writeDebugStreamLine("Getting coord");
-	if(sendCommand(CMD_GET_COORD, 0)){
-	int tmp = 0;
-	memcpy(&tmp, outDelivery.Msg[12], 4);
-
-	if((short)tmp == 0) return false; // here isn't an apple
-	memcpy(&tmp, outDelivery.Msg[4], 4);
-	p1 = (short) tmp;
-	memcpy(&tmp, outDelivery.Msg[8], 4);
-	p2 = (short) tmp;
-	return true;
-	}
-	writeDebugStreamLine("Failed get coord");
-	sleep(100);
-	}
-	return false;
-	*/
 }
 
 void goAheadEncCalc(){
@@ -330,72 +313,10 @@ task controlMotors()
 		}
 	}
 }
-/*
-void findTreesOld()
-{
-int eNorm = getDistRightMedian();
-if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
-int e =0;
-int u =0;
-int eOld =e;
-int v =0;
-int i =0;
-bool treeIsFind = false;
-int encPos = 0;
-int distBeginTree = 0;
-int distEndTree = 0;
-
-while(true){
-e = eNorm - MSDISTreadDist(sFrontRight);
-// error must be great then different distance between fence and tree
-while(((e >= DIST_BETWEEN_FENCE_TREE) && (!treeIsFind)) ||
-((abs(e) >= DIST_BETWEEN_FENCE_TREE) && (treeIsFind))){
-i++;
-if(i > 2 ){
-vLeft = vRight = 0;
-playSound(soundBeepBeep);
-sleep(300);
-if( !treeIsFind ){
-int dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
-goToTree(dist);
-nMotorEncoder[mLeft] =0;
-nMotorEncoder[mRight] =0;
-i = 0;
-eNorm = MSDISTreadDist(sFrontRight);
-distBeginTree = eNorm;
-treeIsFind = true;
-break;
-}else{
-encPos = nMotorEncoder[mLeft];
-goAheadMM(-100);
-int lenght = convertEncoderAheadToMM(encPos) - 100;
-distEndTree = getDistRightMedian();
-int errPosition = distEndTree - distBeginTree;
-int deg = sgn(errPosition) * getAngelDeviationDegree(abs(errPosition), lenght);//mm
-if (abs(deg) > 3 ) 	turnRobotDegree(deg);
-return;
-}
-}
-sleep(30);
-e = eNorm - MSDISTreadDist(sFrontRight);
-}
-if( treeIsFind ){
-encPos = nMotorEncoder[mLeft];
-distEndTree = eNorm - e;
-}
-i = 0;
-u = (e  + ((e - eOld) / 4 )) / 3;
-v = vBase - (u * 0.5);
-vLeft =  v ;// - u;
-vRight = v ;// + u;
-eOld = e;
-sleep(30);
-}
-}
-*/
 
 void findTrees()
 {
+	sleep(300);
 	int eNorm = getDistRightMedian();
 	//if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
 	int e =0;
@@ -412,12 +333,14 @@ void findTrees()
 			i++;
 			if(i > 2 ){
 				vLeft = vRight = 0;
+				goAheadMM(40); // move forward before check distance to tree
 				sleep(100);
 #ifdef DEBUG
-				playSound(soundBeepBeep);
+				//playSound(soundBeepBeep);
 				sleep(300);
 #endif
 				int dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
+				goAheadMM(-40); // retrack
 				if (abs(dist) > 10)
 				{
 					goAheadMM(-50);
@@ -425,8 +348,10 @@ void findTrees()
 					goAheadMM(50);
 				}
 				//goAheadMM(-20);
-				robotAngelCalibration(80);
-				goAheadMM(-30);
+				robotAngelCalibration(70);
+				sleep(500);
+				distToTree = getDistRightMedian(); // save dist to a tree
+				goAheadMM(-40);
 				return;
 			}
 			sleep(30);
@@ -460,18 +385,18 @@ int getDistRightMedian(){
 	const int attempt = 5;
 	int a[attempt];
 
-	for(int i =0; i< attempt; i++){
-		sleep(20);
-		a[i]= MSDISTreadDist(sFrontRight);
+	for(int i = 0; i < attempt; i++){
+		sleep(60);
+		a[i] = MSDISTreadDist(sFrontRight);
 	}
 	return GetMedian(a, attempt);
 }
 
 // if argument is positive angel, robot will turn clockwise, otherwise - anticlockwise.
 void turnRobotDegree(int deg){
-	nMotorEncoder[mLeft] =0;
+	nMotorEncoder[mLeft] = 0;
 	int	enc = (DEGREES_360_ENC * deg) / 360;
-	int currentEnc = nMotorEncoder[mLeft];
+	int currentEnc = 0;
 	int speed = 0 ;
 	if(enc > 0){
 		while(currentEnc < enc){
@@ -540,12 +465,22 @@ int getAngelDeviationDegree(int errorDist, int testLenght){
 	return radiansToDegrees( atan2(errorDist, testLenght));
 }
 
-void robotAngelCalibration(int lenght){
+void robotAngelCalibration(const int lenght){
+	sleep(1000);
+	const int backLenght = -20;
 	int d1 = getDistRightMedian();
 	goAheadMM(lenght);
+	sleep(1000);
 	int d2 = getDistRightMedian();
 	int deg = sgn(d2 - d1) * getAngelDeviationDegree(abs(d2 - d1), lenght);//mm
-	if (abs(deg) > 3 ) 	turnRobotDegree(deg);
+	if (abs(deg) > 45) { // noise protection, go back and recalc
+			goAheadMM(backLenght);
+			sleep(1000);
+			d2 = getDistRightMedian();
+			deg = sgn(d2 - d1) * getAngelDeviationDegree(abs(d2 - d1), lenght + backLenght);//mm
+			goAheadMM(abs(backLenght));
+	}
+	if (abs(deg) > 2 ) turnRobotDegree(deg);
 }
 
 

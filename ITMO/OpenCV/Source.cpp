@@ -10,7 +10,15 @@ using namespace std;
 
 int getCorners(OutputArrayOfArrays curve);
 
+void d(Size &s) {
+	s.height = 8;
+}
+
 int main( int argc, char** argv ) {
+
+	Size a;
+	d(a);
+
 	Mat imgOriginal= imread("1.png", IMREAD_COLOR); // Read the file
 	Mat imgThresholded;
 
@@ -23,7 +31,8 @@ int main( int argc, char** argv ) {
 	Mat cannyOutput;
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
-	Mat imgDrawing (imgOriginal.size(), CV_8UC3, Scalar(255, 255, 255));
+	Mat imgDrawing;
+	Mat imgWhite(imgOriginal.size(), CV_8UC3, Scalar(255, 255, 255));
 	RNG rng(12345);
 
 
@@ -38,10 +47,19 @@ int main( int argc, char** argv ) {
 			break;
 		case 'c':
 
-			//imgThresholded.copyTo(imgDrawing);
+			imgWhite.copyTo(imgDrawing);
 			
 			/// Detect edges using canny
-			Canny( imgThresholded, cannyOutput, thresh, thresh*2, 3 );
+			// Finds edges in an image using the [Canny86] algorithm.
+			/* Parameters:	
+				image – single-channel 8-bit input image.
+				edges – output edge map; it has the same size and type as image .
+				threshold1 – first threshold for the hysteresis procedure.
+				threshold2 – second threshold for the hysteresis procedure.
+				apertureSize – aperture size for the Sobel() operator.
+				L2gradient – a flag, indicating whether a more accurate  L_2 norm  =\sqrt{(dI/dx)^2 + (dI/dy)^2} should be used to calculate the image gradient magnitude ( L2gradient=true ), or whether the default L_1 norm  =|dI/dx|+|dI/dy| is enough ( L2gradient=false ).
+			*/
+			Canny( imgThresholded, cannyOutput, thresh, thresh*2 , 3 );
 			/// Find contours
 			findContours( cannyOutput, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
@@ -49,11 +67,11 @@ int main( int argc, char** argv ) {
 
 			for( int i = 0; i< contours.size(); i++ )
 			{
-				if (getCorners(contours[i]) < 10) {
+				if (getCorners(contours[i]) < 40) {
 					Scalar color = Scalar(255, 0, 0 );
 					//drawContours( imgDrawing, contours, i, color, 2, 8, hierarchy, 0, Point() );
 					drawContours( imgDrawing, contours, i, 0, CV_FILLED  );
-					bitwise_and(imgThresholded, imgDrawing, imgThresholded);
+					bitwise_and( imgDrawing, imgThresholded, imgDrawing);
 				}
 			}
 

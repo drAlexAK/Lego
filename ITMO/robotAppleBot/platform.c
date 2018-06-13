@@ -78,14 +78,14 @@ task parkingRotation();
 task main()
 {
 
-	//InitialyzePipe();
+	InitialyzePipe();
 	startTask (controlMotors);
 
 	resetMotorsEncoder();
 
 	int iConnect = 0;
 
-	/*
+
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
 	displayTextLine(2, "Connecting %d", iConnect);
 	iConnect ++;
@@ -95,13 +95,10 @@ task main()
 	displayTextLine(2, "Connected");
 
 	startTask (BlueToothListener);
-	*/
+
 	sleep(5000);
 
 	goToTheTree();
-
-	stopAllTasks();
-	return;
 
 	//for (int h = 0; h < 10 ; h++)
 	//sleep(1000);
@@ -349,7 +346,7 @@ task controlMotors()
 					sleep(300);
 #endif
 					int dist =  getDistRightMedian() - DIST_TREE_NORM;
-					goAheadMM(-40); // retrack
+					//goAheadMM(-40); // retrack
 					if (abs(dist) > 10)
 					{
 						goAheadMM(-50);
@@ -360,7 +357,7 @@ task controlMotors()
 					//robotAngelCalibration(70); // unfortunately doesn't work because distance too short
 					sleep(500);
 					distToTree = getDistRightMedian(); // save dist to a tree
-					goAheadMM(-40);
+					//goAheadMM(-40);
 					return;
 				}
 				sleep(30);

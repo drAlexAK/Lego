@@ -59,6 +59,8 @@ typedef enum color{
 map<color, string> includeNameOfFile;
 int colorFilter = red | yellow; 
 
+Mat dst;
+
 int main()
 {
 	Capture();
@@ -134,10 +136,13 @@ int Capture()
 	
 	initInclude();
 	loadIncludes(include);
+	// improve perfomance
+	Mat imgOriginal;
+	Mat imgThresholded;
 
 	while (true)
 	{
-		Mat imgOriginal;
+		
 #ifdef CAMERA
 		bool bSuccess = cap.read(imgOriginal); // read a new frame from video
 
@@ -149,8 +154,7 @@ int Capture()
 #else
 		if(imgOriginal.data == NULL)imgOriginal= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
 #endif
-		Mat imgThresholded;
-
+		
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0); // size only odd
 
@@ -281,7 +285,7 @@ void copyArr(short *a1, short *a2, int size){
 }
 
 void replaceColor(Mat &src, Mat &bkg, vector<ScalarRange> &exclude){
-	Mat dst;
+	//Mat dst;
 	for(vector<ScalarRange>::iterator it = exclude.begin(); it != exclude.end(); it++){
 		inRange(src, it->lowBound, it->upBound, dst); // cut of colors by vector
 		bkg.copyTo(src, dst);
@@ -290,7 +294,7 @@ void replaceColor(Mat &src, Mat &bkg, vector<ScalarRange> &exclude){
 
 void builtTreshHold(Mat &src, Mat &thd, vector<ScalarRange> &include){
 	if(include.size() == 0) thd = Mat(Scalar(0)).clone();
-	Mat dst;
+	//Mat dst;
 	for(vector<ScalarRange>::iterator it = include.begin(); it != include.end(); it++){
 		inRange(src, it->lowBound, it->upBound, dst); //
 		if(it == include.begin())

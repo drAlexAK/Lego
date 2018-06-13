@@ -14,6 +14,7 @@
 
 
 #define CAMERA
+#define LEGO
 
 using namespace cv;
 using namespace std;
@@ -105,8 +106,10 @@ int Capture()
 	bool chekGeometry = true;
 
 	getErAndDi(er1, di1, di2, er2);
+#ifdef LEGO
+	GetListOfBricks(lBricks);
+#endif
 
-	//GetListOfBricks(lBricks);
 #ifdef CAMERA
 	VideoCapture cap(0); //capture the video from webcam
 

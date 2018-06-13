@@ -21,16 +21,19 @@ int calcEnc = 0;
 int enc =0;
 //#define DEBUG
 //
-#define DEGREES_360_ROTATION_ENC 2100
+#define DEGREES_360_ROTATION_ENC  2100 // Spb competion
 #define ROTATION_MAX_360_DEGREE   360
 #define M_ROTATION_SPEED_MIN      20
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
 #define DIST_TREE_NORM  		280
-#define DIST_BETWEEN_FENCE_TREE  100
+#define DIST_BETWEEN_FENCE_TREE  110 // need to calibrate distance between tree and garden
 #define DIST_FRONT_MIN 			20
-#define DEGREES_360_ENC 		4250
+
+#define DEGREES_360_ENC 		  4415 // floor at home
+//#define DEGREES_360_ENC 		4250 // Spb competion
+
 #define CM40_ENC 						1950
 #define ENC_360_TURN        2150
 // the lowest body speed limit
@@ -82,12 +85,12 @@ task main()
 
 	int iConnect = 0;
 
-/*
+	/*
 	while ( !sendCommand(CMD_CONNECT, 0, false) ){
-		displayTextLine(2, "Connecting %d", iConnect);
-		iConnect ++;
-		sleep(200);
-		InitialyzePipe();
+	displayTextLine(2, "Connecting %d", iConnect);
+	iConnect ++;
+	sleep(200);
+	InitialyzePipe();
 	}
 	displayTextLine(2, "Connected");
 
@@ -303,254 +306,252 @@ void resetMotorsEncoder() {
 task controlMotors()
 {
 	while(1){
+
+		motor[mLeft] = vLeft;
+		motor[mRight] = vRight
+		sleep(5);
+		/*
 		int s = SensorValue(sFront) * 10 ;
-		if((s< DIST_FRONT_MIN) && ((vLeft > 0) && (vRight > 0))){
-			motor[mLeft] = 0;
-			motor[mRight] = 0;
-			}else{
-			motor[mLeft] = vLeft;
-			motor[mRight] = vRight;
-		}
-	}
-}
-
-void findTrees()
-{
-	sleep(300);
-	int eNorm = getDistRightMedian();
-	//if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
-	int e =0;
-	int i =0;
-
-	vLeft =  vRight = vBase ;
-
-	while(true){
-		e = eNorm - MSDISTreadDist(sFrontRight);
-		// error must be great then different distance between fence and tree
-		while(e >= DIST_BETWEEN_FENCE_TREE){
-			vLeft =  vRight = M_BODY_SPEED_MIN;
-
-			i++;
-			if(i > 2 ){
-				vLeft = vRight = 0;
-				goAheadMM(40); // move forward before check distance to tree
-				sleep(100);
-#ifdef DEBUG
-				//playSound(soundBeepBeep);
-				sleep(300);
-#endif
-				int dist = MSDISTreadDist(sFrontRight) - DIST_TREE_NORM;
-				goAheadMM(-40); // retrack
-				if (abs(dist) > 10)
-				{
-					goAheadMM(-50);
-					goToTree(dist);
-					goAheadMM(50);
-				}
-				//goAheadMM(-20);
-				robotAngelCalibration(70);
-				sleep(500);
-				distToTree = getDistRightMedian(); // save dist to a tree
-				goAheadMM(-40);
-				return;
-			}
-			sleep(30);
-			e = eNorm - MSDISTreadDist(sFrontRight);
-		}
-		i = 0;
-		sleep(30);
-	}
-}
-
-int getDistRightAverage(){
-	int d = MSDISTreadDist(sFrontRight);
-	int sum =0;
-	int attempt = 5;
-
-	for(int i =0; i< attempt; i++){
-		sleep(20);
-		d = MSDISTreadDist(sFrontRight);
-		if (( d > 1000 ) || ( d < 50 )) {
-			attempt--;
-			sleep(40);
-			} else {
-			sum += d;
-		}
-	}
-	return sum / attempt;
-}
-
-int getDistRightMedian(){
-	int d = MSDISTreadDist(sFrontRight);
-	const int attempt = 5;
-	int a[attempt];
-
-	for(int i = 0; i < attempt; i++){
-		sleep(60);
-		a[i] = MSDISTreadDist(sFrontRight);
-	}
-	return GetMedian(a, attempt);
-}
-
-// if argument is positive angel, robot will turn clockwise, otherwise - anticlockwise.
-void turnRobotDegree(int deg){
-	nMotorEncoder[mLeft] = 0;
-	int	enc = (DEGREES_360_ENC * deg) / 360;
-	int currentEnc = 0;
-	int speed = 0 ;
-	if(enc > 0){
-		while(currentEnc < enc){
-			speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
-			vLeft =  speed;
-			vRight = -1 * speed;
-			currentEnc = nMotorEncoder[mLeft];
-		}
-		} else {
-		while(currentEnc > enc){
-			speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
-			vLeft = speed;
-			vRight = -1 * speed;
-			currentEnc = nMotorEncoder[mLeft];
-		}
-	}
-	vLeft = 0;
-	vRight = 0;
-}
-
-int convertEncoderAheadToMM(int encoder) {
-	return (400 * CM40_ENC) / encoder;
-}
-
-void goAheadMM(int dist){ //MM
-	if (abs(dist) < 10) return;
-	goAheadEncoder((CM40_ENC * dist) / 400);
-}
-
-void goAheadEncoder(int enc){ //encoder
-	nMotorEncoder[mLeft] =0;
-	int currentEnc = nMotorEncoder[mLeft];
-	if (enc > 0) {
-		while(currentEnc < enc){
-			vLeft = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
-			vRight = vLeft;
-			currentEnc = nMotorEncoder[mLeft];
-		}
+		if((s < DIST_FRONT_MIN) && ((vLeft > 0) && (vRight > 0))){
+		motor[mLeft] = 0;
+		motor[mRight] = 0;
 		}else{
-		while(currentEnc > enc){
-			vLeft =  getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
-			vRight = vLeft;
-			currentEnc = nMotorEncoder[mLeft];
+		motor[mLeft] = vLeft;
+		motor[mRight] = vRight;
+		}
+		*/
 		}
 	}
-	vLeft = 0;
-	vRight = 0;
-}
 
-void startRobotPos(){
-	int d = getDistRightMedian();
-	if( d < DIST_START_ROBOT ){
-		turnRobotDegree(-90);
-#ifdef DEBUG
+	void findTrees()
+	{
 		sleep(300);
-#endif
-		goAheadMM(DIST_START_ROBOT - abs(d));
+		int eNorm = getDistRightMedian();
+		//if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
+		int e =0;
+		int i =0;
+
+		vLeft =  vRight = vBase ;
+
+		while(true){
+			e = eNorm - MSDISTreadDist(sFrontRight);
+			// error must be great then different distance between fence and tree
+			while(e >= DIST_BETWEEN_FENCE_TREE){
+				vLeft =  vRight = M_BODY_SPEED_MIN;
+
+				i++;
+				if(i > 2 ){
+					vLeft = vRight = 0;
+					goAheadMM(40); // move forward before check distance to tree
+					sleep(100);
 #ifdef DEBUG
-		sleep(300);
+					//playSound(soundBeepBeep);
+					sleep(300);
 #endif
-		turnRobotDegree(90);
+					int dist =  getDistRightMedian() - DIST_TREE_NORM;
+					goAheadMM(-40); // retrack
+					if (abs(dist) > 10)
+					{
+						goAheadMM(-50);
+						goToTree(dist);
+						goAheadMM(50);
+					}
+					//goAheadMM(-20);
+					//robotAngelCalibration(70); // unfortunately doesn't work because distance too short
+					sleep(500);
+					distToTree = getDistRightMedian(); // save dist to a tree
+					goAheadMM(-40);
+					return;
+				}
+				sleep(30);
+				e = eNorm - MSDISTreadDist(sFrontRight);
+			}
+			i = 0;
+			sleep(30);
+		}
 	}
-}
-// returns degree of diviation by error and lenght distances
-int getAngelDeviationDegree(int errorDist, int testLenght){
-	return radiansToDegrees( atan2(errorDist, testLenght));
-}
 
-void robotAngelCalibration(const int lenght){
-	sleep(1000);
-	const int backLenght = -20;
-	int d1 = getDistRightMedian();
-	goAheadMM(lenght);
-	sleep(1000);
-	int d2 = getDistRightMedian();
-	int deg = sgn(d2 - d1) * getAngelDeviationDegree(abs(d2 - d1), lenght);//mm
-	if (abs(deg) > 45) { // noise protection, go back and recalc
+	int getDistRightAverage(){
+		int d = MSDISTreadDist(sFrontRight);
+		int sum =0;
+		int attempt = 5;
+
+		for(int i =0; i< attempt; i++){
+			sleep(20);
+			d = MSDISTreadDist(sFrontRight);
+			if (( d > 1000 ) || ( d < 50 )) {
+				attempt--;
+				sleep(40);
+				} else {
+				sum += d;
+			}
+		}
+		return sum / attempt;
+	}
+
+	int getDistRightMedian(){
+		int d = MSDISTreadDist(sFrontRight);
+		const int attempt = 5;
+		int a[attempt];
+
+		for(int i = 0; i < attempt; i++){
+			sleep(60);
+			a[i] = MSDISTreadDist(sFrontRight);
+		}
+		return GetMedian(a, attempt);
+	}
+
+	// if argument is positive angel, robot will turn clockwise, otherwise - anticlockwise.
+	void turnRobotDegree(int deg){
+		nMotorEncoder[mLeft] = 0;
+		int	enc = (DEGREES_360_ENC * deg) / 360;
+		int currentEnc = 0;
+		int speed = 0 ;
+		if(enc > 0){
+			while(currentEnc < enc){
+				speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
+				vLeft =  speed;
+				vRight = -1 * speed;
+				currentEnc = nMotorEncoder[mLeft];
+			}
+			} else {
+			while(currentEnc > enc){
+				speed = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
+				vLeft = speed;
+				vRight = -1 * speed;
+				currentEnc = nMotorEncoder[mLeft];
+			}
+		}
+		vLeft = 0;
+		vRight = 0;
+	}
+
+	int convertEncoderAheadToMM(int encoder) {
+		return (400 * CM40_ENC) / encoder;
+	}
+
+	void goAheadMM(int dist){ //MM
+		if (abs(dist) < 10) return;
+		goAheadEncoder((CM40_ENC * dist) / 400);
+	}
+
+	void goAheadEncoder(int enc){ //encoder
+		nMotorEncoder[mLeft] =0;
+		int currentEnc = nMotorEncoder[mLeft];
+		if (enc > 0) {
+			while(currentEnc < enc){
+				vLeft = getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
+				vRight = vLeft;
+				currentEnc = nMotorEncoder[mLeft];
+			}
+			}else{
+			while(currentEnc > enc){
+				vLeft =  getLimitSpeed(M_BODY_SPEED_MIN, M_BODY_SPEED_MAX, 0, currentEnc, enc);
+				vRight = vLeft;
+				currentEnc = nMotorEncoder[mLeft];
+			}
+		}
+		vLeft = 0;
+		vRight = 0;
+	}
+
+	void startRobotPos(){
+
+		int dist =  getDistRightMedian() - (DIST_TREE_NORM + DIST_BETWEEN_FENCE_TREE);
+		if (abs(dist) > 10) goToTree(dist);
+
+	}
+	// returns degree of diviation by error and lenght distances
+	int getAngelDeviationDegree(int errorDist, int testLenght){
+		return radiansToDegrees( atan2(errorDist, testLenght));
+	}
+
+	void robotAngelCalibration(const int lenght){
+		sleep(1000);
+		const int backLenght = -20;
+		int d1 = getDistRightMedian();
+		goAheadMM(lenght);
+		sleep(1000);
+		int d2 = getDistRightMedian();
+		int deg = sgn(d2 - d1) * getAngelDeviationDegree(abs(d2 - d1), lenght);//mm
+		if (abs(deg) > 45) { // noise protection, go back and recalc
 			goAheadMM(backLenght);
 			sleep(1000);
 			d2 = getDistRightMedian();
 			deg = sgn(d2 - d1) * getAngelDeviationDegree(abs(d2 - d1), lenght + backLenght);//mm
 			goAheadMM(abs(backLenght));
+		}
+		if (abs(deg) > 2 ) turnRobotDegree(deg);
 	}
-	if (abs(deg) > 2 ) turnRobotDegree(deg);
-}
 
 
-void goToTree(int dist){
-	turnRobotDegree(sgn(dist) * 90);
+	void goToTree(int dist){
+		turnRobotDegree(sgn(dist) * 90);
 #ifdef DEBUG
-	sleep(300);
+		sleep(300);
 #endif
-	goAheadMM(abs(dist));
+		goAheadMM(abs(dist));
 #ifdef DEBUG
-	sleep(300);
+		sleep(300);
 #endif
-	turnRobotDegree(-1 * sgn(dist) * 90);
-}
-
-//----------------------------------------------------------------------------- - -|
-void rotatePlatform(int deg){
-	if (abs(deg) > ROTATION_MAX_360_DEGREE) deg = sgn(deg) * ROTATION_MAX_360_DEGREE;
-	int	enc = (DEGREES_360_ROTATION_ENC * deg) / ROTATION_MAX_360_DEGREE;
-	int startEnc = nMotorEncoder[mRotation];
-	int speed = 0 ;
-	if((enc - startEnc ) > 0){
-		while(nMotorEncoder[mRotation] < enc){
-			speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, startEnc, nMotorEncoder[mRotation], enc);
-			motor[mRotation] = speed;
-		}
-		} else {
-		while(nMotorEncoder[mRotation] > enc){
-			speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, startEnc, nMotorEncoder[mRotation], enc);
-			motor[mRotation]= speed;
-		}
+		turnRobotDegree(-1 * sgn(dist) * 90);
 	}
-	motor[mRotation]=0;
-}
-//----------------------------------------------------------------------------- - -|
-void Parking(){
-	semaphoreInitialize(semParkingRotation);
-	startTask(parkingRotation);
-	sleep(100);
-	semaphoreLock( semParkingRotation);
-	if (bDoesTaskOwnSemaphore(semParkingRotation)) semaphoreUnlock(semParkingRotation);
-}
 
-task parkingRotation(){
-	semaphoreLock( semParkingRotation );
-	rotatePlatform(0);
-	if (bDoesTaskOwnSemaphore(semParkingRotation)) semaphoreUnlock(semParkingRotation);
-}
-
-int moveByHor(){
-	int accuracy = 25;
-	int shiftMM = 0;
-	short x =0, y =0;
-	int sum =0;
-	bool appleHere = getCoord(y, x);
-	while ((appleHere) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
-
-		shiftMM = x / 15;
-		//writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
-		if (abs(shiftMM) > 10) {
-			sum += shiftMM;
-			goAheadMM(shiftMM);
+	//----------------------------------------------------------------------------- - -|
+	void rotatePlatform(int deg){
+		if (abs(deg) > ROTATION_MAX_360_DEGREE) deg = sgn(deg) * ROTATION_MAX_360_DEGREE;
+		int	enc = (DEGREES_360_ROTATION_ENC * deg) / ROTATION_MAX_360_DEGREE;
+		int startEnc = nMotorEncoder[mRotation];
+		int speed = 0 ;
+		if((enc - startEnc ) > 0){
+			while(nMotorEncoder[mRotation] < enc){
+				speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, startEnc, nMotorEncoder[mRotation], enc);
+				motor[mRotation] = speed;
+			}
+			} else {
+			while(nMotorEncoder[mRotation] > enc){
+				speed = getLimitSpeed(M_ROTATION_SPEED_MIN, M_ROTATION_SPEED_MAX, startEnc, nMotorEncoder[mRotation], enc);
+				motor[mRotation]= speed;
+			}
 		}
-		else
-		{
-			break;
-		}
-		sleep(200);
-		appleHere = getCoord(y, x);
+		motor[mRotation]=0;
 	}
-	if ( ! getCoord(y, x)) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
-		return sum;
-}
+	//----------------------------------------------------------------------------- - -|
+	void Parking(){
+		semaphoreInitialize(semParkingRotation);
+		startTask(parkingRotation);
+		sleep(100);
+		semaphoreLock( semParkingRotation);
+		if (bDoesTaskOwnSemaphore(semParkingRotation)) semaphoreUnlock(semParkingRotation);
+	}
+
+	task parkingRotation(){
+		semaphoreLock( semParkingRotation );
+		rotatePlatform(0);
+		if (bDoesTaskOwnSemaphore(semParkingRotation)) semaphoreUnlock(semParkingRotation);
+	}
+
+	int moveByHor(){
+		int accuracy = 25;
+		int shiftMM = 0;
+		short x =0, y =0;
+		int sum =0;
+		bool appleHere = getCoord(y, x);
+		while ((appleHere) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
+
+			shiftMM = x / 15;
+			//writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
+			if (abs(shiftMM) > 10) {
+				sum += shiftMM;
+				goAheadMM(shiftMM);
+			}
+			else
+			{
+				break;
+			}
+			sleep(200);
+			appleHere = getCoord(y, x);
+		}
+		if ( ! getCoord(y, x)) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
+			return sum;
+	}

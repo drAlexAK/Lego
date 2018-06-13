@@ -14,7 +14,7 @@
 
 
 #define CAMERA
-#define LEGO
+//#define LEGO
 
 using namespace cv;
 using namespace std;
@@ -131,7 +131,7 @@ int Capture()
 	vector<ScalarRange> include;
 
 	getExcludeScalar(exclude);
-	//	getIncludeScalar(include);
+	
 	initInclude();
 	loadIncludes(include);
 
@@ -218,7 +218,7 @@ int Capture()
 
 		imshow("Thresholded Image", imgThresholded); //show the thresholded image
 		imshow("Original", imgOriginal); //show the original image
-		key = waitKey(100);
+		key = waitKey(10);
 		switch (key){
 		case  27:
 			for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){

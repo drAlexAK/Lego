@@ -439,15 +439,24 @@ void geometry(Mat &imgThreshold){
 		double aspectRatioRR = 0; // Rectangle
 		double aspectRatioRE = 0; // Ellipse
 		if((rr.size.height != 0) && (rr.size.width != 0)){
+			aspectRatioRR = rr.size.height / rr.size.width;
+			if(aspectRatioRR < 0)
+				aspectRatioRR = rr.size.width / rr.size.height;
+			if(aspectRatioRR > 2.0){
+				drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
+				continue;
+			}
+
 			if((re.size.height != 0) && (re.size.width != 0)){
-				aspectRatioRR = rr.size.height / rr.size.width;
-				if(aspectRatioRR < 0) aspectRatioRR = rr.size.width / rr.size.height;
 				aspectRatioRE = re.size.height / re.size.width;
 				if(aspectRatioRE < 0) aspectRatioRE = re.size.width / re.size.height;
-				if((aspectRatioRR > 2.0) || (aspectRatioRE > 2.0) || (getBrokenLine(contours[i]) < 10)){	
+				if(aspectRatioRE > 2.0){	
 					drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
+					continue;
 				}
 			}
+			if(getBrokenLine(contours[i]) < 10) 
+				drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 		}
 	}
 	imshow("imgDrawing", imgDrawing);

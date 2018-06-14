@@ -14,7 +14,7 @@
 
 
 #define CAMERA
-//#define LEGO
+#define LEGO
 
 using namespace cv;
 using namespace std;
@@ -71,8 +71,8 @@ vector<string> GetListOfCOMPorts()
 {
 	vector<string> lCom;
 
-	lCom.push_back("COM13"); 
-	lCom.push_back("COM3"); // COM3 - platform, COM13 - arm
+	lCom.push_back("COM6"); 
+	lCom.push_back("COM4"); // COM3 - platform, COM13 - arm
 	return lCom;
 }
 
@@ -113,7 +113,7 @@ int Capture()
 #endif
 
 #ifdef CAMERA
-	VideoCapture cap(0); //capture the video from webcam
+	VideoCapture cap(1); //capture the video from webcam
 
 	if ( !cap.isOpened() )  // if not success, exit program
 	{

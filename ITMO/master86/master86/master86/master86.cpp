@@ -153,7 +153,7 @@ int Capture()
 	Mat imgOriginalGrey;
 	Mat imgThresholded;
 	double sumGrey;
-	int maxGreySum = (imgTmp.rows +1) * (imgTmp.cols + 1) * 255 / 100; // 100% lights from matrix
+	int maxGreySum = imgTmp.rows * imgTmp.cols * 255 / 100; // 100% lights from matrix
 	int grey = 0;
 
 	while (true)
@@ -171,7 +171,7 @@ int Capture()
 #else
 		if(imgOriginal.data == NULL)imgOriginal= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
 #endif
-		cv::cvtColor(imgOriginal, imgOriginalGrey, COLOR_BGR2GRAY);
+		cvtColor(imgOriginal, imgOriginalGrey, COLOR_BGR2GRAY);
 		sumGrey = sum(imgOriginalGrey)[0]; 
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0); // size only odd

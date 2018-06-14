@@ -11,10 +11,10 @@
 #include "fstream"
 #include "map"
 #include "cmath"
-
+#include <time.h>
 
 #define CAMERA
-#define LEGO
+//#define LEGO
 
 using namespace cv;
 using namespace std;
@@ -114,6 +114,10 @@ int Capture()
 	vector<btSender> lBricks;
 	Mat imgTmp;
 	bool chekGeometry = true;
+	// Start and end times
+	time_t start, end;
+	int frmCount = 0;
+	int fps = 0;
 
 	getErAndDi(er1, di1, di2, er2);
 #ifdef LEGO
@@ -121,7 +125,7 @@ int Capture()
 #endif
 
 #ifdef CAMERA
-	VideoCapture cap(1); //capture the video from webcam
+	VideoCapture cap(0); //capture the video from webcam
 
 	if ( !cap.isOpened() )  // if not success, exit program
 	{
@@ -141,16 +145,21 @@ int Capture()
 	vector<ScalarRange> include;
 
 	getExcludeScalar(exclude);
-	
+
 	initInclude();
 	loadIncludes(include);
 	// improve perfomance
 	Mat imgOriginal;
+	Mat imgOriginalGrey;
 	Mat imgThresholded;
+	double sumGrey;
+	int maxGreySum = (imgTmp.rows +1) * (imgTmp.cols + 1) * 255 / 100; // 100% lights from matrix
+	int grey = 0;
 
 	while (true)
 	{
-		
+		if (frmCount==0) time(&start); // Start time
+
 #ifdef CAMERA
 		bool bSuccess = cap.read(imgOriginal); // read a new frame from video
 
@@ -162,7 +171,8 @@ int Capture()
 #else
 		if(imgOriginal.data == NULL)imgOriginal= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
 #endif
-		
+		cv::cvtColor(imgOriginal, imgOriginalGrey, COLOR_BGR2GRAY);
+		sumGrey = sum(imgOriginalGrey)[0]; 
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0); // size only odd
 
@@ -179,10 +189,7 @@ int Capture()
 
 		if((colorFilter != none) && (chekGeometry)) geometry(imgThresholded);
 
-		putText(imgOriginal, getColorFilterAsString(), Point(25, 25), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
-		putText(imgOriginal, "g:" + to_string(chekGeometry), Point(25, 65), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
-
-
+		grey = sumGrey / maxGreySum;
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
 
@@ -190,7 +197,7 @@ int Capture()
 		double dM10 = oMoments.m10;
 		double dArea = oMoments.m00;
 
-		// skip smell objects
+		// skip small objects
 		if (dArea > 3000000)
 		{
 			//calculate the position of the ball
@@ -227,10 +234,23 @@ int Capture()
 		} else {
 			cout << ".";
 		}
+		frmCount++;
+		if (frmCount >= 50)
+		{
+			time(&end);
+			fps = frmCount/difftime (end, start);
+			frmCount = 0;
+		}
+
+		putText(imgOriginal, getColorFilterAsString(), Point(25, 25), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
+		putText(imgOriginal, "g:" + to_string(chekGeometry), Point(25, 65), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
+		putText(imgOriginal, "fps: " + to_string(fps), Point(25, 105), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA);
+		putText(imgOriginal, "b:" + to_string(grey), Point(25, 145), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA);
 
 		imshow("Thresholded Image", imgThresholded); //show the thresholded image
 		imshow("Original", imgOriginal); //show the original image
-		key = waitKey(10);
+
+		key = waitKey(1);
 		switch (key){
 		case  27:
 			for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){

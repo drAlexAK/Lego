@@ -1,1 +1,3 @@
-com6	com4 // comPorts
+// COM ports
+COM6
+COM4 

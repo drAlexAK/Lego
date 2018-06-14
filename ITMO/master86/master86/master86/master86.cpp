@@ -150,11 +150,11 @@ int Capture()
 	loadIncludes(include);
 	// improve perfomance
 	Mat imgOriginal;
-	Mat imgOriginalGrey;
+	Mat imgOriginalGray;
 	Mat imgThresholded;
-	double sumGrey;
-	int maxGreySum = imgTmp.rows * imgTmp.cols * 255 / 100; // 100% lights from matrix
-	int grey = 0;
+	double sumGray;
+	int maxGraySum = imgTmp.rows * imgTmp.cols * 255 / 100; // 100% lights from matrix
+	int gray = 0;
 
 	while (true)
 	{
@@ -171,8 +171,8 @@ int Capture()
 #else
 		if(imgOriginal.data == NULL)imgOriginal= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
 #endif
-		cvtColor(imgOriginal, imgOriginalGrey, COLOR_BGR2GRAY);
-		sumGrey = sum(imgOriginalGrey)[0]; 
+		cvtColor(imgOriginal, imgOriginalGray, COLOR_BGR2GRAY);
+		sumGray = sum(imgOriginalGray)[0]; 
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
 		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0); // size only odd
 
@@ -189,7 +189,7 @@ int Capture()
 
 		if((colorFilter != none) && (chekGeometry)) geometry(imgThresholded);
 
-		grey = sumGrey / maxGreySum;
+		gray = sumGray / maxGraySum;
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
 
@@ -210,16 +210,18 @@ int Capture()
 			{
 				dataToSend[0] = posY - rowCenter;
 				dataToSend[1] = posX - colCenter;
-				dataToSend[2] = 1;				
+				dataToSend[2] = gray | 1;				
 			}
 			else
 			{
 				zeroArray(dataToSend, msgElements);
+				dataToSend[2] = gray &~ 1;
 			}
 		}
 		else
 		{
 			zeroArray(dataToSend, msgElements);
+			dataToSend[2] = gray &~ 1;
 		}
 
 		if (!compar(dataToSend, dataToSendOld, 3)) {
@@ -245,7 +247,7 @@ int Capture()
 		putText(imgOriginal, getColorFilterAsString(), Point(25, 25), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
 		putText(imgOriginal, "g:" + to_string(chekGeometry), Point(25, 65), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
 		putText(imgOriginal, "fps: " + to_string(fps), Point(25, 105), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA);
-		putText(imgOriginal, "b:" + to_string(grey), Point(25, 145), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA);
+		putText(imgOriginal, "b:" + to_string(gray), Point(25, 145), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA);
 
 		imshow("Thresholded Image", imgThresholded); //show the thresholded image
 		imshow("Original", imgOriginal); //show the original image

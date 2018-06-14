@@ -70,9 +70,17 @@ int main()
 vector<string> GetListOfCOMPorts() 
 {
 	vector<string> lCom;
+	string line;
+	string i ="";
+	ifstream file("comPorts.txt");
+	while(getline(file, line)){
+		if((line.length() > 3) && (line[0] != '/')){
+			istringstream sStream(line);
+			sStream >> i;
+			lCom.push_back(i);
+		}
+	}
 
-	lCom.push_back("COM6"); 
-	lCom.push_back("COM4"); // COM3 - platform, COM13 - arm
 	return lCom;
 }
 

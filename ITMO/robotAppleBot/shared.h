@@ -21,7 +21,17 @@ typedef enum COMMAND {
 	CMD_RESTORE_ARM_MM				= 14
 } COMMAND;
 
-short msgCam[3] = {0,0,0};
+// 0 : Y position, 1 : X position, 2 : 1|0 apple, 3 : 0-100 brightness
+//short msgCam[4] = {0, 0, 0, 0};
+
+typedef struct {
+	int X;
+	int Y;
+	bool Apple;
+	int Brightness;
+} Camera;
+
+Camera camStatus;
 
 //typedef char commandMsg[COMMAND_MSG_SIZE];
 //----------------------------------------
@@ -33,15 +43,25 @@ void getCommand(char *msg, COMMAND &cmd);
 void getValue(char *msg, int &value);
 void getValue(char *msg, short &v1, short &v2, short &v3);
 int getLimitSpeed(const int speedMin, int speedMax, int startEnc, int currentEnc, int targetEnc);
+bool isAppleInLadle();
 task BlueToothListener();
+
+bool isAppleInLadle() {
+	return ((camStatus.Apple) || (camStatus.Brightness < 40));
+}
 
 task BlueToothListener()
 {
 	while(true) {
 		if (bQueuedMsgAvailable()) {
-			msgCam[0] = messageParm[0];
-			msgCam[1] = messageParm[1];
-			msgCam[2] = messageParm[2];
+			camStatus.Y = messageParm[0];
+			camStatus.X = messageParm[1];
+			camStatus.Apple = ((messageParm[2] & 1) == 1);
+			camStatus.Brightness = messageParm[3];
+			//msgCam[0] = messageParm[0];
+			//msgCam[1] = messageParm[1];
+			//msgCam[2] = messageParm[2] & 1;
+			//msgCam[3] = messageParm[2];
 			ClearMessage();
 		}
 		sleep(50);

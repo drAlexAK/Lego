@@ -114,8 +114,8 @@ task main()
 	//////////////////////////
 	//startTask(holdPlPositionByArm);
 
-	ubyte const sizeCordReplayBody = sizeof(int)*3;
-	char bodyCoord[sizeCordReplayBody];
+	//ubyte const sizeCordReplayBody = sizeof(int)*3;
+	//char bodyCoord[sizeCordReplayBody];
 	char bodyInt[sizeof(int)];
 
 	while(true){
@@ -123,11 +123,11 @@ task main()
 			id = inDelivery.Msg[MSG_HEAD_INDEX_ID];
 			if (inDelivery.Size >= MSG_HEADER_SIZE + COMMAND_MSG_SIZE ){
 				getCommand(inDelivery.Msg, cmd);
-				if (cmd == CMD_GET_COORD){
-					getMsgCoord(&bodyCoord[0], msgCam[0], msgCam[1], msgCam[2]);
-					SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyCoord, sizeCordReplayBody);
-				}
-				else if (cmd == CMD_GET_ARM_MM) {
+				//if (cmd == CMD_GET_COORD){
+				//	getMsgCoord(&bodyCoord[0], msgCam[0], msgCam[1], msgCam[2]);
+				//	SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyCoord, sizeCordReplayBody);
+				//}
+				if (cmd == CMD_GET_ARM_MM) {
 					getIntAsArray(&bodyInt[0],nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER);
 					SendReplayMsg(id, MSG_STATUS_COMPLETED, bodyInt, sizeof(int));
 				}
@@ -275,14 +275,16 @@ void lookForAppleByArm() {
 	int speed = 0 ;
 	if ((targetEnc - startEnc) > 0){
 		while(nMotorEncoder[mArm] < targetEnc){
-			speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
+			//speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
+			speedMax = (camStatus.Apple ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
 			speed = getLimitSpeed(M_ARM_SPEED_MIN, speedMax, startEnc, nMotorEncoder[mArm], targetEnc);
 			if (isAppleHere()) break;
 			motor[mArm] = speed;
 		}
 		} else {
 		while(nMotorEncoder[mArm] > targetEnc){
-			speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
+			//speedMax = (msgCam[2] == 1 ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
+			speedMax = (camStatus.Apple ? M_ARM_SPEED_MAX / 2 : M_ARM_SPEED_MAX); // if cam sees an apple motor will slow down
 			speed = getLimitSpeed(M_ARM_SPEED_MIN, speedMax, startEnc, nMotorEncoder[mArm], targetEnc);
 			if (isAppleHere()) break;
 			motor[mArm] = speed;
@@ -299,8 +301,11 @@ void lookForAppleByArm() {
 bool isAppleHere() {
 	const int accuracy = 50;
 	int shiftPosition = shiftLandle[((nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM) / ARM_270MM_ENCODER ) / 30];
-	if (msgCam[2] == 1) { //apple here
-		if (((msgCam[0] + shiftPosition) < accuracy) && ((msgCam[0] + shiftPosition) > -1 * accuracy)) return true;
+	//if (msgCam[2] == 1) { //apple here
+	//	if (((msgCam[0] + shiftPosition) < accuracy) && ((msgCam[0] + shiftPosition) > -1 * accuracy)) return true;
+	if (camStatus.Apple) { //apple here
+		if (((camStatus.Y + shiftPosition) < accuracy) && ((camStatus.Y + shiftPosition) > -1 * accuracy)) return true;
+
 	}
 	return false;
 }

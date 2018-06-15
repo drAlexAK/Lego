@@ -66,7 +66,7 @@ void goAheadEncCalc();
 void unloading();
 void rotatePlatform(int deg);
 void goToTheTree();
-bool getCoord(short &p1, short &p2);
+//bool getCoord(short &p1, short &p2);
 bool lookForAppleVertical();
 //int getArmMM();
 bool catchApple();
@@ -158,15 +158,15 @@ void goToTheTree(){
 }
 
 bool lookForAppleVertical() {
-	short y, x;
+	//short y, x;
 	int sum = 0;
 	sendCommand(CMD_SET_LANDLE_BY_ARM, 0);
 	sendCommand(CMD_MOVE_PL,0);
 	sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM);
 	sleep(100);
 	InitialyzePipe(); //reinit pipe
-	if (getCoord(y, x)) {
-
+	//if (getCoord(y, x)) {
+	if (camStatus.Apple) {
 		sum = moveByHor();
 		if (catchApple()) unloading();
 		if (abs(sum) > 10) goAheadMM(-1 * sum);
@@ -178,40 +178,43 @@ bool lookForAppleVertical() {
 
 // gets an apple and confirms the apple in the basket. here are three attempts
 bool catchApple(){
-	short x =0;
-	short y =0;
+	//short x =0;
+	//short y =0;
 	int shiftPL = 100;// - (DIST_TREE_NORM - distToTree);
 	int shiftArm = 50;
 
 	writeDebugStreamLine("Starting catch apple");
 	for (int i = 0; i < 3; i++) {
-		if(!getCoord(y, x)) break;
+		//if(!getCoord(y, x)) break;
+		if (camStatus.Apple == false) break;
 		sendCommand(CMD_SHIFT_PL_MM, shiftPL);
 		sendCommand(CMD_DOWN_LANDLE, 0);
 		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL);
 		sleep(100);
-		if (getCoord(y, x)) return true;
-
+		//if (getCoord(y, x)) return true;
+		if (isAppleInLadle()) return true;
 		rotatePlatform(30);
 
-		if (getCoord(y, x)){
+		//if (getCoord(y, x)){
+		if (isAppleInLadle()) {
 			rotatePlatform(0);
 			return true;
 		}
 
 		rotatePlatform(-30);
 
-		if (getCoord(y, x)){
+		//if (getCoord(y, x)){
+		if (isAppleInLadle())	{
 			rotatePlatform(0);
 			return true;
 		}
 
 		rotatePlatform(0);
-		if (getCoord(y, x)) return true;
+		if (isAppleInLadle()) return true;
 
 		writeDebugStreamLine("Failed catch apple");
 		sendCommand(CMD_SET_LANDLE_BY_ARM);
-		shiftPL += 10;
+		shiftPL += 7; //10
 	}
 	sendCommand(CMD_SAVE_ARM_MM);
 	sendCommand(CMD_RESTORE_ARM_MM, shiftArm); // skip unride apple
@@ -250,14 +253,14 @@ writeDebugStreamLine("Failed get Arm mm");
 return ARM_MAX_POSITION_270MM;
 }
 */
-
+/*
 bool getCoord(short &p1, short &p2){
 
-	p1 = msgCam[0];
-	p2 = msgCam[1];
-	return (msgCam[2] == 1);
+	p1 = camStatus.Y;
+	p2 = camStatus.X;
+	return (camStatus.Apple);
 }
-
+*/
 void goAheadEncCalc(){
 	int encNorm = getDistRightMedian();
 	int i=0;
@@ -305,7 +308,7 @@ task controlMotors()
 	while(1){
 
 		motor[mLeft] = vLeft;
-		motor[mRight] = vRight
+		motor[mRight] = vRight;
 		sleep(5);
 		/*
 		int s = SensorValue(sFront) * 10 ;
@@ -531,12 +534,12 @@ task controlMotors()
 	int moveByHor(){
 		int accuracy = 25;
 		int shiftMM = 0;
-		short x =0, y =0;
+		//short x =0, y =0;
 		int sum =0;
-		bool appleHere = getCoord(y, x);
-		while ((appleHere) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
-
-			shiftMM = x / 15;
+		//bool appleHere = getCoord(y, x);
+		//while ((appleHere) && ((x < -1 * accuracy ) || (x > accuracy ))){ // hor
+		while ((camStatus.Apple) && ((camStatus.X < -1 * accuracy ) || (camStatus.X > accuracy ))){
+			shiftMM = camStatus.X / 15;
 			//writeDebugStreamLine("Positionary by horizont: %d", shiftMM);
 			if (abs(shiftMM) > 10) {
 				sum += shiftMM;
@@ -547,8 +550,9 @@ task controlMotors()
 				break;
 			}
 			sleep(200);
-			appleHere = getCoord(y, x);
+			//appleHere = getCoord(y, x);
 		}
-		if ( ! getCoord(y, x)) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
+		//if ( ! getCoord(y, x)) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
+		if ( camStatus.Apple == false) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
 			return sum;
 	}

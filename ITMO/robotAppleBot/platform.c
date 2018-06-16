@@ -190,7 +190,7 @@ bool catchApple(){
 		sendCommand(CMD_SHIFT_PL_MM, shiftPL);
 		// here----------------------------------------------------------------------------------------
 		sendCommand(CMD_SAVE_ARM_MM);
-		sendCommand(CMD_RESTORE_ARM_MM, 5);
+		sendCommand(CMD_RESTORE_ARM_MM, 30);
 		//---------------------------------------------------------------------------------------------
 		sendCommand(CMD_DOWN_LANDLE, 0);
 		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL);

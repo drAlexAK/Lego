@@ -14,7 +14,7 @@
 #include <time.h>
 
 #define CAMERA
-//#define LEGO
+#define LEGO
 
 using namespace cv;
 using namespace std;

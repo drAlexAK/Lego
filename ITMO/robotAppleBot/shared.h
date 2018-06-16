@@ -57,7 +57,7 @@ task BlueToothListener()
 			camStatus.Y = messageParm[0];
 			camStatus.X = messageParm[1];
 			camStatus.Apple = ((messageParm[2] & 1) == 1);
-			camStatus.Brightness = messageParm[3];
+			camStatus.Brightness = messageParm[2];
 			//msgCam[0] = messageParm[0];
 			//msgCam[1] = messageParm[1];
 			//msgCam[2] = messageParm[2] & 1;

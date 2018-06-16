@@ -96,7 +96,7 @@ task main()
 
 	startTask (BlueToothListener);
 
-	sleep(5000);
+	sleep(10000);
 
 	goToTheTree();
 
@@ -119,16 +119,16 @@ task main()
 
 			while (lookForAppleVertical());
 			sendCommand(CMD_PARK_ALL);
-			sleep(3000);
+			sleep(1000);
 
 			displayTextLine(2, "LookUp apple %d", i);
 
 			if (i < 3) {
 				if(k == 0)
-					goAheadMM(120);
+					goAheadMM(100);
 
 				if(k == 1)
-					goAheadMM(-120);
+					goAheadMM(-100);
 			}
 			i++;
 		}
@@ -166,6 +166,8 @@ bool lookForAppleVertical() {
 	sleep(100);
 	InitialyzePipe(); //reinit pipe
 	//if (getCoord(y, x)) {
+	if (camStatus.Apple == false) sleep(500); // protect mistake
+
 	if (camStatus.Apple) {
 		sum = moveByHor();
 		if (catchApple()) unloading();

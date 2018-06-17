@@ -14,7 +14,7 @@
 #include <time.h>
 
 #define CAMERA
-#define LEGO
+//#define LEGO
 
 using namespace cv;
 using namespace std;
@@ -48,6 +48,7 @@ string getColorFilterAsString();
 ////
 
 
+	uchar clrMap[256][256][256];
 
 typedef enum color{
 	none	= 0,
@@ -103,6 +104,7 @@ void GetListOfBricks(vector<btSender> &lBricks)
 	}
 }
 
+
 int Capture()
 {
 	char key = '0';  
@@ -125,7 +127,7 @@ int Capture()
 #endif
 
 #ifdef CAMERA
-	VideoCapture cap(1); //capture the video from webcam
+	VideoCapture cap(0); //capture the video from webcam
 
 	if ( !cap.isOpened() )  // if not success, exit program
 	{
@@ -137,6 +139,7 @@ int Capture()
 #else
 	imgTmp= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
 #endif
+
 
 	Mat imgBlack(imgTmp.size(), CV_8UC3, Scalar(0));
 	int rowCenter = imgTmp.rows / 2;
@@ -173,10 +176,11 @@ int Capture()
 #endif
 		cvtColor(imgOriginal, imgOriginalGray, COLOR_BGR2GRAY);
 		sumBrightness = sum(imgOriginalGray)[0]; 
-		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0);
-		GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0); // size only odd
-
-		replaceColor(imgOriginal, imgBlack, exclude); // removes unwanted colors from original image
+		//GaussianBlur(imgOriginal, imgOriginal, Size(11, 11), 0, 0);
+		//GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0); // size only odd
+		blur(imgOriginal, imgOriginal, Size(5, 5));
+		//replaceColor(imgOriginal, imgBlack, exclude); // removes unwanted colors from original image
+		cvtColor(imgOriginal, imgOriginal, COLOR_BGR2HSV);
 		builtTreshHold(imgOriginal, imgThresholded, include);
 
 		//morphological opening (removes small objects from the foreground)
@@ -441,15 +445,15 @@ void geometry(Mat &imgThreshold){
 			aspectRatioRR = rr.size.height / rr.size.width;
 			if(aspectRatioRR < 0)
 				aspectRatioRR = rr.size.width / rr.size.height;
-			if(aspectRatioRR > 2.0){
+			if(aspectRatioRR > 1.75){
 				drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 				continue;
 			}
-
+		
 			if((re.size.height != 0) && (re.size.width != 0)){
 				aspectRatioRE = re.size.height / re.size.width;
 				if(aspectRatioRE < 0) aspectRatioRE = re.size.width / re.size.height;
-				if(aspectRatioRE > 2.0){	
+				if(aspectRatioRE > 1.75){	
 					drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 					continue;
 				}
@@ -465,7 +469,7 @@ void geometry(Mat &imgThreshold){
 int getBrokenLine(OutputArrayOfArrays curve){
 	int perimeter = arcLength(curve, true);
 	vector<Point> appCurve;
-	approxPolyDP(curve, appCurve, perimeter * 0.01, true);
+	approxPolyDP(curve, appCurve, perimeter * 0.005, true);
 	return appCurve.size();
 }
 

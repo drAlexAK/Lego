@@ -252,9 +252,12 @@ void waitAvailHSBytes(ubyte size) {
 task ReadMsg(){
 	ubyte cs = 0;
 	Delivery d;
+	int flooder = 0;
 
 	ubyte header[MSG_HEADER_SIZE];
 	while(true){
+		flooder ++;
+		displayTextLine(6, "RID: %d,%d", msgLastID, flooder );
 		waitAvailHSBytes( MSG_HEADER_SIZE ); // waiting messages
 		semaphoreLock( lockSend );
 		nxtReadRawHS(header, MSG_HEADER_SIZE);
@@ -320,7 +323,7 @@ void SendReplayMsg(ubyte id, MSG_STATUS status){
 	msgHeader h;
 	h[RPL_HEAD_INDEX_TYPE]			= RPL_TYPE;
 	h[RPL_HEAD_INDEX_ID]				= id;
-	h[RPL_HEAD_INDEX_BODY_SIZE]			= 0;
+	h[RPL_HEAD_INDEX_BODY_SIZE]	= 0;
 	h[RPL_HEAD_INDEX_STATUS]		= (ubyte) status;
 	SendSafe(&h[0], MSG_HEADER_SIZE);
 }
@@ -350,10 +353,13 @@ void SendReplayMsg(ubyte id, MSG_STATUS status, char *body, ubyte size){
 * reint stupid HS port
 */
 void ReinitPipe() {
+	nxtDisableHSPort();
+	sleep(100);
 	nxtEnableHSPort();			/* configure S4 as a high-speed port */
 	nxtHS_Mode = hsRawMode; /* Set port mode. This can be one of hsRawMode, hsMsgModeMaster, hsMsgModeSlave.
 	RS485 is a half duplex protocol,	that means that only one BXT can say something at any given time. */
 	nxtSetHSBaudRate(); //(9600);	/* configure S4 as a high-speed port and select a BAUD rate */
+	ClearReadBuffer();
 	sleep(100);
 }
 

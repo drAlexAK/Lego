@@ -14,10 +14,10 @@
 //
 #define ARM_270MM_ENCODER 			5604	//9340 * 24 / 40 the top gear has changed
 //#define ARM_MAX_POSITION_270MM    270 moved to shared
-#define M_ARM_SPEED_MIN           20
+#define M_ARM_SPEED_MIN           30
 #define M_ARM_SPEED_MAX           100
-#define LANDLE_11000_ENCODER      2400  //2000 // 11000
-#define M_LANDLE_SPEED_MIN        10
+#define LANDLE_11000_ENCODER      2300  //2000 // 11000
+#define M_LANDLE_SPEED_MIN        15
 #define M_LANDLE_SPEED_MAX        100
 //----------------------------
 #define MAX_CENTER_MM 125

@@ -59,28 +59,30 @@ byte armDiffMM[28];
 short landleDiffEnc[28];
 short shiftLandle[10] =  {-77, -60, -32, -11, -9, -19, -52, -57, -42, -40};
 //{-30, -20, -12, 9, 41, 21, -22, -37, -42, -50};
+
 task main()
 {
 	/*
-	InitialyzePipe();
-	startTask(BlueToothListener);
+	//InitialyzePipe();
+	//startTask(BlueToothListener);
 	InitArmDiffMM();
 	InitLandleDiffEnc();
 	resetMotorsEncoder();
 
 
 	sleep(3000);
-	downLandle(45);
+	//downLandle(45);
+	sleep(3000);
 	startTask(holdPlPositionByArm);
 	startTask(holdVerticalLandlePositionByArm);
 	sleep(250);
 	for (int k = 0; k <= 270; k+=30){
-	upArmMM(k);
-	displayBigTextLine(2, "&d" , k);
-	sleep(5000);
-	sleep(5000);
-	sleep(5000);
-	sleep(5000);
+		upArmMM(k);
+		displayBigTextLine(2, "&d" , k);
+		sleep(5000);
+		sleep(5000);
+		sleep(5000);
+		sleep(5000);
 	}
 
 	stopTask(holdPlPositionByArm);
@@ -88,7 +90,7 @@ task main()
 	sleep(3000);
 	Parking();
 	return;
-	*/
+*/
 	ubyte id =0;
 	COMMAND cmd ;
 	int value =0;
@@ -462,7 +464,7 @@ void upArmMMStrongVert(int posit){
 }
 
 int getLandlePositionByArmEnc (int enc){
-	const int armMM2Enc = 325;
+	const int armMM2Enc =  195; // 325;
 	int index = abs(enc / armMM2Enc);
 	if (index > 27) index = 27;
 	if (index < 0) index = 0;

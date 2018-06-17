@@ -18,9 +18,11 @@ int vRight = 0;
 //
 int calcEnc = 0;
 //
-int enc =0;
+int enc = 0;
 //#define DEBUG
 //
+#define UP_ARM_BEFORE_CATCH_APPLE_MM 35
+
 #define DEGREES_360_ROTATION_ENC  2100 // Spb competion
 #define ROTATION_MAX_360_DEGREE   360
 #define M_ROTATION_SPEED_MIN      20
@@ -28,7 +30,7 @@ int enc =0;
 //
 #define DIST_START_ROBOT    400
 #define DIST_TREE_NORM  		280
-#define DIST_BETWEEN_FENCE_TREE  110 // need to calibrate distance between tree and garden
+#define DIST_BETWEEN_FENCE_TREE  95 // need to calibrate distance between tree and garden
 #define DIST_FRONT_MIN 			20
 
 #define DEGREES_360_ENC 		  4415 // floor at home
@@ -164,6 +166,7 @@ bool lookForAppleVertical() {
 	sendCommand(CMD_MOVE_PL,0);
 	sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM);
 	sleep(100);
+	//ReinitPipe();
 	InitialyzePipe(); //reinit pipe
 	//if (getCoord(y, x)) {
 	if (camStatus.Apple == false) sleep(500); // protect mistake
@@ -182,7 +185,7 @@ bool lookForAppleVertical() {
 bool catchApple(){
 	//short x =0;
 	//short y =0;
-	int shiftPL = 100;// - (DIST_TREE_NORM - distToTree);
+	int shiftPL = 100 + (distToTree - DIST_TREE_NORM );
 	int shiftArm = 50;
 
 	writeDebugStreamLine("Starting catch apple");
@@ -192,10 +195,15 @@ bool catchApple(){
 		sendCommand(CMD_SHIFT_PL_MM, shiftPL);
 		// here----------------------------------------------------------------------------------------
 		sendCommand(CMD_SAVE_ARM_MM);
-		sendCommand(CMD_RESTORE_ARM_MM, 30);
+		sendCommand(CMD_RESTORE_ARM_MM, UP_ARM_BEFORE_CATCH_APPLE_MM);
 		//---------------------------------------------------------------------------------------------
 		sendCommand(CMD_DOWN_LANDLE, 0);
 		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL);
+			// here----------------------------------------------------------------------------------------
+		sendCommand(CMD_SAVE_ARM_MM);
+		sendCommand(CMD_RESTORE_ARM_MM, -1 * UP_ARM_BEFORE_CATCH_APPLE_MM);
+		//---------------------------------------------------------------------------------------------
+
 		sleep(100);
 		//if (getCoord(y, x)) return true;
 		if (isAppleInLadle()) return true;

@@ -1,11 +1,13 @@
 //height width
 
 //erode noise foreground
-10	10
+15	15
 //dilate noise foreground
-10	10
+15	15
 //dilate hole foreground
-25	25
+//25	25
+20	20
 //erode hole foreground
-25 25
+//25 25
+20	20
  

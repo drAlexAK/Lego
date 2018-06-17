@@ -14,7 +14,10 @@
 #include <time.h>
 
 #define CAMERA
-//#define LEGO
+#define LEGO
+#define FLOOD_PROTECT
+#define CAMERA_INDEX 1
+
 
 using namespace cv;
 using namespace std;
@@ -48,7 +51,7 @@ string getColorFilterAsString();
 ////
 
 
-	uchar clrMap[256][256][256];
+uchar clrMap[256][256][256];
 
 typedef enum color{
 	none	= 0,
@@ -127,7 +130,7 @@ int Capture()
 #endif
 
 #ifdef CAMERA
-	VideoCapture cap(0); //capture the video from webcam
+	VideoCapture cap(CAMERA_INDEX); //capture the video from webcam
 
 	if ( !cap.isOpened() )  // if not success, exit program
 	{
@@ -140,7 +143,7 @@ int Capture()
 	imgTmp= imread(".\\pictures\\red.png", IMREAD_COLOR); // Read the file
 #endif
 
-
+	Scalar fontScalar(255, 255, 255);
 	Mat imgBlack(imgTmp.size(), CV_8UC3, Scalar(0));
 	int rowCenter = imgTmp.rows / 2;
 	int colCenter = imgTmp.cols / 2;
@@ -176,9 +179,10 @@ int Capture()
 #endif
 		cvtColor(imgOriginal, imgOriginalGray, COLOR_BGR2GRAY);
 		sumBrightness = sum(imgOriginalGray)[0]; 
-		//GaussianBlur(imgOriginal, imgOriginal, Size(11, 11), 0, 0);
+		GaussianBlur(imgOriginal, imgOriginal, Size(11, 11), 0, 0);
 		//GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0); // size only odd
-		blur(imgOriginal, imgOriginal, Size(5, 5));
+		//blur(imgOriginal, imgOriginal, Size(5, 5)); // too much
+
 		//replaceColor(imgOriginal, imgBlack, exclude); // removes unwanted colors from original image
 		cvtColor(imgOriginal, imgOriginal, COLOR_BGR2HSV);
 		builtTreshHold(imgOriginal, imgThresholded, include);
@@ -248,15 +252,15 @@ int Capture()
 			frmCount = 0;
 		}
 
-		putText(imgOriginal, getColorFilterAsString(), Point(25, 25), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
-		putText(imgOriginal, "g:" + to_string(chekGeometry), Point(25, 65), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA); 
-		putText(imgOriginal, "fps: " + to_string(fps), Point(25, 105), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA);
-		putText(imgOriginal, "b:" + to_string(brightness), Point(25, 145), FONT_HERSHEY_DUPLEX, 1.0, Scalar(200, 150, 50), 2, CV_AA);
+		putText(imgOriginal, getColorFilterAsString(), Point(25, 25), FONT_HERSHEY_DUPLEX, 1.0, fontScalar, 2, CV_AA); 
+		putText(imgOriginal, "g:" + to_string(chekGeometry), Point(25, 65), FONT_HERSHEY_DUPLEX, 1.0, fontScalar, 2, CV_AA); 
+		putText(imgOriginal, "fps: " + to_string(fps), Point(25, 105), FONT_HERSHEY_DUPLEX, 1.0, fontScalar, 2, CV_AA);
+		putText(imgOriginal, "b:" + to_string(brightness), Point(25, 145), FONT_HERSHEY_DUPLEX, 1.0, fontScalar, 2, CV_AA);
 
 		imshow("Thresholded Image", imgThresholded); //show the thresholded image
 		imshow("Original", imgOriginal); //show the original image
 
-		key = waitKey(10);
+		key = waitKey(100);
 		switch (key){
 		case  27:
 			for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){
@@ -298,11 +302,15 @@ int Capture()
 }
 
 bool compar(short *a1, short *a2, int size){
-	//return false;
-	for(int i = 0; i < size; i++){
-		if(a1[i] != a2[i]) return false;
-	}
-	return true;
+#ifndef FLOOD_PROTECT
+	return false;
+#endif // ! FLOOD_PROTECT
+//	for(int i = 0; i < size; i++){
+//		if(a1[i] != a2[i]) return false;
+//	}
+	if (abs(a1[0] - a2[0]) > 3) return false;
+	if (abs(a1[1] - a2[1]) > 3) return false;
+	return (a1[2] == a2[2]);
 }
 
 void zeroArray(short *a, int size){
@@ -443,23 +451,22 @@ void geometry(Mat &imgThreshold){
 		double aspectRatioRE = 0; // Ellipse
 		if((rr.size.height != 0) && (rr.size.width != 0)){
 			aspectRatioRR = rr.size.height / rr.size.width;
-			if(aspectRatioRR < 0)
-				aspectRatioRR = rr.size.width / rr.size.height;
-			if(aspectRatioRR > 1.75){
+			if(aspectRatioRR < 0) aspectRatioRR = rr.size.width / rr.size.height;
+			if((aspectRatioRR > 1.75) && (rr.angle > -30 ) && (rr.angle < 30)) {
 				drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 				continue;
 			}
-		
+
 			if((re.size.height != 0) && (re.size.width != 0)){
 				aspectRatioRE = re.size.height / re.size.width;
 				if(aspectRatioRE < 0) aspectRatioRE = re.size.width / re.size.height;
-				if(aspectRatioRE > 1.75){	
+				if((aspectRatioRE > 1.75)  && (re.angle > -30 ) && (re.angle < 30)){	
 					drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 					continue;
 				}
 			}
-			if(getBrokenLine(contours[i]) < 10) 
-				drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
+			//if(getBrokenLine(contours[i]) < 10) 
+				//drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 		}
 	}
 	imshow("imgDrawing", imgDrawing);

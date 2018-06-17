@@ -99,6 +99,7 @@ task ReadMsg();
 bool isItTraceArray(ubyte *b, int size);
 void skipTraceHSByte();
 void waitAvailHSBytes(ubyte size);
+void ReinitPipe();
 //-------------------
 Delivery outDelivery;
 Delivery inDelivery;
@@ -343,6 +344,17 @@ void SendReplayMsg(ubyte id, MSG_STATUS status, char *body, ubyte size){
 	memcpy(&d.Msg[MSG_HEADER_SIZE], body, size);
 
 	SendSafe(d.Msg, MSG_HEADER_SIZE + size);
+}
+
+/**
+* reint stupid HS port
+*/
+void ReinitPipe() {
+	nxtEnableHSPort();			/* configure S4 as a high-speed port */
+	nxtHS_Mode = hsRawMode; /* Set port mode. This can be one of hsRawMode, hsMsgModeMaster, hsMsgModeSlave.
+	RS485 is a half duplex protocol,	that means that only one BXT can say something at any given time. */
+	nxtSetHSBaudRate(); //(9600);	/* configure S4 as a high-speed port and select a BAUD rate */
+	sleep(100);
 }
 
 /**

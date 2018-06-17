@@ -21,7 +21,7 @@ int calcEnc = 0;
 int enc = 0;
 //#define DEBUG
 //
-#define UP_ARM_BEFORE_CATCH_APPLE_MM 35
+#define UP_ARM_BEFORE_CATCH_APPLE_MM 30
 
 #define DEGREES_360_ROTATION_ENC  2100 // Spb competion
 #define ROTATION_MAX_360_DEGREE   360
@@ -29,8 +29,8 @@ int enc = 0;
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
-#define DIST_TREE_NORM  		280
-#define DIST_BETWEEN_FENCE_TREE  95 // need to calibrate distance between tree and garden
+#define DIST_TREE_NORM  		300
+#define DIST_BETWEEN_FENCE_TREE  80 // need to calibrate distance between tree and garden
 #define DIST_FRONT_MIN 			20
 
 #define DEGREES_360_ENC 		  4415 // floor at home

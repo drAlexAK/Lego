@@ -260,7 +260,7 @@ int Capture()
 		imshow("Thresholded Image", imgThresholded); //show the thresholded image
 		imshow("Original", imgOriginal); //show the original image
 
-		key = waitKey(100);
+		key = waitKey(10);
 		switch (key){
 		case  27:
 			for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){
@@ -308,6 +308,7 @@ bool compar(short *a1, short *a2, int size){
 //	for(int i = 0; i < size; i++){
 //		if(a1[i] != a2[i]) return false;
 //	}
+//	return true;
 	if (abs(a1[0] - a2[0]) > 3) return false;
 	if (abs(a1[1] - a2[1]) > 3) return false;
 	return (a1[2] == a2[2]);
@@ -465,8 +466,8 @@ void geometry(Mat &imgThreshold){
 					continue;
 				}
 			}
-			//if(getBrokenLine(contours[i]) < 10) 
-				//drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
+			if(getBrokenLine(contours[i]) < 10) 
+				drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 		}
 	}
 	imshow("imgDrawing", imgDrawing);

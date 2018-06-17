@@ -12,7 +12,7 @@
 //
 //#define DEBUG
 //
-#define ARM_270MM_ENCODER 			  5590 //5604	//9340 * 24 / 40 the top gear has changed
+#define ARM_270MM_ENCODER 			  5550 //5604	//9340 * 24 / 40 the top gear has changed
 //#define ARM_MAX_POSITION_270MM    270 moved to shared
 #define M_ARM_SPEED_MIN           30
 #define M_ARM_SPEED_MAX           100

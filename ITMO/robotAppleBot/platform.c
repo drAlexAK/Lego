@@ -29,9 +29,11 @@ int enc = 0;
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
-#define DIST_TREE_NORM  		300
-#define DIST_BETWEEN_FENCE_TREE  80 // need to calibrate distance between tree and garden
+#define DIST_TREE_NORM  		290
+#define DIST_BETWEEN_FENCE_TREE  95 // need to calibrate distance between tree and garden
+#define ACCURACY_DIST_BETWEEN_FENCE_AND_TREE 20
 #define DIST_FRONT_MIN 			20
+#define DIST_BETWEEN_VERTICAL_TREE_LINE 110
 
 #define DEGREES_360_ENC 		  4415 // floor at home
 //#define DEGREES_360_ENC 		4250 // Spb competion
@@ -127,10 +129,10 @@ task main()
 
 			if (i < 3) {
 				if(k == 0)
-					goAheadMM(100);
+					goAheadMM(DIST_BETWEEN_VERTICAL_TREE_LINE);
 
 				if(k == 1)
-					goAheadMM(-100);
+					goAheadMM(-1 * DIST_BETWEEN_VERTICAL_TREE_LINE);
 			}
 			i++;
 		}
@@ -166,8 +168,8 @@ bool lookForAppleVertical() {
 	sendCommand(CMD_MOVE_PL,0);
 	sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM);
 	sleep(100);
-	//ReinitPipe();
-	InitialyzePipe(); //reinit pipe
+	ReinitPipe();
+	//InitialyzePipe(); //reinit pipe
 	//if (getCoord(y, x)) {
 	if (camStatus.Apple == false) sleep(500); // protect mistake
 
@@ -186,7 +188,8 @@ bool catchApple(){
 	//short x =0;
 	//short y =0;
 	int shiftPL = 100 + (distToTree - DIST_TREE_NORM );
-	int shiftArm = 50;
+	const int shiftArm = 50;
+	const int shiftPlatformAfterArmUp = 10;
 
 	writeDebugStreamLine("Starting catch apple");
 	for (int i = 0; i < 3; i++) {
@@ -196,9 +199,10 @@ bool catchApple(){
 		// here----------------------------------------------------------------------------------------
 		sendCommand(CMD_SAVE_ARM_MM);
 		sendCommand(CMD_RESTORE_ARM_MM, UP_ARM_BEFORE_CATCH_APPLE_MM);
+		sendCommand(CMD_SHIFT_PL_MM, shiftPlatformAfterArmUp);
 		//---------------------------------------------------------------------------------------------
 		sendCommand(CMD_DOWN_LANDLE, 0);
-		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL);
+		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL - shiftPlatformAfterArmUp);
 			// here----------------------------------------------------------------------------------------
 		sendCommand(CMD_SAVE_ARM_MM);
 		sendCommand(CMD_RESTORE_ARM_MM, -1 * UP_ARM_BEFORE_CATCH_APPLE_MM);
@@ -339,6 +343,7 @@ task controlMotors()
 
 	void findTrees()
 	{
+
 		sleep(300);
 		int eNorm = getDistRightMedian();
 		//if (eNorm < DIST_TREE_NORM) eNorm = DIST_TREE_NORM;
@@ -350,7 +355,7 @@ task controlMotors()
 		while(true){
 			e = eNorm - MSDISTreadDist(sFrontRight);
 			// error must be great then different distance between fence and tree
-			while(e >= DIST_BETWEEN_FENCE_TREE){
+			while(e >= (DIST_BETWEEN_FENCE_TREE - ACCURACY_DIST_BETWEEN_FENCE_AND_TREE)){
 				vLeft =  vRight = M_BODY_SPEED_MIN;
 
 				i++;

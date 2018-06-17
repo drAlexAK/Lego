@@ -74,7 +74,7 @@ bool sendCommand(COMMAND cmd, int value, bool waitComplete){
 	char msg[messageSize];
 	memcpy(&msg[0], &cmd, sizeof(int));
 	memcpy(&msg[sizeof(int)], &value, sizeof(int));
-	return SendMsg(&msg[0], messageSize, waitComplete, 3, 3000);
+	return SendMsg(&msg[0], messageSize, waitComplete, 3, 10000);
 }
 
 bool sendCommand(COMMAND cmd, int value){

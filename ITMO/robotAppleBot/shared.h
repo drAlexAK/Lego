@@ -18,7 +18,8 @@ typedef enum COMMAND {
 	CMD_SHIFT_ARM_MM 					= 11,
 	CMD_GET_ARM_MM						= 12,
 	CMD_SAVE_ARM_MM						= 13,
-	CMD_RESTORE_ARM_MM				= 14
+	CMD_RESTORE_ARM_MM				= 14,
+	CMD_SOFTLY_GET_APPLE 			= 15
 } COMMAND;
 
 // 0 : Y position, 1 : X position, 2 : 1|0 apple, 3 : 0-100 brightness

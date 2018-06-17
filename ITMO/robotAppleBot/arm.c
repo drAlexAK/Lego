@@ -44,6 +44,7 @@ void executeCMD(COMMAND cmd,int value);
 void InitArmDiffMM();
 void InitLandleDiffEnc();
 void movePl(int posit);
+void shiftPl(int posit);
 void lookForAppleByArm();
 bool isAppleHere();
 void setVerticalLandlePositionByArm();
@@ -51,6 +52,7 @@ int getLandlePositionByArmEnc(int enc);
 int getPlPositionByArmEnc(int enc);
 int getPlPositionByArmMM(int posit);
 int getPlCurrentPositionMM();
+void softlyGetApple(int value);
 //----------------------------
 
 int armMM =0;
@@ -187,8 +189,9 @@ void executeCMD(COMMAND cmd, int value){
 		lookForAppleByArm();
 		break;
 	case CMD_SHIFT_PL_MM:
-		int mm1 = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
-		movePl(value + mm1);
+		//int mm1 = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
+		//movePl(value + mm1);
+		shiftPl(value);
 		break;
 	case CMD_SAVE_ARM_MM:
 		armMM = nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER;
@@ -199,6 +202,9 @@ void executeCMD(COMMAND cmd, int value){
 	case CMD_SHIFT_ARM_MM:
 		int mm2 = nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER;
 		upArmMM(value + mm2);
+		break;
+	case CMD_SOFTLY_GET_APPLE:
+		softlyGetApple(value);
 		break;
 	case CMD_PARK_ALL:
 	default:
@@ -263,6 +269,46 @@ void downLandle(int angel)
 		}
 	}
 	motor[mLandle] = 0;
+}
+
+void softlyGetApple(int value){
+
+	//startTask(holdPlPositionByArm);
+	//startTask(holdVerticalLandlePositionByArm);
+	//sleep(250);
+	const int step = 10;
+	int shiftPlMM = 0;
+	int shiftTotalArmMM = 0;
+	int shiftTotalPlMM = 0;
+	int armPositionMM = 0;
+
+	for (int i = 0; i < (value / step); i++) {
+		armPositionMM = nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER;
+
+		shiftTotalArmMM += step;
+		upArmMM(armPositionMM + step);
+
+		//armPositionMM = nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER;
+
+		shiftPlMM = getPlPositionByArmMM(armPositionMM) - getPlPositionByArmMM((nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER));
+		shiftTotalPlMM += shiftPlMM;
+
+		shiftPl(shiftPlMM);
+	}
+	downLandle(0); //up landle
+
+	// rollback
+	armPositionMM = nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER;
+	shiftPl( -1 *  shiftTotalPlMM);
+	upArmMM(armPositionMM - shiftTotalArmMM);
+
+	//motor[mArm] = 0;
+	//sleep(500);
+	//stopTask(holdPlPositionByArm);
+	//stopTask(holdVerticalLandlePositionByArm);
+	//motor[mPl]=0;
+	//motor[mLandle]=0;
+
 }
 
 void lookForAppleByArm() {
@@ -353,6 +399,10 @@ int getPlPositionByArmMM(int posit){
 	return armDiffMM[a] + ((armDiffMM[b] - armDiffMM[a]) * (posit - a * 10) / (b * 10 - a * 10));
 }
 
+void shiftPl(int posit) {
+		int mm1 = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
+		movePl(posit + mm1);
+}
 
 void movePl(int posit){
 	if (abs(posit) > MAX_CENTER_MM) posit = sgn(posit) * MAX_CENTER_MM;

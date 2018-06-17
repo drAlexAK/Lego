@@ -29,11 +29,11 @@ int enc = 0;
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
-#define DIST_TREE_NORM  		290
+#define DIST_TREE_NORM  		260
 #define DIST_BETWEEN_FENCE_TREE  95 // need to calibrate distance between tree and garden
 #define ACCURACY_DIST_BETWEEN_FENCE_AND_TREE 20
 #define DIST_FRONT_MIN 			20
-#define DIST_BETWEEN_VERTICAL_TREE_LINE 110
+#define DIST_BETWEEN_VERTICAL_TREE_LINE 100
 
 #define DEGREES_360_ENC 		  4415 // floor at home
 //#define DEGREES_360_ENC 		4250 // Spb competion
@@ -123,7 +123,7 @@ task main()
 
 			while (lookForAppleVertical());
 			sendCommand(CMD_PARK_ALL);
-			sleep(1000);
+			sleep(500);
 
 			displayTextLine(2, "LookUp apple %d", i);
 
@@ -136,7 +136,7 @@ task main()
 			}
 			i++;
 		}
-		sleep(1000);
+		sleep(500);
 		getAppleAttempts =0;
 		i =0;
 	}
@@ -168,8 +168,8 @@ bool lookForAppleVertical() {
 	sendCommand(CMD_MOVE_PL,0);
 	sendCommand(CMD_LOOK_FOR_APPLE_BY_ARM);
 	sleep(100);
-	ReinitPipe();
-	//InitialyzePipe(); //reinit pipe
+	//ReinitPipe();
+	InitialyzePipe(); //reinit pipe
 	//if (getCoord(y, x)) {
 	if (camStatus.Apple == false) sleep(500); // protect mistake
 
@@ -187,9 +187,9 @@ bool lookForAppleVertical() {
 bool catchApple(){
 	//short x =0;
 	//short y =0;
-	int shiftPL = 100 + (distToTree - DIST_TREE_NORM );
+	int shiftPL = 80 + (distToTree - DIST_TREE_NORM );
 	const int shiftArm = 50;
-	const int shiftPlatformAfterArmUp = 10;
+	//const int shiftPlatformAfterArmUp = 10;
 
 	writeDebugStreamLine("Starting catch apple");
 	for (int i = 0; i < 3; i++) {
@@ -197,15 +197,19 @@ bool catchApple(){
 		if (camStatus.Apple == false) break;
 		sendCommand(CMD_SHIFT_PL_MM, shiftPL);
 		// here----------------------------------------------------------------------------------------
-		sendCommand(CMD_SAVE_ARM_MM);
-		sendCommand(CMD_RESTORE_ARM_MM, UP_ARM_BEFORE_CATCH_APPLE_MM);
-		sendCommand(CMD_SHIFT_PL_MM, shiftPlatformAfterArmUp);
+		//sendCommand(CMD_SAVE_ARM_MM);
+		//sendCommand(CMD_RESTORE_ARM_MM, UP_ARM_BEFORE_CATCH_APPLE_MM);
+		//sendCommand(CMD_SHIFT_ARM_STR_VERT_MM, UP_ARM_BEFORE_CATCH_APPLE_MM);
+		//sendCommand(CMD_SHIFT_PL_MM, shiftPlatformAfterArmUp);
+		sendCommand(CMD_SOFTLY_GET_APPLE, UP_ARM_BEFORE_CATCH_APPLE_MM);
 		//---------------------------------------------------------------------------------------------
-		sendCommand(CMD_DOWN_LANDLE, 0);
-		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL - shiftPlatformAfterArmUp);
+		//sendCommand(CMD_DOWN_LANDLE, 0);
+		sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL);
+		//sendCommand(CMD_SHIFT_PL_MM, -1 * shiftPL - shiftPlatformAfterArmUp);
 			// here----------------------------------------------------------------------------------------
-		sendCommand(CMD_SAVE_ARM_MM);
-		sendCommand(CMD_RESTORE_ARM_MM, -1 * UP_ARM_BEFORE_CATCH_APPLE_MM);
+		//sendCommand(CMD_SAVE_ARM_MM);
+		//sendCommand(CMD_RESTORE_ARM_MM, -1 * UP_ARM_BEFORE_CATCH_APPLE_MM);
+		//sendCommand(CMD_SHIFT_ARM_STR_VERT_MM, -1 * UP_ARM_BEFORE_CATCH_APPLE_MM);
 		//---------------------------------------------------------------------------------------------
 
 		sleep(100);
@@ -232,7 +236,7 @@ bool catchApple(){
 
 		writeDebugStreamLine("Failed catch apple");
 		sendCommand(CMD_SET_LANDLE_BY_ARM);
-		shiftPL += 7; //10
+		shiftPL += 5; //10
 	}
 	sendCommand(CMD_SAVE_ARM_MM);
 	sendCommand(CMD_RESTORE_ARM_MM, shiftArm); // skip unride apple
@@ -361,13 +365,14 @@ task controlMotors()
 				i++;
 				if(i > 2 ){
 					vLeft = vRight = 0;
-					goAheadMM(40); // move forward before check distance to tree
+					goAheadMM(50); // move forward before check distance to tree
 					sleep(100);
 #ifdef DEBUG
 					//playSound(soundBeepBeep);
-					sleep(300);
+					//sleep(300);
 #endif
-					int dist =  getDistRightMedian() - DIST_TREE_NORM;
+					distToTree = getDistRightMedian();
+					int dist =  distToTree - DIST_TREE_NORM;
 					//goAheadMM(-40); // retrack
 					if (abs(dist) > 10)
 					{
@@ -378,7 +383,7 @@ task controlMotors()
 					//goAheadMM(-20);
 					//robotAngelCalibration(70); // unfortunately doesn't work because distance too short
 					sleep(500);
-					distToTree = getDistRightMedian(); // save dist to a tree
+					 // save dist to a tree
 					//goAheadMM(-40);
 					return;
 				}

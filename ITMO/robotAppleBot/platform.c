@@ -29,7 +29,7 @@ int enc = 0;
 #define M_ROTATION_SPEED_MAX      80
 //
 #define DIST_START_ROBOT    400
-#define DIST_TREE_NORM  		260
+#define DIST_TREE_NORM  		280
 #define DIST_BETWEEN_FENCE_TREE  95 // need to calibrate distance between tree and garden
 #define ACCURACY_DIST_BETWEEN_FENCE_AND_TREE 20
 #define DIST_FRONT_MIN 			20
@@ -109,6 +109,8 @@ task main()
 	//----------------------
 	int i =0;
 	int sum = 0;
+	int falseLookUpAppleIteration = 0;
+	const int maxFalseLookUpAppleIteration = 3;
 
 	const int maxGetAppleAttempts = 6;
 	int getAppleAttempts = 0;
@@ -120,8 +122,10 @@ task main()
 
 		while(i < 4){
 			getAppleAttempts ++;
-
-			while (lookForAppleVertical());
+			falseLookUpAppleIteration = 0;
+			while ((lookForAppleVertical()) && (falseLookUpAppleIteration < maxFalseLookUpAppleIteration)) {
+			falseLookUpAppleIteration ++;
+			}
 			sendCommand(CMD_PARK_ALL);
 			sleep(500);
 
@@ -137,7 +141,7 @@ task main()
 			i++;
 		}
 		sleep(500);
-		getAppleAttempts =0;
+		getAppleAttempts = 0;
 		i =0;
 	}
 	sendCommand(CMD_PARK_ALL,0);
@@ -187,7 +191,7 @@ bool lookForAppleVertical() {
 bool catchApple(){
 	//short x =0;
 	//short y =0;
-	int shiftPL = 80 + (distToTree - DIST_TREE_NORM );
+	int shiftPL = 70 + (distToTree - DIST_TREE_NORM );
 	const int shiftArm = 50;
 	//const int shiftPlatformAfterArmUp = 10;
 
@@ -251,7 +255,7 @@ void unloading(){
 	rotatePlatform(-90);
 	sendCommand(CMD_UP_ARM, 120);
 	while(SensorValue(sFront) > 20) sleep(100);
-	sendCommand(CMD_DOWN_LANDLE, 110);
+	sendCommand(CMD_DOWN_LANDLE, 130);
 	sleep(1000);
 	sendCommand(CMD_DOWN_LANDLE, 0);
 	rotatePlatform(0);

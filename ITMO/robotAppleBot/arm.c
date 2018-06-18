@@ -16,7 +16,9 @@
 //#define ARM_MAX_POSITION_270MM    270 moved to shared
 #define M_ARM_SPEED_MIN           30
 #define M_ARM_SPEED_MAX           100
-#define LANDLE_11000_ENCODER      2300  //2000 // 11000
+
+#define LANDLE_11000_ENCODER      2718 //2300  //2000 // 11000
+#define MAX_LANDLE_ANGEL 					130
 #define M_LANDLE_SPEED_MIN        15
 #define M_LANDLE_SPEED_MAX        100
 //----------------------------
@@ -253,8 +255,8 @@ task ParkingPl(){
 void downLandle(int angel)
 {
 	if (angel < 0)  angel  = 0;
-	if (angel > 110) angel = 110;
-	int	targetEnc = LANDLE_11000_ENCODER / 110 * angel;
+	if (angel > MAX_LANDLE_ANGEL) angel = MAX_LANDLE_ANGEL;
+	int	targetEnc = LANDLE_11000_ENCODER / MAX_LANDLE_ANGEL * angel;
 	int startEnc = nMotorEncoder[mLandle];
 	int speed = 0 ;
 	if((targetEnc - startEnc) > 0){
@@ -273,9 +275,6 @@ void downLandle(int angel)
 
 void softlyGetApple(int value){
 
-	//startTask(holdPlPositionByArm);
-	//startTask(holdVerticalLandlePositionByArm);
-	//sleep(250);
 	const int step = 10;
 	int shiftPlMM = 0;
 	int shiftTotalArmMM = 0;
@@ -301,13 +300,6 @@ void softlyGetApple(int value){
 	armPositionMM = nMotorEncoder[mArm] * ARM_MAX_POSITION_270MM / ARM_270MM_ENCODER;
 	shiftPl( -1 *  shiftTotalPlMM);
 	upArmMM(armPositionMM - shiftTotalArmMM);
-
-	//motor[mArm] = 0;
-	//sleep(500);
-	//stopTask(holdPlPositionByArm);
-	//stopTask(holdVerticalLandlePositionByArm);
-	//motor[mPl]=0;
-	//motor[mLandle]=0;
 
 }
 

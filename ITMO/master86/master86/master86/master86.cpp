@@ -34,6 +34,7 @@ typedef struct ScalarRange{
 ////
 int Capture();
 bool compar(short *a1, short *a2, int size);
+bool comparAppr(short *a1, short *a2, int size);
 void zeroArray(short *a1, int size);
 void copyArr(short *a1, short *a2, int size);
 void GetListOfBricks(vector<btSender> &lBricks);
@@ -232,7 +233,7 @@ int Capture()
 			dataToSend[2] = brightness &~ 1;
 		}
 
-		if (!compar(dataToSend, dataToSendOld, 3)) {
+		if (!comparAppr(dataToSend, dataToSendOld, 3)) {
 			cout << dataToSend[0] << " " << dataToSend[1] << "    " << dataToSend[2] << endl;  
 			for (vector<btSender>::iterator it = lBricks.begin(); it != lBricks.end(); it++){
 				copyArr(dataToSend,  msg, msgElements);
@@ -301,17 +302,25 @@ int Capture()
 	return 0;
 }
 
+// approximate comparison
+bool comparAppr(short *a1, short *a2, int size){
+#ifndef FLOOD_PROTECT
+	return false;
+#endif // ! FLOOD_PROTECT
+	if (abs(a1[0] - a2[0]) > 1) return false;
+	if (abs(a1[1] - a2[1]) > 1) return false;
+	return (a1[2] == a2[2]);
+}
+
+// accurate comparison
 bool compar(short *a1, short *a2, int size){
 #ifndef FLOOD_PROTECT
 	return false;
 #endif // ! FLOOD_PROTECT
-//	for(int i = 0; i < size; i++){
-//		if(a1[i] != a2[i]) return false;
-//	}
-//	return true;
-	if (abs(a1[0] - a2[0]) > 3) return false;
-	if (abs(a1[1] - a2[1]) > 3) return false;
-	return (a1[2] == a2[2]);
+	for(int i = 0; i < size; i++){
+		if(a1[i] != a2[i]) return false;
+	}
+	return true;
 }
 
 void zeroArray(short *a, int size){

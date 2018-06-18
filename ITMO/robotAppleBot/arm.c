@@ -208,6 +208,9 @@ void executeCMD(COMMAND cmd, int value){
 	case CMD_SOFTLY_GET_APPLE:
 		softlyGetApple(value);
 		break;
+	case CMD_SHUT_DOWN:
+		stopAllTasks();
+		break;
 	case CMD_PARK_ALL:
 	default:
 		Parking();

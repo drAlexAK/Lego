@@ -150,6 +150,7 @@ task main()
 	goAheadMM(-300);
 
 	vRight = vLeft = 0;
+	sendCommand(CMD_SHUT_DOWN,0, false);
 	stopAllTasks();
 }
 

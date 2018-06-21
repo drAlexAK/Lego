@@ -39,9 +39,7 @@ void zeroArray(short *a1, int size);
 void copyArr(short *a1, short *a2, int size);
 void GetListOfBricks(vector<btSender> &lBricks);
 vector<string> GetListOfCOMPorts();
-void replaceColor(Mat &src, Mat &bkg, vector<ScalarRange> &exlude);
 void builtTreshHold(Mat &src, Mat &thd, vector<ScalarRange> &inlude);
-void getExcludeScalar(vector<ScalarRange> &scRange);
 void getIncludeScalar(vector<ScalarRange> &scRange, string inFile);
 void initInclude();
 void loadIncludes(vector<ScalarRange> &scRange);
@@ -50,9 +48,6 @@ int getBrokenLine(OutputArrayOfArrays curve);
 void geometry(Mat &treshHold);
 string getColorFilterAsString();
 ////
-
-
-uchar clrMap[256][256][256];
 
 typedef enum color{
 	none	= 0,
@@ -145,13 +140,9 @@ int Capture()
 #endif
 
 	Scalar fontScalar(255, 255, 255);
-	Mat imgBlack(imgTmp.size(), CV_8UC3, Scalar(0));
 	int rowCenter = imgTmp.rows / 2;
 	int colCenter = imgTmp.cols / 2;
-	vector<ScalarRange> exclude;
 	vector<ScalarRange> include;
-
-	getExcludeScalar(exclude);
 
 	initInclude();
 	loadIncludes(include);
@@ -180,11 +171,10 @@ int Capture()
 #endif
 		cvtColor(imgOriginal, imgOriginalGray, COLOR_BGR2GRAY);
 		sumBrightness = sum(imgOriginalGray)[0]; 
-		GaussianBlur(imgOriginal, imgOriginal, Size(11, 11), 0, 0);
+		GaussianBlur(imgOriginal, imgOriginal, Size(7, 7), 0, 0);   // standart kenel size 7x7 for best perfomance
 		//GaussianBlur(imgOriginal, imgOriginal, Size(5, 5), 0, 0); // size only odd
 		//blur(imgOriginal, imgOriginal, Size(5, 5)); // too much
 
-		//replaceColor(imgOriginal, imgBlack, exclude); // removes unwanted colors from original image
 		cvtColor(imgOriginal, imgOriginal, COLOR_BGR2HSV);
 		builtTreshHold(imgOriginal, imgThresholded, include);
 
@@ -271,7 +261,6 @@ int Capture()
 			return 0; 
 			break;
 		case 'r':			
-			getExcludeScalar(exclude);
 			loadIncludes(include);
 			getErAndDi(er1, di1, di2, er2);
 			break;
@@ -335,14 +324,6 @@ void copyArr(short *a1, short *a2, int size){
 	}
 }
 
-void replaceColor(Mat &src, Mat &bkg, vector<ScalarRange> &exclude){
-	//Mat dst;
-	for(vector<ScalarRange>::iterator it = exclude.begin(); it != exclude.end(); it++){
-		inRange(src, it->lowBound, it->upBound, dst); // cut of colors by vector
-		bkg.copyTo(src, dst);
-	}
-}
-
 void builtTreshHold(Mat &src, Mat &thd, vector<ScalarRange> &include){
 	if(include.size() == 0) thd = Mat(Scalar(0)).clone();
 	//Mat dst;
@@ -352,25 +333,6 @@ void builtTreshHold(Mat &src, Mat &thd, vector<ScalarRange> &include){
 			thd = dst.clone();
 		else 
 			bitwise_or(dst, thd, thd);
-	}
-}
-
-
-void getExcludeScalar(vector<ScalarRange> &scRange){
-	scRange.clear();
-	const string exFile = "exclude.txt";
-	string line;
-	ifstream file(exFile);
-	int lR, lB, lG,
-		uR, uB, uG;
-	while(getline(file, line)){
-		if((line.length() > 6) && (line[0] != '/')){
-			istringstream sStream(line);
-			sStream >> lB >> lG >> lR;
-			sStream >> uB >> uG >> uR;
-			cout << "  - color: (" << lB << ' ' << lG << ' ' << lR << ") (" << uB << ' ' << uG << ' ' << uR << ')' << endl;  
-			scRange.push_back(ScalarRange(Scalar(lB, lG, lR), Scalar(uB, uG, uR)));
-		}
 	}
 }
 

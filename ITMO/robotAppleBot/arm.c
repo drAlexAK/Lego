@@ -191,8 +191,6 @@ void executeCMD(COMMAND cmd, int value){
 		lookForAppleByArm();
 		break;
 	case CMD_SHIFT_PL_MM:
-		//int mm1 = nMotorEncoder[mPl] / (MAX_CENTER_ENC / MAX_CENTER_MM);
-		//movePl(value + mm1);
 		shiftPl(value);
 		break;
 	case CMD_SAVE_ARM_MM:

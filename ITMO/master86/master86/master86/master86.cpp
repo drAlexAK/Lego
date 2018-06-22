@@ -47,7 +47,11 @@ void getErAndDi(Size &Er1, Size &Di1, Size &Di2, Size &Er2);
 int getBrokenLine(OutputArrayOfArrays curve);
 void geometry(Mat &treshHold);
 string getColorFilterAsString();
+void getSetings();
 ////
+
+int points =0;
+double minMass =0;
 
 typedef enum color{
 	none	= 0,
@@ -143,6 +147,7 @@ int Capture()
 	int rowCenter = imgTmp.rows / 2;
 	int colCenter = imgTmp.cols / 2;
 	vector<ScalarRange> include;
+	getSetings();
 
 	initInclude();
 	loadIncludes(include);
@@ -197,7 +202,7 @@ int Capture()
 		double dArea = oMoments.m00;
 
 		// skip small objects
-		if (dArea > 3000000)
+		if (dArea > minMass)
 		{
 			//calculate the position of the ball
 			int posX = dM10 / dArea;
@@ -263,6 +268,7 @@ int Capture()
 		case 'r':			
 			loadIncludes(include);
 			getErAndDi(er1, di1, di2, er2);
+			getSetings();
 			break;
 		case '1':
 			colorFilter = colorFilter ^ (2 << 0);
@@ -437,7 +443,7 @@ void geometry(Mat &imgThreshold){
 					continue;
 				}
 			}
-			if(getBrokenLine(contours[i]) < 10) 
+			if(getBrokenLine(contours[i]) < points)//------------------------------------------------------------------------------------------------------
 				drawContours( imgDrawing, contours, i, Scalar(255, 255, 255), CV_FILLED );
 		}
 	}
@@ -458,4 +464,24 @@ string getColorFilterAsString(){
 	if((colorFilter & yellow) == yellow) filter += "y";
 	if((colorFilter & green) == green) filter += "g";
 	return filter;
+}
+
+void getSetings(){
+	string line;
+	ifstream file("getSetings.txt");
+	int i =0;
+	while(getline(file, line)){
+		if((line.length() > 0) && (line[0] != '/')){
+			istringstream sStream(line);
+			if(i == 0){
+				sStream >> points;
+				cout << "points: "<< points << endl;  
+			}
+			else{
+				sStream >> minMass;
+				cout <<"minMass: "<< minMass<<endl;  
+			}
+		i++;
+		}
+	}
 }

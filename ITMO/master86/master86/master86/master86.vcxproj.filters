@@ -16,9 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
-    <Text Include="exclude.txt">
-      <Filter>Source Files</Filter>
-    </Text>
     <Text Include="includeGreen.txt">
       <Filter>Source Files</Filter>
     </Text>
@@ -32,6 +29,9 @@
       <Filter>Source Files</Filter>
     </Text>
     <Text Include="comPorts.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="getSetings.txt">
       <Filter>Source Files</Filter>
     </Text>
   </ItemGroup>

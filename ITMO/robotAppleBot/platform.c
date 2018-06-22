@@ -35,7 +35,7 @@ int enc = 0;
 #define DIST_FRONT_MIN 			20
 #define DIST_BETWEEN_VERTICAL_TREE_LINE 115
 
-#define DEGREES_360_ENC 		  4415 // floor at home
+#define DEGREES_360_ENC 		  4465 // floor at home //4115
 //#define DEGREES_360_ENC 		4250 // Spb competion
 
 #define CM40_ENC 						1950
@@ -81,11 +81,9 @@ task parkingRotation();
 
 task main()
 {
-
+	sleep(7000);
 	InitialyzePipe();
 	startTask (controlMotors);
-
-	resetMotorsEncoder();
 
 	int iConnect = 0;
 
@@ -99,6 +97,8 @@ task main()
 	displayTextLine(2, "Connected");
 
 	startTask (BlueToothListener);
+
+	waitArm();
 
 	sleep(10000);
 
@@ -584,4 +584,16 @@ int moveByHor(){
 	//if ( ! getCoord(y, x)) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
 	if ( camStatus.Apple == false) goAheadMM( -1 * shiftMM); // if we lost the apple we will move back
 		return sum;
+}
+
+void waitArm(){
+	while(true){
+		if(SensorValue(sFront) < 20){
+			sleep(1000);
+			if(SensorValue(sFront) < 20){
+				while(SensorValue(sFront) < 20) sleep(100);
+				break;
+			}
+		}
+	}
 }

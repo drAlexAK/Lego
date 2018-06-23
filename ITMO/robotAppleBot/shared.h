@@ -49,7 +49,7 @@ bool isAppleInLadle();
 task BlueToothListener();
 
 bool isAppleInLadle() {
-	return ((camStatus.Apple) || (camStatus.Brightness < 52));
+	return ((camStatus.Apple) || (camStatus.Brightness < 60));
 }
 
 task BlueToothListener()

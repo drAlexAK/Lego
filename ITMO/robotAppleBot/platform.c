@@ -30,7 +30,7 @@ int enc = 0;
 //
 #define DIST_START_ROBOT    400
 #define DIST_TREE_NORM  		280
-#define DIST_BETWEEN_FENCE_TREE  95 // need to calibrate distance between tree and garden
+#define DIST_BETWEEN_FENCE_TREE  90 // need to calibrate distance between tree and garden
 #define ACCURACY_DIST_BETWEEN_FENCE_AND_TREE 20
 #define DIST_FRONT_MIN 			20
 #define DIST_BETWEEN_VERTICAL_TREE_LINE 115
@@ -44,6 +44,7 @@ int enc = 0;
 #define M_BODY_SPEED_MIN 20
 // the highest body speed limit
 #define M_BODY_SPEED_MAX 50
+#define VERTICAL_ITERATION 6
 //----------------------------
 // semaphore variables
 TSemaphore  semParkingRotation;
@@ -53,6 +54,7 @@ int distToTree = 0;
 //function
 //int getSpeedByFrontDistance();
 void resetMotorsEncoder();
+void waitArm();
 void findTrees();
 int getDistRightMedian();
 int getDistRightAverage();
@@ -81,7 +83,6 @@ task parkingRotation();
 
 task main()
 {
-	sleep(7000);
 	InitialyzePipe();
 	startTask (controlMotors);
 
@@ -98,9 +99,11 @@ task main()
 
 	startTask (BlueToothListener);
 
+	sleep(10000);
+
 	waitArm();
 
-	sleep(10000);
+	sleep(5000);
 
 	goToTheTree();
 
@@ -120,7 +123,7 @@ task main()
 		sum =0;
 		getAppleAttempts = 0;
 
-		while(i < 4){
+		while(i < VERTICAL_ITERATION){
 			getAppleAttempts ++;
 			falseLookUpAppleIteration = 0;
 			while ((lookForAppleVertical()) && (falseLookUpAppleIteration < maxFalseLookUpAppleIteration)) {
@@ -131,7 +134,7 @@ task main()
 
 			displayTextLine(2, "LookUp apple %d", i);
 
-			if (i < 3) {
+			if (i < (VERTICAL_ITERATION - 1)) {
 				if(k == 0)
 					goAheadMM(DIST_BETWEEN_VERTICAL_TREE_LINE);
 
@@ -155,7 +158,7 @@ task main()
 }
 
 void goToTheTree(){
-	startRobotPos();
+	//startRobotPos();
 #ifdef DEBUG
 	sleep(500);
 #endif
@@ -192,7 +195,7 @@ bool lookForAppleVertical() {
 bool catchApple(){
 	//short x =0;
 	//short y =0;
-	int shiftPL = 75 + (distToTree - DIST_TREE_NORM );
+	int shiftPL = 75 + (distToTree - DIST_TREE_NORM ); // 75
 	const int shiftArm = 50;
 	//const int shiftPlatformAfterArmUp = 10;
 
@@ -255,7 +258,7 @@ void unloading(){
 	sendCommand(CMD_MOVE_PL, 0);
 	rotatePlatform(-90);
 	sendCommand(CMD_UP_ARM, 120);
-	while(SensorValue(sFront) > 20) sleep(100);
+	while(SensorValue(sFront) > 30) sleep(100);
 	sendCommand(CMD_DOWN_LANDLE, 130);
 	sleep(1000);
 	sendCommand(CMD_DOWN_LANDLE, 0);
@@ -379,12 +382,12 @@ void findTrees()
 				distToTree = getDistRightMedian();
 				int dist =  distToTree - DIST_TREE_NORM;
 				//goAheadMM(-40); // retrack
-				if (abs(dist) > 10)
+				/*if (abs(dist) > 30)
 				{
 					goAheadMM(-50);
 					goToTree(dist);
 					goAheadMM(50);
-				}
+				}*/
 				//goAheadMM(-20);
 				//robotAngelCalibration(70); // unfortunately doesn't work because distance too short
 				sleep(500);
@@ -487,7 +490,7 @@ void goAheadEncoder(int enc){ //encoder
 void startRobotPos(){
 
 	int dist =  getDistRightMedian() - (DIST_TREE_NORM + DIST_BETWEEN_FENCE_TREE);
-	if (abs(dist) > 10) goToTree(dist);
+	if (abs(dist) > 20) goToTree(dist);
 
 }
 // returns degree of diviation by error and lenght distances
@@ -587,13 +590,11 @@ int moveByHor(){
 }
 
 void waitArm(){
-	while(true){
-		if(SensorValue(sFront) < 20){
-			sleep(1000);
-			if(SensorValue(sFront) < 20){
-				while(SensorValue(sFront) < 20) sleep(100);
-				break;
-			}
-		}
+
+	while(SensorValue(sFront) > 20)
+		sleep(100);
+
+	while(SensorValue(sFront) < 20)
+	sleep(100);
+
 	}
-}

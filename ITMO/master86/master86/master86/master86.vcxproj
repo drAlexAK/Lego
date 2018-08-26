@@ -62,7 +62,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -84,9 +84,9 @@
     <Text Include="includeRed.txt" />
     <Text Include="includeYellow.txt" />
     <Text Include="ReadMe.txt" />
-    <Text Include="exclude.txt" />
     <Text Include="erodeAndDilate.txt" />
     <Text Include="comPorts.txt" />
+    <Text Include="getSetings.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTConnect.cpp" />

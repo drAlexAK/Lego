@@ -73,16 +73,16 @@ task main()
 	waitTouchRelease();
 	startTask(speedUp);
 
-
 	long ik   		  = 0;
-	int e       		= 0;
-	int eOld 				= e;
+	float e       		= 0;
+	float eOld 				= e;
 	int rwLeft  		= getRWLeft();
 	int rwRight 		= getRWRight();
-	int es 					= rwLeft - rwRight;
+	float es 					= rwLeft - rwRight;
 	float i 				= 0;
+	float dDyn			= 0;
 	int 	v 				= 0 ;
-	int   u					= 0 ;
+	float   u					= 0 ;
 	int vLeft 			= 0;
 	int vRight 			= 0;
 	long iSpeed     = 0;
@@ -183,8 +183,9 @@ task main()
 
 			i = i + e / 2500;
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;
-			u = (e * 1  + (e - eOld ) * 7) / k  + i;
-			v = (vBase - abs (u) * 0.65 ) ;
+			dDyn = dDyn * 0.8 + (e - eOld) * 0.2;
+			u = (e  + dDyn * 100) + i;
+			v = (vBase - abs(u) * 0.65 ) ;
 
 			vLeft = v + u;
 			vRight = v - u;
@@ -207,14 +208,15 @@ task main()
 		motor[mRight] = vRight;
 #endif
 #ifdef DEBUG
-		displayTextLine(0,"rwL %d",rwLeft);
-		displayTextLine(1,"rwR %d", rwRight);
-		displayTextLine(2,"lAlert %d", leftAlert);
-		displayTextLine(3,"rAlert %d",rightAlert);
-		displayTextLine(4,"e %d",e);
-		displayTextLine(5,"u %d",u);
-		displayTextLine(6,"vLeft %d",vLeft);
-		displayTextLine(7, "vRight %d",vRight);
+		//displayTextLine(0,"rwL %d",rwLeft);
+		//displayTextLine(1,"rwR %d", rwRight);
+		displayTextLine(0,"lAlert %d", leftAlert);
+		displayTextLine(1,"rAlert %d",rightAlert);
+		displayTextLine(2,"e %d",e);
+		displayTextLine(3,"u %d",u);
+		displayTextLine(4,"dDyn %d", dDyn);
+		displayTextLine(5,"vLeft %d",vLeft);
+		displayTextLine(6, "vRight %d",vRight);
 #endif
 		sleep (1);
 

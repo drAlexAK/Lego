@@ -23,11 +23,11 @@ task main()
 		sleep (10);
 	}
 
-	power p[240];
+	power p[400];
 
-	getRec(p, 240);
+	getRec(p, 400);
 
-	for(int i = 0; i < 240; i ++){
+	for(int i = 0; i < 400; i ++){
 		motor[mLeft] = p[i].left;
 		motor[mRight] = p[i].right;
 		sleep(25);

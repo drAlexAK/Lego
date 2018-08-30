@@ -11,10 +11,14 @@ typedef struct power{
 
 power p[ITER];
 
-void getRec(power *p, int size);
+void getRec(power *p, int size, string fileName);
+int getFileName();
 
 task main()
 {
+	string fileName;
+	getFileName();
+	sprintf(fileName, "rec%d.bin",getFileName());
 	while(true)
 	{
 		if (nNxtButtonPressed == 3)
@@ -29,7 +33,7 @@ task main()
 	}
 
 	sleep(1000);
-	getRec(p, ITER);
+	getRec(p, ITER, fileName);
 	sleep(1000);
 	for(int i = 0; i < ITER; i ++){
 		motor[mLeft] = p[i].left;
@@ -39,10 +43,58 @@ task main()
 	}
 }
 
-void getRec(power *p, int size){
+int getFileName(){
+
+	string fileName;
+	int i =0;
+
+	displayBigTextLine(4, "  FILE NAME");
+
+	while(true)
+	{
+		if (nNxtButtonPressed == 3)
+		{
+			while (nNxtButtonPressed == 3)
+			{
+				sleep (10);
+			}
+			//sprintf(fileName, "rec%d.bin", i);
+
+			return i;
+		}
+
+		if (nNxtButtonPressed == 1)
+		{
+			while (nNxtButtonPressed == 1)
+			{
+				sleep (10);
+			}
+			i++;
+		}
+
+		if (nNxtButtonPressed == 2)
+		{
+			while (nNxtButtonPressed == 2)
+			{
+				sleep (10);
+			}
+			i--;
+		}
+
+		if(i < 0) i = 0;
+		//if(i >= IFILE) i = i - IFILE;
+
+		displayBigTextLine(4, "  %d", i);
+
+		sleep (10);
+	}
+	displayBigTextLine(4, "  DONE");
+	sleep(1000);
+}
+
+void getRec(power *p, int size, string fileName){
 	TFileHandle hFile;
 	TFileIOResult ioResult;
-	string fileName = "rec.bin";
 	short sizeFile = size * sizeof(power);
 	byte rByte;
 

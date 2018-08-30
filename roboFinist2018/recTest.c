@@ -25,7 +25,7 @@ typedef struct power{
 }power;
 
 int getRWRight();
-void safeToFile(power *p, int size, int fileNumber);
+void safeToFile(power *p, int size, string fileName);
 int getRWLeft();
 void calibrate ();
 void waitTouchRelease();
@@ -75,11 +75,12 @@ task main()
 	_lineLeader_cmd(sLightLeft, 'E'); // European frequency compensation
 	_lineLeader_cmd(sLightRight, 'E'); // European frequency compensation
 
-	int numberOfFile = getFileName();
+	string fileName;
+	sprintf(fileName, "rec%d.bin",getFileName());
+
 	calibrate();
 	waitTouchRelease();
 	startTask(speedUp);
-
 
 	long ik   		  = 0;
 	int e       		= 0;
@@ -102,7 +103,7 @@ task main()
 
 	clearTimer(T1);
 
-	while(time1[T1] < ITER *25)
+	while(time1[T1] < ITER * 25) // 25 msec per iteration (40 iterations per sec)
 	{
 
 		//------------
@@ -234,10 +235,10 @@ task main()
 		//if (SensorValue(sTouch) == 1) break;
 	}
 
-		motor[mLeft]  = 0;
+	motor[mLeft]  = 0;
 	motor[mRight] = 0;
 
-	safeToFile( p, ITER, numberOfFile);
+	safeToFile( p, ITER, fileName);
 	displayBigTextLine(4, "%d", ik);
 
 
@@ -250,15 +251,13 @@ task main()
 
 //---------------------------------
 
-void safeToFile(power *p, int size, int fileNumber){
-	string fileName;
+void safeToFile(power *p, int size, string fileName){
 	TFileHandle hFile;
 	TFileIOResult ioResult;
-  sprintf(fileName, "rec%d.bin", fileNumber);
 
 	short sizeFile = size * sizeof(power);
 
-	//Delete(fileName , ioResult);
+	Delete(fileName , ioResult);
 	OpenWrite(hFile, ioResult, fileName, sizeFile);
 
 	for (int i = 0 ; i < size; i++)
@@ -273,8 +272,11 @@ void safeToFile(power *p, int size, int fileNumber){
 
 int getFileName(){
 
-int i =0;
+	string fileName;
+	int i =0;
+
 	displayBigTextLine(4, "  FILE NAME");
+
 	while(true)
 	{
 		if (nNxtButtonPressed == 3)
@@ -283,8 +285,9 @@ int i =0;
 			{
 				sleep (10);
 			}
-		return  i;
-			break;
+			//sprintf(fileName, "rec%d.bin", i);
+
+			return i;
 		}
 
 		if (nNxtButtonPressed == 1)

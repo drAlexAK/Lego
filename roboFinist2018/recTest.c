@@ -13,8 +13,7 @@
 // ger: 	    direct
 // tire:      \__/ #61481 + #56145c04
 
-#define ITER 40
-//#define IFILE 6
+#define ITER 120
 #define RELEASE
 //#define DEBUG
 
@@ -25,11 +24,13 @@ typedef struct power{
 }power;
 
 int getRWRight();
-void safeToFile(power *p, int size, string fileName);
+void safeToFile(power *p, int size);
 int getRWLeft();
 void calibrate ();
 void waitTouchRelease();
-int getFileName();
+void getFileName();
+//-------------------
+string fileName = "";
 //-------------------
 float const KL0 = 1.00;
 float const KL1 = 1.00;
@@ -75,8 +76,7 @@ task main()
 	_lineLeader_cmd(sLightLeft, 'E'); // European frequency compensation
 	_lineLeader_cmd(sLightRight, 'E'); // European frequency compensation
 
-	string fileName;
-	sprintf(fileName, "rec%d.bin",getFileName());
+	getFileName();
 
 	calibrate();
 	waitTouchRelease();
@@ -238,7 +238,7 @@ task main()
 	motor[mLeft]  = 0;
 	motor[mRight] = 0;
 
-	safeToFile( p, ITER, fileName);
+	safeToFile( p, ITER);
 	displayBigTextLine(4, "%d", ik);
 
 
@@ -251,14 +251,15 @@ task main()
 
 //---------------------------------
 
-void safeToFile(power *p, int size, string fileName){
+void safeToFile(power *p, int size){
 	TFileHandle hFile;
 	TFileIOResult ioResult;
 
-	short sizeFile = size * sizeof(power);
+	short sizeFile = size * sizeof(power) + 1;
 
 	Delete(fileName , ioResult);
 	OpenWrite(hFile, ioResult, fileName, sizeFile);
+	WriteByte(hFile, ioResult, (byte)ITER);
 
 	for (int i = 0 ; i < size; i++)
 	{
@@ -270,9 +271,8 @@ void safeToFile(power *p, int size, string fileName){
 	Close(hFile, ioResult);
 }
 
-int getFileName(){
+void getFileName(){
 
-	string fileName;
 	int i =0;
 
 	displayBigTextLine(4, "  FILE NAME");
@@ -285,9 +285,10 @@ int getFileName(){
 			{
 				sleep (10);
 			}
-			//sprintf(fileName, "rec%d.bin", i);
-
-			return i;
+			string tmp = "";
+			sprintf(tmp, "rec%d.bin", i);
+			fileName = tmp;
+			return;
 		}
 
 		if (nNxtButtonPressed == 1)
@@ -309,7 +310,6 @@ int getFileName(){
 		}
 
 		if(i < 0) i = 0;
-		//if(i >= IFILE) i = i - IFILE;
 
 		displayBigTextLine(4, "  %d", i);
 

@@ -1,7 +1,7 @@
 #pragma config(Motor,  motorB,          mLeft,         tmotorNXT, openLoop)
 #pragma config(Motor,  motorC,          mRight,        tmotorNXT, openLoop)
 
-#define ITER 460
+#define MAX_BUFFER 500
 
 typedef struct power{
 	byte left;
@@ -9,16 +9,20 @@ typedef struct power{
 	byte sl;
 }power;
 
-power p[ITER];
+string fileName = "";
+power p[MAX_BUFFER];
+byte Iter  = 0;
 
-void getRec(power *p, int size, string fileName);
-int getFileName();
+void getRec(power *p);
+void getFileName();
 
 task main()
 {
-	string fileName;
 	getFileName();
-	sprintf(fileName, "rec%d.bin",getFileName());
+
+	displayBigTextLine(4, "  START");
+	sleep(1000);
+
 	while(true)
 	{
 		if (nNxtButtonPressed == 3)
@@ -33,19 +37,22 @@ task main()
 	}
 
 	sleep(1000);
-	getRec(p, ITER, fileName);
+	getRec(p);
+
 	sleep(1000);
-	for(int i = 0; i < ITER; i ++){
+	for(int i = 0; i < Iter; i ++){
 		motor[mLeft] = p[i].left;
 		motor[mRight] = p[i].right;
 		sleep(p[i].sl);
 		//sleep(25);
 	}
+	motor[mLeft] = 0;
+	motor[mRight] = 0;
+
 }
 
-int getFileName(){
+void getFileName(){
 
-	string fileName;
 	int i =0;
 
 	displayBigTextLine(4, "  FILE NAME");
@@ -58,9 +65,10 @@ int getFileName(){
 			{
 				sleep (10);
 			}
-			//sprintf(fileName, "rec%d.bin", i);
-
-			return i;
+			string tmp = "";
+			sprintf(tmp, "rec%d.bin", i);
+			fileName = tmp;
+			return;
 		}
 
 		if (nNxtButtonPressed == 1)
@@ -82,26 +90,31 @@ int getFileName(){
 		}
 
 		if(i < 0) i = 0;
-		//if(i >= IFILE) i = i - IFILE;
 
 		displayBigTextLine(4, "  %d", i);
 
 		sleep (10);
 	}
-	displayBigTextLine(4, "  DONE");
-	sleep(1000);
 }
 
-void getRec(power *p, int size, string fileName){
+void getRec(power *p){
 	TFileHandle hFile;
 	TFileIOResult ioResult;
-	short sizeFile = size * sizeof(power);
+	short fileSize = 1;
 	byte rByte;
 
-	OpenRead(hFile, ioResult, fileName, sizeFile);
+	OpenRead(hFile, ioResult, fileName, fileSize);
+	ReadByte(hFile, ioResult, Iter); // get iteration
+	memset(p, Iter, Iter * sizeof(power));
+	Close(hFile, ioResult);
+
+	fileSize = Iter * sizeof(power) + 1;
+	OpenRead(hFile, ioResult, fileName, fileSize);
+
+	ReadByte(hFile, ioResult, rByte);
 	ReadByte(hFile, ioResult, rByte);
 
-	for(int i = 0; i < sizeFile; i++){
+	for(int i = 0; i < Iter; i++){
 		ReadByte(hFile, ioResult, rByte);
 		p[i].left = rByte;
 
@@ -112,4 +125,5 @@ void getRec(power *p, int size, string fileName){
 		p[i].sl = rByte;
 
 	}
+	Close(hFile, ioResult);
 }

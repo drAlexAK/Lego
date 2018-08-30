@@ -1,10 +1,15 @@
 #pragma config(Motor,  motorB,          mLeft,         tmotorNXT, openLoop)
 #pragma config(Motor,  motorC,          mRight,        tmotorNXT, openLoop)
 
+#define ITER 460
+
 typedef struct power{
 	byte left;
 	byte right;
+	byte sl;
 }power;
+
+power p[ITER];
 
 void getRec(power *p, int size);
 
@@ -23,14 +28,14 @@ task main()
 		sleep (10);
 	}
 
-	power p[400];
-
-	getRec(p, 400);
-
-	for(int i = 0; i < 400; i ++){
+	sleep(1000);
+	getRec(p, ITER);
+	sleep(1000);
+	for(int i = 0; i < ITER; i ++){
 		motor[mLeft] = p[i].left;
 		motor[mRight] = p[i].right;
-		sleep(25);
+		sleep(p[i].sl);
+		//sleep(25);
 	}
 }
 
@@ -39,15 +44,20 @@ void getRec(power *p, int size){
 	TFileIOResult ioResult;
 	string fileName = "rec.bin";
 	short sizeFile = size * sizeof(power);
-	char power2;
+	byte rByte;
 
 	OpenRead(hFile, ioResult, fileName, sizeFile);
+	ReadByte(hFile, ioResult, rByte);
+
 	for(int i = 0; i < sizeFile; i++){
-		ReadByte(hFile, ioResult, power2);
-		if(i % 2 != 1){
-			p[i/2].left = power2;
-			}else{
-			p[i/2].right = power2;
-		}
+		ReadByte(hFile, ioResult, rByte);
+		p[i].left = rByte;
+
+		ReadByte(hFile, ioResult, rByte);
+		p[i].right= rByte;
+
+		ReadByte(hFile, ioResult, rByte);
+		p[i].sl = rByte;
+
 	}
 }

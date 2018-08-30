@@ -13,19 +13,23 @@
 // ger: 	    direct
 // tire:      \__/ #61481 + #56145c04
 
+#define ITER 40
+//#define IFILE 6
 #define RELEASE
 //#define DEBUG
 
 typedef struct power{
 	byte left;
 	byte right;
+	byte sl;
 }power;
 
 int getRWRight();
-void safeToFile(power *p, int size);
+void safeToFile(power *p, int size, int fileNumber);
 int getRWLeft();
 void calibrate ();
 void waitTouchRelease();
+int getFileName();
 //-------------------
 float const KL0 = 1.00;
 float const KL1 = 1.00;
@@ -36,7 +40,7 @@ float const KL5 = 1.00;
 float const KL6 = 1.00;
 float const KL7 = 1.00;
 //--------------------
-int vBase 			= 90;
+int vBase 			= 75;
 int const vMax  = 100;
 int const vMin	= 10;
 int const maxI	= 10;
@@ -44,7 +48,9 @@ float const k 	= 35;
 int iAlert			= 0;
 bool leftAlert  = false;
 bool rightAlert = false;
-power p[400]       ;
+power p[ITER]       ;
+//string fileNames[IFILE];
+//int numberOfFile = 0;
 //--------------------
 task speedUp()
 {
@@ -69,6 +75,7 @@ task main()
 	_lineLeader_cmd(sLightLeft, 'E'); // European frequency compensation
 	_lineLeader_cmd(sLightRight, 'E'); // European frequency compensation
 
+	int numberOfFile = getFileName();
 	calibrate();
 	waitTouchRelease();
 	startTask(speedUp);
@@ -86,6 +93,8 @@ task main()
 	int vLeft 			= 0;
 	int vRight 			= 0;
 	long iSpeed     = 0;
+	int timer       = 0;
+	int timerOld    = 0;
 	leftAlert  			= false;
 	rightAlert 			= false;
 	tByteArray rawLightLeft;
@@ -93,7 +102,7 @@ task main()
 
 	clearTimer(T1);
 
-	while(time1[T1] < 10000)
+	while(time1[T1] < ITER *25)
 	{
 
 		//------------
@@ -183,7 +192,7 @@ task main()
 
 			i = i + e / 2500;
 			if ( fabs(i) > maxI ) i = sgn(i) * maxI ;
-			u = (e * 1  + (e - eOld ) * 7) / k  + i;
+			u = (e * 1  + (e - eOld ) * 7) / k  + i; // d - 7
 			v = (vBase - abs (u) * 0.65 ) ;
 
 			vLeft = v + u;
@@ -200,9 +209,13 @@ task main()
 		if (vRight > vMax)  vRight = vMax;
 
 #ifdef RELEASE
+
+		p[ik].left  = vLeft;
+		p[ik].right = vRight;
+		timer = time1[T1];
+		p[ik].sl 		=  timer - timerOld;
 		ik++;
-		p[ik-1].left  = vLeft;
-		p[ik-1].right = vRight;
+		timerOld = timer;
 		motor[mLeft]  = vLeft;
 		motor[mRight] = vRight;
 #endif
@@ -220,11 +233,14 @@ task main()
 
 		//if (SensorValue(sTouch) == 1) break;
 	}
-	safeToFile( p, 400);
+
+		motor[mLeft]  = 0;
+	motor[mRight] = 0;
+
+	safeToFile( p, ITER, numberOfFile);
 	displayBigTextLine(4, "%d", ik);
 
-	motor[mLeft]  = 0;
-	motor[mRight] = 0;
+
 
 	sleep(5000);
 
@@ -234,23 +250,70 @@ task main()
 
 //---------------------------------
 
-void safeToFile(power *p, int size){
-
+void safeToFile(power *p, int size, int fileNumber){
+	string fileName;
 	TFileHandle hFile;
 	TFileIOResult ioResult;
-	string fileName = "rec.bin";
+  sprintf(fileName, "rec%d.bin", fileNumber);
+
 	short sizeFile = size * sizeof(power);
 
-	Delete(fileName , ioResult);
+	//Delete(fileName , ioResult);
 	OpenWrite(hFile, ioResult, fileName, sizeFile);
 
 	for (int i = 0 ; i < size; i++)
 	{
+		WriteByte(hFile, ioResult, p[i].sl);
 		WriteByte(hFile, ioResult, p[i].left);
 		WriteByte(hFile, ioResult, p[i].right);
 	}
 
 	Close(hFile, ioResult);
+}
+
+int getFileName(){
+
+int i =0;
+	displayBigTextLine(4, "  FILE NAME");
+	while(true)
+	{
+		if (nNxtButtonPressed == 3)
+		{
+			while (nNxtButtonPressed == 3)
+			{
+				sleep (10);
+			}
+		return  i;
+			break;
+		}
+
+		if (nNxtButtonPressed == 1)
+		{
+			while (nNxtButtonPressed == 1)
+			{
+				sleep (10);
+			}
+			i++;
+		}
+
+		if (nNxtButtonPressed == 2)
+		{
+			while (nNxtButtonPressed == 2)
+			{
+				sleep (10);
+			}
+			i--;
+		}
+
+		if(i < 0) i = 0;
+		//if(i >= IFILE) i = i - IFILE;
+
+		displayBigTextLine(4, "  %d", i);
+
+		sleep (10);
+	}
+	displayBigTextLine(4, "  DONE");
+	sleep(1000);
 }
 
 void calibrate ()

@@ -11,7 +11,7 @@ typedef struct power{
 
 string fileName = "";
 power p[MAX_BUFFER];
-byte Iter  = 0;
+int Iter  = 120; // 1phase - 120, 2phase -
 
 void getRec(power *p);
 void getFileName();
@@ -104,14 +104,13 @@ void getRec(power *p){
 	byte rByte;
 
 	OpenRead(hFile, ioResult, fileName, fileSize);
-	ReadByte(hFile, ioResult, Iter); // get iteration
-	memset(p, Iter, Iter * sizeof(power));
+	//ReadByte(hFile, ioResult, Iter); // get iteration
 	Close(hFile, ioResult);
-
+	//Iter = 480;
 	fileSize = Iter * sizeof(power) + 1;
 	OpenRead(hFile, ioResult, fileName, fileSize);
 
-	ReadByte(hFile, ioResult, rByte);
+//	ReadByte(hFile, ioResult, rByte);
 	ReadByte(hFile, ioResult, rByte);
 
 	for(int i = 0; i < Iter; i++){

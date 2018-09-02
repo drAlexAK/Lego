@@ -28,11 +28,11 @@ task speedUp();
 void calibrate ();
 void waitTouchRelease();
 //--------------------
-int vBase 			= 50;
-int const vMax  = 50;
+int vBase 			= 60;
+int const vMax  = 80;
 
 int const vMin	= 10;
-int const k     = 25;
+int const k     = 35;
 int iAlert			= 0;
 bool leftAlert  = false;
 bool rightAlert = false;
@@ -166,7 +166,7 @@ task main()
 		if (leftAlert)
 		{
 			if(leftLevel == 0) leftLevel = 8;
-			vLeft  = vMax - (vMax - vMin) * leftLevel / 8 ;
+			vLeft  = vMax - (iAlert+1)*2;//(vMax - vMin) * leftLevel / 8 ;
 			vRight = vMax ;
 			iAlert ++;
 		}
@@ -174,7 +174,7 @@ task main()
 		{
 			if(rightLevel == 0)rightLevel = 8;
 			vLeft  = vMax;
-			vRight = vMax - (vMax - vMin) * rightLevel / 8 ;
+			vRight = vMax - (iAlert+1) * 2;//(vMax - vMin) * rightLevel / 8 ;
 			iAlert ++;
 		}
 		else
@@ -182,7 +182,7 @@ task main()
 			e =  centerLeft - centerRight;
 
 			u = (e * 1  + (e - eOld ) * 7) / k; //+ i;
-			v = (vBase - abs(u) * 0.3);//0.65 ) ;
+			v = (vBase - abs(u) * 0.65);//0.65 ) ;
 
 			vLeft  = v + u;
 			vRight = v - u;

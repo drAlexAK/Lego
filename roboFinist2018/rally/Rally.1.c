@@ -14,15 +14,15 @@
 ////////////////////////////////////////////////////////////////
 // includes
 //
-#include "mindsensors-ev3smux.h"
+//#include "mindsensors-ev3smux.h"
 #include "mindsensors-irdist.h"
 
 //--------------------------------------------
 // wheel
 #define WHEEL_ENCODER_MAX                145
 #define WHEEL_SPEED						            60
-#define WHEEL_DIST_MAX_ERROR            1500
-#define WHEEL_INACCURACY_ENCODER           5
+#define WHEEL_DIST_MAX_ERROR            1200
+#define WHEEL_INACCURACY_ENCODER           2
 //dist
 #define INIT_FRONT_DIST_MIN		           100
 #define INIT_FRONT_DIST_MAX		           800
@@ -36,6 +36,7 @@ task wheelControl();
 task getDist();
 //--------------------------------------------
 // functions
+bool selfTest();
 int normalizeSide(int dist);
 int normalizeFront(int dist);
 int getWheelEncoderByDistErr(int err);
@@ -56,14 +57,20 @@ int distFront 		= 0;
 
 task main()
 {
+
+	//selfTest();
+
+	sleep(100);
 	startTask(getDist);
+	sleep(100);
 	startTask(wheelControl);
+	sleep(100);
 
 	while(true){
 		encRat = (eDist * 1 + (eDist - eDistOld));
 		eDistOld = eDist;
 		displayBigTextLine(4, "%d", encRat);
-		sleep(10);
+		sleep(100);
 	}
 }
 
@@ -76,11 +83,13 @@ task getDist(){
 	string type3 = MSDISTreadModuleType(sDistLeft,  address);
 
 	while(true){
-		distRight = normalizeSide(MSDISTreadDist(sDistRight, address));
 		distLeft  = normalizeSide(MSDISTreadDist(sDistLeft, address));
+		sleep(10);
+		distRight = normalizeSide(MSDISTreadDist(sDistRight, address));
+		sleep(10);
 		distFront = normalizeFront(MSDISTreadDist(sDistFront, address));
-		eDist 		= distRight - distLeft;
-		sleep(100);
+		eDist 		= distLeft - distRight;
+		sleep(10);
 	}
 }
 
@@ -107,7 +116,7 @@ task wheelControl()
 		int targetEncoder = getWheelEncoderByDistErr(encRat);
 		while ( ! isWheelCurrentEncoderOk( nMotorEncoder[mWheel] , targetEncoder ))
 		{
-			motor[mWheel] = sgn(encRat) * WHEEL_SPEED;
+			motor[mWheel] = -1 * sgn( nMotorEncoder[mWheel] - targetEncoder  ) * WHEEL_SPEED;
 			targetEncoder = getWheelEncoderByDistErr(encRat);
 			sleep(3);
 		}
@@ -125,5 +134,19 @@ bool isWheelCurrentEncoderOk(int currentEncoder, int targetEncoder)
 int getWheelEncoderByDistErr(int err)
 {
 	if (err > WHEEL_DIST_MAX_ERROR) err = WHEEL_DIST_MAX_ERROR;
-	return ( WHEEL_ENCODER_MAX * err ) / WHEEL_DIST_MAX_ERROR;
+	long t = WHEEL_ENCODER_MAX * err ; // protectes int overflow
+	return -1 * (t / WHEEL_DIST_MAX_ERROR);
+}
+
+//--------------------------
+bool selfTest()
+{
+	clearDebugStream();
+ 	writeDebugStreamLine("--isWheelCurrentEncoderOk()-- ");
+
+	if ( ! isWheelCurrentEncoderOk(10, 0)) setException(1);
+
+
+	return true;
+
 }

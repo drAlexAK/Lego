@@ -6,6 +6,8 @@
 task main()
 {
 
+	int r = sgn(0);
+
 	resetMotorEncoder(mWheel);
 
 	motor[mWheel] = 10;
